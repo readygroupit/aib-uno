@@ -28,6 +28,12 @@
     display: block;
 }
 
+.stat-box__dot--moss { background: var(--color-moss); box-shadow: 0 0 0 3px rgba(79, 123, 92, 0.15); }
+.stat-box__dot--lilac { background: var(--color-lilac); box-shadow: 0 0 0 3px rgba(139, 131, 173, 0.15); }
+.stat-box__dot--brass { background: var(--color-brass); box-shadow: 0 0 0 3px rgba(185, 147, 51, 0.15); }
+.stat-box__dot--teal { background: var(--color-teal); box-shadow: 0 0 0 3px rgba(95, 138, 134, 0.15); }
+.stat-box__dot--danger { background: var(--color-danger); box-shadow: 0 0 0 3px rgba(142, 58, 41, 0.15); }
+
 .stat-box__value-row {
     display: flex;
     align-items: flex-end;
@@ -70,4 +76,21 @@
     font-size: 11.5px;
     color: rgba(18, 51, 63, 0.66);
     font-weight: 500;
+}
+
+/* La card e' un <a> quando ha 'href' (vedi stat-box.js): reset dei default
+   del link (colore/sottolineatura/display inline) + un feedback al hover
+   visibile ma discreto, coerente con "e' un contatore su cui si clicca"
+   invece di un semplice numero statico. */
+.stat-box--clickable {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.stat-box--clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(18, 51, 63, 0.1);
+    border-color: rgba(18, 51, 63, 0.16);
 }

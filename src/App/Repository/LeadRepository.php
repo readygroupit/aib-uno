@@ -124,6 +124,29 @@ final class LeadRepository extends AbstractRepository
         return null;
     }
 
+    /**
+     * Contatti ancora aperti (non convertiti, non persi) fermi da prima di
+     * $before - "lead fermi da oltre 48/72 ore" del brief Assilevi
+     * (Follow-up commerciale, 6.4). "Fermo" = mai ricontattato dopo la
+     * soglia, non "mai ricontattato in assoluto".
+     */
+    public function countStale(string $before): int
+    {
+        // ':before1'/':before2' distinti, non lo stesso nome due volte:
+        // con PDO::ATTR_EMULATE_PREPARES a false su MySQL riusare lo
+        // stesso placeholder piu' volte nella query non e' affidabile
+        // (vedi la stessa nota in searchFreeText()).
+        $row = $this->db->fetchRow(
+            'SELECT COUNT(*) AS total FROM leads
+             WHERE status != 0 AND converted_customer_id IS NULL AND lost_reason IS NULL
+               AND created_at <= :before1
+               AND (last_contacted_at IS NULL OR last_contacted_at <= :before2)',
+            ['before1' => $before, 'before2' => $before]
+        );
+
+        return (int) ($row['total'] ?? 0);
+    }
+
     /** Nuovi contatti attivi creati da $since in poi (formato 'Y-m-d H:i:s') - usato dal Report. */
     public function countCreatedSince(string $since): int
     {

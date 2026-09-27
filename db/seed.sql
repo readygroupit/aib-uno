@@ -34,7 +34,8 @@ VALUES
     (13, 1, 'cases', 'Pratiche', 'Gestione pratiche/fascicoli', 0, 1, NOW(), 1),
     (14, 1, 'document_requests', 'Documenti richiesti', 'Gestione documenti richiesti per le pratiche', 0, 1, NOW(), 1),
     (15, 1, 'communications', 'Comunicazioni', 'Storico comunicazioni con clienti/contatti/pratiche', 0, 1, NOW(), 1),
-    (16, 1, 'reports', 'Report', 'Riepiloghi e statistiche', 0, 1, NOW(), 1);
+    (16, 1, 'reports', 'Report', 'Riepiloghi e statistiche', 0, 1, NOW(), 1),
+    (17, 1, 'refunds', 'Rimborsi', 'Importi, stato pagamento e fattura del rimborso', 0, 1, NOW(), 1);
 
 -- users/leads restano un permesso unico "X.manage" (non ancora
 -- retrofittati su AbstractEntityController, vedi memoria progetto). Da
@@ -94,7 +95,11 @@ VALUES
     (48, 15, 'communications.create', 'Creare comunicazioni', 'Aggiungere nuovi elementi.', 0, 1, NOW(), 1, 'create'),
     (49, 15, 'communications.edit', 'Modificare comunicazioni', 'Modificare elementi esistenti.', 0, 1, NOW(), 1, 'edit'),
     (50, 15, 'communications.delete', 'Eliminare comunicazioni', 'Eliminare elementi esistenti.', 0, 1, NOW(), 1, 'delete'),
-    (51, 16, 'reports.view', 'Visualizzare report', 'Vedere i riepiloghi numerici.', 0, 1, NOW(), 1, 'view');
+    (51, 16, 'reports.view', 'Visualizzare report', 'Vedere i riepiloghi numerici.', 0, 1, NOW(), 1, 'view'),
+    (52, 17, 'refunds.view', 'Visualizzare rimborsi', 'Vedere l''elenco e aprire il dettaglio.', 0, 1, NOW(), 1, 'view'),
+    (53, 17, 'refunds.create', 'Creare rimborsi', 'Aggiungere nuovi elementi.', 0, 1, NOW(), 1, 'create'),
+    (54, 17, 'refunds.edit', 'Modificare rimborsi', 'Modificare elementi esistenti.', 0, 1, NOW(), 1, 'edit'),
+    (55, 17, 'refunds.delete', 'Eliminare rimborsi', 'Eliminare elementi esistenti.', 0, 1, NOW(), 1, 'delete');
 
 INSERT INTO profile_permissions (profile_id, permission_id, status, created_at, created_by)
 VALUES
@@ -148,7 +153,11 @@ VALUES
     (1, 48, 1, NOW(), 1),
     (1, 49, 1, NOW(), 1),
     (1, 50, 1, NOW(), 1),
-    (1, 51, 1, NOW(), 1);
+    (1, 51, 1, NOW(), 1),
+    (1, 52, 1, NOW(), 1),
+    (1, 53, 1, NOW(), 1),
+    (1, 54, 1, NOW(), 1),
+    (1, 55, 1, NOW(), 1);
 
 INSERT INTO config_groups (id, parent_id, code, name, description, sort_order, status, created_at, created_by)
 VALUES

@@ -124,6 +124,50 @@ abstract class AbstractRepository
     }
 
     /**
+     * Conteggio per giorno negli ultimi 7 giorni (oggi incluso) su una
+     * colonna data/datetime - sparkline reale per le card del cruscotto,
+     * non il placeholder piatto usato altrove. Sempre 7 valori anche nei
+     * giorni senza righe (0), dal piu' vecchio al piu' recente.
+     *
+     * @return list<int>
+     */
+    public function countPerDayLast7(string $dateColumn, bool $includeDeleted = false): array
+    {
+        $statusSql = $includeDeleted ? '' : 'AND status != 0';
+        $since = date('Y-m-d', strtotime('-6 days'));
+        $rows = $this->db->fetchAll(
+            "SELECT DATE({$dateColumn}) AS d, COUNT(*) AS total FROM {$this->table}
+             WHERE {$dateColumn} >= :since {$statusSql}
+             GROUP BY DATE({$dateColumn})",
+            ['since' => $since]
+        );
+
+        $byDay = [];
+        foreach ($rows as $row) {
+            $byDay[$row['d']] = (int) $row['total'];
+        }
+
+        $series = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $series[] = $byDay[date('Y-m-d', strtotime("-{$i} days"))] ?? 0;
+        }
+
+        return $series;
+    }
+
+    /** Conteggio tra due date/datetime su una colonna (from incluso, to escluso) - confronti periodo-su-periodo (es. delta % settimana su settimana). */
+    public function countBetween(string $dateColumn, string $from, string $to, bool $includeDeleted = false): int
+    {
+        $statusSql = $includeDeleted ? '' : 'AND status != 0';
+        $row = $this->db->fetchRow(
+            "SELECT COUNT(*) AS total FROM {$this->table} WHERE {$dateColumn} >= :from AND {$dateColumn} < :to {$statusSql}",
+            ['from' => $from, 'to' => $to]
+        );
+
+        return (int) ($row['total'] ?? 0);
+    }
+
+    /**
      * @return array{items: AbstractModel[], total: int, page: int, perPage: int}
      */
     public function paginate(int $page, int $perPage, array $where = [], string $orderBy = '', bool $includeDeleted = false): array

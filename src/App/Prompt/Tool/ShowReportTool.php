@@ -10,6 +10,7 @@ use App\Repository\CaseFileRepository;
 use App\Repository\CommunicationRepository;
 use App\Repository\DocumentRequestRepository;
 use App\Repository\LeadRepository;
+use App\Repository\RefundRepository;
 use App\Repository\TaskRepository;
 use App\View\Component\DataTableComponent;
 use App\View\Component\StatBoxComponent;
@@ -26,6 +27,7 @@ final class ShowReportTool implements PromptToolInterface
     private DocumentRequestRepository $documentRequests;
     private CommunicationRepository $communications;
     private TaskRepository $tasks;
+    private RefundRepository $refunds;
     private StatBoxComponent $statBox;
     private DataTableComponent $dataTable;
 
@@ -36,6 +38,7 @@ final class ShowReportTool implements PromptToolInterface
         $this->documentRequests = $container->get(DocumentRequestRepository::class);
         $this->communications = $container->get(CommunicationRepository::class);
         $this->tasks = $container->get(TaskRepository::class);
+        $this->refunds = $container->get(RefundRepository::class);
         $this->statBox = $container->get(StatBoxComponent::class);
         $this->dataTable = $container->get(DataTableComponent::class);
     }
@@ -85,25 +88,29 @@ final class ShowReportTool implements PromptToolInterface
     {
         $weekAgo = date('Y-m-d H:i:s', strtotime('-7 days'));
         $threeDaysAhead = date('Y-m-d H:i:s', strtotime('+3 days'));
+        $accepted = $this->refunds->sumAcceptedAmount();
 
         return [
-            $this->stat('Pratiche aperte', (string) $this->cases->count(), 'attive, escluse quelle eliminate'),
-            $this->stat('Nuovi contatti', (string) $this->leads->countCreatedSince($weekAgo), 'ultimi 7 giorni'),
-            $this->stat('Comunicazioni inviate', (string) $this->communications->countSentSince($weekAgo), 'ultimi 7 giorni'),
-            $this->stat('Attivita\' in scadenza', (string) $this->tasks->countDueBy($threeDaysAhead), 'non completate, entro 3 giorni'),
-            $this->stat('Duplicati contatti sospetti', (string) count($this->leads->findDuplicateCandidates(200)), 'da rivedere in "Duplicati contatti"'),
+            $this->stat('Pratiche aperte', (string) $this->cases->count(), 'attive, escluse quelle eliminate', '/pratiche', 'lilac'),
+            $this->stat('Nuovi contatti', (string) $this->leads->countCreatedSince($weekAgo), 'ultimi 7 giorni', '/contatti', 'moss'),
+            $this->stat('Comunicazioni inviate', (string) $this->communications->countSentSince($weekAgo), 'ultimi 7 giorni', '/comunicazioni', 'moss'),
+            $this->stat('Attivita\' in scadenza', (string) $this->tasks->countDueBy($threeDaysAhead), 'non completate, entro 3 giorni', '/attivita', 'lilac'),
+            $this->stat('Duplicati contatti sospetti', (string) count($this->leads->findDuplicateCandidates(200)), 'da rivedere in "Duplicati contatti"', '/contatti/duplicati', 'brass'),
+            $this->stat('Valore rimborsi accettati', number_format($accepted, 2, ',', '.') . ' €', 'somma di tutte le pratiche', '/rimborsi', 'teal'),
             $this->breakdown('Pratiche per stato', $this->cases->countGroupedBy('stage')),
             $this->breakdown('Documenti per stato completezza', $this->documentRequests->countGroupedBy('completeness_status')),
+            $this->breakdown('Rimborsi per stato pagamento', $this->refunds->countGroupedBy('payment_status')),
         ];
     }
 
-    private function stat(string $label, string $value, string $comparison): array
+    private function stat(string $label, string $value, string $comparison, string $href, string $dotColor): array
     {
         return $this->statBox->toData([
             'label' => $label,
             'value' => $value,
             'comparison' => $comparison,
-            'sparkline' => [3, 3, 4, 4, 4, 5, (int) $value],
+            'href' => $href,
+            'dotColor' => $dotColor,
         ]);
     }
 

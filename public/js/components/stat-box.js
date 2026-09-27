@@ -48,7 +48,7 @@ function buildSparkline(values) {
 function renderStatBox(data) {
     const header = el('div', { className: 'stat-box__header' }, [
         el('span', { className: 'stat-box__label' }, [data.label || '']),
-        el('span', { className: 'stat-box__dot' }),
+        el('span', { className: 'stat-box__dot stat-box__dot--' + (data.dotColor || 'petrol') }),
     ]);
 
     const valueChildren = [el('span', { className: 'stat-box__value' }, [String(data.value ?? '')])];
@@ -58,7 +58,8 @@ function renderStatBox(data) {
         }, [data.delta]));
     }
 
-    const section = el('section', { className: 'card stat-box' }, [
+    const className = 'card stat-box' + (data.href ? ' stat-box--clickable' : '');
+    const section = el(data.href ? 'a' : 'section', { className, href: data.href || null }, [
         header,
         el('div', { className: 'stat-box__value-row' }, valueChildren),
     ]);

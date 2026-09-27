@@ -20,6 +20,7 @@ use Index\Controller\LeadsController;
 use Index\Controller\PermissionsController;
 use Index\Controller\ProfileController;
 use Index\Controller\PromptController;
+use Index\Controller\RefundsController;
 use Index\Controller\ReportController;
 use Index\Controller\RestrictedAreaController;
 use Index\Controller\ServicesController;
@@ -160,6 +161,7 @@ return [
     ...entityRoutes('cases', '/pratiche', CasesController::class),
     ...entityRoutes('document_requests', '/documenti-richiesti', DocumentRequestsController::class),
     ...entityRoutes('communications', '/comunicazioni', CommunicationsController::class),
+    ...entityRoutes('refunds', '/rimborsi', RefundsController::class),
 
     'report' => [
         'path' => '/report',

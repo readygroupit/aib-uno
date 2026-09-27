@@ -99,6 +99,31 @@ abstract class AbstractRepository
     }
 
     /**
+     * Conteggio per valore di UNA colonna (es. quante righe per ogni
+     * 'stage') - usato dalla schermata Report per riassumere senza dover
+     * scrivere una query dedicata per ogni pacchetto. $column arriva
+     * sempre da codice (mai da input utente): nessun rischio di
+     * injection nonostante l'interpolazione diretta nell'SQL.
+     *
+     * @return array<string,int> valore colonna (stringa, '(vuoto)' se NULL) => conteggio, ordinato dal piu' frequente
+     */
+    public function countGroupedBy(string $column, bool $includeDeleted = false): array
+    {
+        $whereSql = $includeDeleted ? '' : 'WHERE status != 0';
+        $rows = $this->db->fetchAll(
+            "SELECT {$column} AS grp, COUNT(*) AS total FROM {$this->table} {$whereSql} GROUP BY {$column} ORDER BY total DESC"
+        );
+
+        $result = [];
+        foreach ($rows as $row) {
+            $key = $row['grp'] === null || $row['grp'] === '' ? '(vuoto)' : (string) $row['grp'];
+            $result[$key] = (int) $row['total'];
+        }
+
+        return $result;
+    }
+
+    /**
      * @return array{items: AbstractModel[], total: int, page: int, perPage: int}
      */
     public function paginate(int $page, int $perPage, array $where = [], string $orderBy = '', bool $includeDeleted = false): array

@@ -28,6 +28,7 @@ use App\Prompt\Tool\ListCustomersTool;
 use App\Prompt\Tool\ListDocumentRequestsTool;
 use App\Prompt\Tool\ListInterventionsTool;
 use App\Prompt\Tool\ListInvoicesTool;
+use App\Prompt\Tool\ListLeadDuplicatesTool;
 use App\Prompt\Tool\ListLeadsTool;
 use App\Prompt\Tool\ListPackagesTool;
 use App\Prompt\Tool\ListPermissionsTool;
@@ -36,6 +37,7 @@ use App\Prompt\Tool\ListServicesTool;
 use App\Prompt\Tool\ListTasksTool;
 use App\Prompt\Tool\ListUsersTool;
 use App\Prompt\Tool\ShowMenuTool;
+use App\Prompt\Tool\ShowReportTool;
 use App\Prompt\Tool\ShowWizardTool;
 
 return static function (PromptToolRegistry $registry): void {
@@ -44,6 +46,7 @@ return static function (PromptToolRegistry $registry): void {
     $registry->register(ListUsersTool::class);
     $registry->register(ListPermissionsTool::class);
     $registry->register(ListLeadsTool::class);
+    $registry->register(ListLeadDuplicatesTool::class);
     $registry->register(ListCustomersTool::class);
     $registry->register(ListTasksTool::class);
     $registry->register(ListAppointmentsTool::class);
@@ -73,4 +76,5 @@ return static function (PromptToolRegistry $registry): void {
     $registry->register(EditCommunicationTool::class);
     $registry->register(ListPackagesTool::class);
     $registry->register(InstallPackageTool::class);
+    $registry->register(ShowReportTool::class);
 };

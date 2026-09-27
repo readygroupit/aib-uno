@@ -15,10 +15,12 @@ use Index\Controller\GeoController;
 use Index\Controller\IndexController;
 use Index\Controller\InterventionsController;
 use Index\Controller\InvoicesController;
+use Index\Controller\LeadDuplicatesController;
 use Index\Controller\LeadsController;
 use Index\Controller\PermissionsController;
 use Index\Controller\ProfileController;
 use Index\Controller\PromptController;
+use Index\Controller\ReportController;
 use Index\Controller\RestrictedAreaController;
 use Index\Controller\ServicesController;
 use Index\Controller\TasksController;
@@ -113,10 +115,22 @@ return [
         'controller' => LeadsController::class,
         'action' => 'new',
     ],
+    // Stesso motivo di 'leads-new' sopra: segmento letterale, deve
+    // precedere ':id' o verrebbe interpretato come l'id di un contatto.
+    'leads-duplicates' => [
+        'path' => '/contatti/duplicati',
+        'controller' => LeadDuplicatesController::class,
+        'action' => 'index',
+    ],
     'leads-edit' => [
         'path' => '/contatti/:id',
         'controller' => LeadsController::class,
         'action' => 'edit',
+    ],
+    'leads-duplicates-confirm' => [
+        'path' => '/contatti/duplicati/:id',
+        'controller' => LeadDuplicatesController::class,
+        'action' => 'confirm',
     ],
     'leads-convert' => [
         'path' => '/contatti/:id/converti',
@@ -146,6 +160,12 @@ return [
     ...entityRoutes('cases', '/pratiche', CasesController::class),
     ...entityRoutes('document_requests', '/documenti-richiesti', DocumentRequestsController::class),
     ...entityRoutes('communications', '/comunicazioni', CommunicationsController::class),
+
+    'report' => [
+        'path' => '/report',
+        'controller' => ReportController::class,
+        'action' => 'index',
+    ],
 
     'geo-search-municipalities' => [
         'path' => '/geo/comuni/cerca',

@@ -69,6 +69,19 @@
     height: 34px;
 }
 
+.stat-box__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 100%;
+}
+
+.stat-box__bar {
+    flex: 1;
+    min-width: 3px;
+    border-radius: 2px 2px 0 0;
+}
+
 .stat-box__comparison {
     margin-top: 12px;
     padding-top: 12px;

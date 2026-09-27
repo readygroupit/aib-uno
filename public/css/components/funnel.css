@@ -1,0 +1,97 @@
+.funnel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.funnel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.funnel__title {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: rgba(18, 51, 63, 0.63);
+}
+
+.funnel__subtitle {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.funnel__summary {
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.66);
+}
+
+.funnel__summary-value {
+    font-family: var(--font-heading);
+    color: var(--color-petrol);
+}
+
+.funnel__stages {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+}
+
+.funnel__stage {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.funnel__stage--clickable {
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    padding: 6px;
+    margin: -6px;
+    transition: background 0.15s ease;
+}
+
+.funnel__stage--clickable:hover {
+    background: rgba(18, 51, 63, 0.04);
+}
+
+.funnel__stage-label {
+    font-size: 12px;
+    color: rgba(18, 51, 63, 0.66);
+    font-weight: 500;
+}
+
+.funnel__stage-value {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+.funnel__bar-track {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(18, 51, 63, 0.08);
+    overflow: hidden;
+}
+
+.funnel__bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--color-petrol);
+}
+
+.funnel__stage-caption {
+    font-size: 11px;
+    color: rgba(18, 51, 63, 0.5);
+}

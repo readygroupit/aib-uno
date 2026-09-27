@@ -168,6 +168,31 @@ final class LeadsController extends AuthController
     }
 
     /**
+     * Azione "Approva" della card "Contatti da richiamare" nel cruscotto
+     * home (vedi ShowHomeDashboardTool/ApprovalQueueComponent): l'unica
+     * cosa che quella card puo' onestamente offrire senza un vero invio
+     * WhatsApp/email dietro e' segnare che il contatto e' stato ripreso in
+     * mano - reale (scrive davvero last_contacted_at), non un placeholder.
+     * Risposta JSON minima (non l'intera pagina): chi chiama toglie la
+     * riga dalla lista lato client, non ha bisogno d'altro.
+     */
+    public function markContactedAction(): void
+    {
+        $id = (int) $this->param('id');
+        /** @var LeadRepository $leads */
+        $leads = $this->container->get(LeadRepository::class);
+
+        if ($leads->find($id) === null) {
+            $this->json(['ok' => false], 404);
+
+            return;
+        }
+
+        $leads->update($id, ['last_contacted_at' => date('Y-m-d H:i:s')]);
+        $this->json(['ok' => true]);
+    }
+
+    /**
      * Deliberatamente non implementata: bottone presente sulla scheda
      * (vedi EditLeadTool::buildForm()) cosi' si vede gia' dove finira'
      * una futura capacita' di invio email, ma risponde onestamente che

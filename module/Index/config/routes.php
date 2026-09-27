@@ -148,6 +148,11 @@ return [
         'controller' => LeadsController::class,
         'action' => 'sendEmail',
     ],
+    'leads-mark-contacted' => [
+        'path' => '/contatti/:id/contattato',
+        'controller' => LeadsController::class,
+        'action' => 'markContacted',
+    ],
 
     ...entityRoutes('customers', '/clienti', CustomersController::class),
     ...entityRoutes('tasks', '/attivita', TasksController::class),
@@ -160,6 +165,11 @@ return [
     ...entityRoutes('invoices', '/fatture', InvoicesController::class),
     ...entityRoutes('cases', '/pratiche', CasesController::class),
     ...entityRoutes('document_requests', '/documenti-richiesti', DocumentRequestsController::class),
+    'document-requests-remind' => [
+        'path' => '/documenti-richiesti/:id/sollecita',
+        'controller' => DocumentRequestsController::class,
+        'action' => 'remind',
+    ],
     ...entityRoutes('communications', '/comunicazioni', CommunicationsController::class),
     ...entityRoutes('refunds', '/rimborsi', RefundsController::class),
 

@@ -45,6 +45,33 @@ function buildSparkline(values) {
     return svg;
 }
 
+const DOT_COLOR_HEX = { petrol: '#12333f', moss: '#4f7b5c', lilac: '#8b83ad', brass: '#b99333', teal: '#5f8a86', danger: '#8e3a29' };
+
+// Barre invece della linea (vedi 'sparklineStyle: bars' - opt-in, il resto
+// dell'app usa ancora la linea di buildSparkline() sopra): l'ultima barra
+// nel colore della card (dotColor), le altre in grigio neutro - stesso
+// linguaggio delle card viste nel riferimento "Exploration Board".
+function buildBarSparkline(values, dotColor) {
+    if (!values || values.length === 0) {
+        return null;
+    }
+
+    const max = Math.max(...values, 1);
+    const highlight = DOT_COLOR_HEX[dotColor] || DOT_COLOR_HEX.petrol;
+
+    const bars = values.map((value, i) => {
+        const pct = Math.max(8, Math.round((value / max) * 100));
+        const isLast = i === values.length - 1;
+
+        return el('span', {
+            className: 'stat-box__bar',
+            style: `height:${pct}%;background:${isLast ? highlight : 'rgba(18,51,63,0.14)'}`,
+        });
+    });
+
+    return el('div', { className: 'stat-box__bars' }, bars);
+}
+
 function renderStatBox(data) {
     const header = el('div', { className: 'stat-box__header' }, [
         el('span', { className: 'stat-box__label' }, [data.label || '']),
@@ -64,7 +91,9 @@ function renderStatBox(data) {
         el('div', { className: 'stat-box__value-row' }, valueChildren),
     ]);
 
-    const spark = buildSparkline(data.sparkline);
+    const spark = data.sparklineStyle === 'bars'
+        ? buildBarSparkline(data.sparkline, data.dotColor)
+        : buildSparkline(data.sparkline);
     if (spark) {
         section.appendChild(el('div', { className: 'stat-box__spark' }, [spark]));
     }

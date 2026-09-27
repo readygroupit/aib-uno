@@ -3,6 +3,10 @@ import './components/data-table.js';
 import './components/stat-box.js';
 import './components/menu-grid.js';
 import './components/form.js';
+import './components/dashboard-header.js';
+import './components/funnel.js';
+import './components/approval-queue.js';
+import './components/agent-panel.js';
 
 function boot() {
     const root = document.getElementById('page-root');

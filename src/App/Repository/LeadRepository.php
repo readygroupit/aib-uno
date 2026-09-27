@@ -130,6 +130,22 @@ final class LeadRepository extends AbstractRepository
      * (Follow-up commerciale, 6.4). "Fermo" = mai ricontattato dopo la
      * soglia, non "mai ricontattato in assoluto".
      */
+    /** Le righe vere dietro countStale() - usato dalla coda "da approvare" del cruscotto home (vedi ShowHomeDashboardTool). */
+    public function findStale(string $before, int $limit = 5): array
+    {
+        $sql = 'SELECT * FROM leads
+                WHERE status != 0 AND converted_customer_id IS NULL AND lost_reason IS NULL
+                  AND created_at <= :before1
+                  AND (last_contacted_at IS NULL OR last_contacted_at <= :before2)
+                ORDER BY created_at ASC
+                LIMIT ' . max(1, $limit);
+
+        return array_map(
+            static fn (array $row) => Lead::fromArray($row),
+            $this->db->fetchAll($sql, ['before1' => $before, 'before2' => $before])
+        );
+    }
+
     public function countStale(string $before): int
     {
         // ':before1'/':before2' distinti, non lo stesso nome due volte:

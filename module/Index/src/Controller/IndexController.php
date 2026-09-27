@@ -20,7 +20,8 @@ final class IndexController extends AuthController
      */
     public function indexAction(): ?string
     {
-        $components = $this->container->get(ShowHomeDashboardTool::class)->execute([]);
+        $range = (string) $this->param('range', 'today');
+        $components = $this->container->get(ShowHomeDashboardTool::class)->execute(['range' => $range]);
 
         return $this->renderPage($components, ['title' => 'Uno']);
     }

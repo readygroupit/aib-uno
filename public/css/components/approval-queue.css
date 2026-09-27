@@ -1,0 +1,120 @@
+.approval-queue {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.approval-queue__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.approval-queue__title {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: rgba(18, 51, 63, 0.63);
+}
+
+.approval-queue__subtitle {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.approval-queue__count {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    color: var(--color-petrol);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.approval-queue__empty {
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.approval-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border: var(--hairline);
+    border-radius: var(--radius-md);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.approval-item.is-approved {
+    opacity: 0;
+    transform: translateX(8px);
+}
+
+.approval-item__avatar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-petrol);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.approval-item__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.approval-item__title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.approval-item__title {
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.approval-item__tag {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+.approval-item__tag--danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.approval-item__tag--brass { background: rgba(185, 147, 51, 0.16); color: #8a6a1f; }
+.approval-item__tag--lilac { background: rgba(139, 131, 173, 0.18); color: #5b5480; }
+.approval-item__tag--neutral { background: rgba(18, 51, 63, 0.08); color: rgba(18, 51, 63, 0.66); }
+
+.approval-item__description {
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.72);
+    margin-top: 3px;
+}
+
+.approval-item__agent {
+    font-size: 11px;
+    color: rgba(18, 51, 63, 0.5);
+    margin-top: 4px;
+}
+
+.approval-item__actions {
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+}

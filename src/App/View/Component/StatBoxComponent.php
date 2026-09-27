@@ -33,6 +33,10 @@ final class StatBoxComponent extends AbstractComponent
             // 'petrol' (il colore di sempre) resta il default per chi non
             // lo passa, nessun cambiamento per gli usi gia' esistenti.
             'dotColor' => $config['dotColor'] ?? 'petrol',
+            // 'bars' (mini-istogramma, ultima barra evidenziata nel colore
+            // della card) invece della linea di default - vedi
+            // stat-box.js buildBarSparkline().
+            'sparklineStyle' => $config['sparklineStyle'] ?? 'line',
         ];
     }
 }

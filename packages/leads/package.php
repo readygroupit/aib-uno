@@ -195,6 +195,68 @@ return [
                     'label' => 'Pagina di atterraggio',
                     'defaultRequired' => true,
                 ],
+
+                // --- qualita' del dato / deduplica (negoziabili: un lead
+                // generico B2B non ne ha bisogno, un progetto che riceve
+                // contatti da moduli esterni ripetuti si', vedi il caso
+                // Assilevi - preservare l'id originale e collegare senza
+                // MAI cancellare e' un requisito esplicito li') ---
+                'original_submission_id' => [
+                    'sql' => 'VARCHAR(100)',
+                    'label' => 'Id invio originale',
+                    'defaultRequired' => true,
+                    'help' => "Identificativo del modulo/invio esterno (es. Jotform) che ha generato questo contatto - "
+                        . "non va mai sovrascritto, nemmeno unendo un duplicato: e' la prova di dove e quando e' arrivato.",
+                ],
+                'related_lead_id' => [
+                    'sql' => 'INT UNSIGNED',
+                    'label' => 'Collegato a',
+                    'defaultRequired' => true,
+                    'format' => 'integer',
+                    'references' => ['table' => 'leads', 'column' => 'id'],
+                    'help' => "Punta a un altro contatto quando questo e' un probabile duplicato o fa parte della stessa "
+                        . "pratica familiare/di gruppo - un collegamento, non una fusione: entrambe le righe restano, nessun dato si perde.",
+                ],
+                'reliability_level' => [
+                    'sql' => 'VARCHAR(20)',
+                    'label' => 'Affidabilita',
+                    'defaultRequired' => true,
+                    'help' => "Quanto la richiesta sembra completa e coerente (es. alta, media, bassa) - una valutazione "
+                        . "di supporto per l'operatore, mai il criterio che decide da solo se accettare la pratica.",
+                ],
+
+                // --- dettagli del disservizio (negoziabili - un pacchetto
+                // generico di contatti non li usa, un progetto per reclami
+                // di viaggio si') ---
+                'disservice_type' => [
+                    'sql' => 'VARCHAR(50)',
+                    'label' => 'Tipo di disservizio',
+                    'defaultRequired' => true,
+                    'help' => "Vocabolario libero come 'stage' sopra - valori tipici: cancellazione, ritardo, negato "
+                        . "imbarco, bagaglio, spese documentate.",
+                ],
+                'airline' => [
+                    'sql' => 'VARCHAR(100)',
+                    'label' => 'Compagnia aerea',
+                    'defaultRequired' => true,
+                ],
+                'flight_route' => [
+                    'sql' => 'VARCHAR(150)',
+                    'label' => 'Tratta',
+                    'defaultRequired' => true,
+                ],
+                'flight_date' => [
+                    'sql' => 'DATE',
+                    'label' => 'Data del volo',
+                    'defaultRequired' => true,
+                    'format' => 'date',
+                ],
+                'passenger_count' => [
+                    'sql' => 'TINYINT UNSIGNED',
+                    'label' => 'Numero passeggeri',
+                    'defaultRequired' => true,
+                    'format' => 'integer',
+                ],
             ],
 
             /**
@@ -269,6 +331,21 @@ return [
                                 'title' => 'Attribuzione',
                                 'area' => 'main',
                                 'fields' => ['source_channel', 'campaign', 'keyword', 'landing_page'],
+                            ],
+                        ],
+                    ],
+                    [
+                        'label' => 'Disservizio',
+                        'boxes' => [
+                            [
+                                'title' => 'Dettagli del volo',
+                                'area' => 'main',
+                                'fields' => ['disservice_type', 'airline', 'flight_route', 'flight_date', 'passenger_count'],
+                            ],
+                            [
+                                'title' => 'Qualita del dato',
+                                'area' => 'sidebar',
+                                'fields' => ['original_submission_id', 'reliability_level', 'related_lead_id'],
                             ],
                         ],
                     ],

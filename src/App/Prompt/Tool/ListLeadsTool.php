@@ -95,9 +95,12 @@ final class ListLeadsTool implements PromptToolInterface
             'columns' => [
                 ['key' => 'firstName', 'label' => 'Nome'],
                 ['key' => 'lastName', 'label' => 'Cognome'],
-                ['key' => 'companyName', 'label' => 'Azienda'],
                 ['key' => 'email', 'label' => 'Email'],
                 ['key' => 'phone', 'label' => 'Telefono'],
+                // Utile solo per chi usa questi campi (es. reclami di
+                // viaggio) - per chi non li ha installati e' semplicemente
+                // vuota, non e' un problema mostrarla comunque.
+                ['key' => 'disserviceType', 'label' => 'Disservizio'],
                 ['key' => 'stage', 'label' => 'Stato'],
                 ['key' => 'priority', 'label' => 'Priorita'],
             ],

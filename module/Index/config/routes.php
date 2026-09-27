@@ -5,8 +5,10 @@ declare(strict_types=1);
 use Index\Controller\AppointmentsController;
 use Index\Controller\BlogController;
 use Index\Controller\CampaignsController;
+use Index\Controller\CasesController;
 use Index\Controller\CatalogController;
 use Index\Controller\CustomersController;
+use Index\Controller\EntityReferenceController;
 use Index\Controller\GeoController;
 use Index\Controller\IndexController;
 use Index\Controller\InterventionsController;
@@ -139,10 +141,17 @@ return [
     ...entityRoutes('blog', '/blog', BlogController::class),
     ...entityRoutes('campaigns', '/campagne', CampaignsController::class),
     ...entityRoutes('invoices', '/fatture', InvoicesController::class),
+    ...entityRoutes('cases', '/pratiche', CasesController::class),
 
     'geo-search-municipalities' => [
         'path' => '/geo/comuni/cerca',
         'controller' => GeoController::class,
         'action' => 'searchMunicipalities',
+    ],
+
+    'entity-ref-search' => [
+        'path' => '/riferimenti/:source/cerca',
+        'controller' => EntityReferenceController::class,
+        'action' => 'search',
     ],
 ];

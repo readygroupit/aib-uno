@@ -55,18 +55,21 @@ return [
                     'label' => 'Responsabile',
                     'defaultRequired' => false,
                     'references' => ['table' => 'users', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/users/cerca'],
                 ],
                 'primary_customer_id' => [
                     'sql' => 'INT UNSIGNED',
                     'label' => 'Cliente',
                     'base' => true,
                     'references' => ['package' => 'customers', 'table' => 'customers', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/customers/cerca'],
                 ],
                 'lead_id' => [
                     'sql' => 'INT UNSIGNED',
                     'label' => 'Contatto di origine',
                     'defaultRequired' => false,
                     'references' => ['package' => 'leads', 'table' => 'leads', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/leads/cerca'],
                 ],
                 'opened_at' => [
                     'sql' => 'DATETIME',

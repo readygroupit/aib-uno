@@ -31,4 +31,12 @@ final class Lead extends AbstractModel
     public ?string $campaign = null;
     public ?string $keyword = null;
     public ?string $landingPage = null;
+    public ?string $originalSubmissionId = null;
+    public ?int $relatedLeadId = null;
+    public ?string $reliabilityLevel = null;
+    public ?string $disserviceType = null;
+    public ?string $airline = null;
+    public ?string $flightRoute = null;
+    public ?string $flightDate = null;
+    public ?int $passengerCount = null;
 }

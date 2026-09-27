@@ -33,13 +33,19 @@ abstract class AbstractModel
     {
         $model = new static();
         foreach ($row as $column => $value) {
-            $property = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $column))));
+            $property = self::propertyFromColumn($column);
             if (property_exists($model, $property)) {
                 $model->$property = $value;
             }
         }
 
         return $model;
+    }
+
+    /** Nome colonna snake_case (es. 'company_name') -> proprieta' camelCase (es. 'companyName'). */
+    public static function propertyFromColumn(string $column): string
+    {
+        return lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $column))));
     }
 
     public function toArray(): array

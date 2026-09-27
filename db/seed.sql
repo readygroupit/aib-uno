@@ -30,7 +30,8 @@ VALUES
     (9, 1, 'interventions', 'Interventi', 'Gestione interventi tecnici', 0, 1, NOW(), 1),
     (10, 1, 'blog', 'Blog', 'Gestione articoli blog', 0, 1, NOW(), 1),
     (11, 1, 'campaigns', 'Campagne marketing', 'Gestione campagne marketing', 0, 1, NOW(), 1),
-    (12, 1, 'invoices', 'Fatture', 'Gestione fatture', 0, 1, NOW(), 1);
+    (12, 1, 'invoices', 'Fatture', 'Gestione fatture', 0, 1, NOW(), 1),
+    (13, 1, 'cases', 'Pratiche', 'Gestione pratiche/fascicoli', 0, 1, NOW(), 1);
 
 -- users/leads restano un permesso unico "X.manage" (non ancora
 -- retrofittati su AbstractEntityController, vedi memoria progetto). Da
@@ -77,7 +78,11 @@ VALUES
     (35, 12, 'invoices.view', 'Visualizzare fatture', 'Vedere l''elenco e aprire il dettaglio.', 0, 1, NOW(), 1, 'view'),
     (36, 12, 'invoices.create', 'Creare fatture', 'Aggiungere nuovi elementi.', 0, 1, NOW(), 1, 'create'),
     (37, 12, 'invoices.edit', 'Modificare fatture', 'Modificare elementi esistenti.', 0, 1, NOW(), 1, 'edit'),
-    (38, 12, 'invoices.delete', 'Eliminare fatture', 'Eliminare elementi esistenti.', 0, 1, NOW(), 1, 'delete');
+    (38, 12, 'invoices.delete', 'Eliminare fatture', 'Eliminare elementi esistenti.', 0, 1, NOW(), 1, 'delete'),
+    (39, 13, 'cases.view', 'Visualizzare pratiche', 'Vedere l''elenco e aprire il dettaglio.', 0, 1, NOW(), 1, 'view'),
+    (40, 13, 'cases.create', 'Creare pratiche', 'Aggiungere nuovi elementi.', 0, 1, NOW(), 1, 'create'),
+    (41, 13, 'cases.edit', 'Modificare pratiche', 'Modificare elementi esistenti.', 0, 1, NOW(), 1, 'edit'),
+    (42, 13, 'cases.delete', 'Eliminare pratiche', 'Eliminare elementi esistenti.', 0, 1, NOW(), 1, 'delete');
 
 INSERT INTO profile_permissions (profile_id, permission_id, status, created_at, created_by)
 VALUES
@@ -118,7 +123,11 @@ VALUES
     (1, 35, 1, NOW(), 1),
     (1, 36, 1, NOW(), 1),
     (1, 37, 1, NOW(), 1),
-    (1, 38, 1, NOW(), 1);
+    (1, 38, 1, NOW(), 1),
+    (1, 39, 1, NOW(), 1),
+    (1, 40, 1, NOW(), 1),
+    (1, 41, 1, NOW(), 1),
+    (1, 42, 1, NOW(), 1);
 
 INSERT INTO config_groups (id, parent_id, code, name, description, sort_order, status, created_at, created_by)
 VALUES

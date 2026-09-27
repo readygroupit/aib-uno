@@ -1,0 +1,1 @@
+ALTER TABLE `customers` ADD COLUMN `website` VARCHAR(190) NULL;

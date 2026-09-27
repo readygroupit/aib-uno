@@ -1,0 +1,164 @@
+/*
+ * Modale "cosa posso fare?" (vedi public/js/wizard.js). Il tocco "questo
+ * e' un riquadro di aiuto, non un'altra card di contenuto normale" resta
+ * nell'accento lilla (bordo del pannello, titoli di sezione, focus della
+ * ricerca) invece che in un header a tutta larghezza tinto di viola -
+ * quella prima versione non convinceva l'utente (troppo carico/non
+ * chiaro perche' proprio quel colore), qui e' molto piu' tenue: sfondo
+ * uguale al resto dell'app, solo un accento.
+ */
+.wizard-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(18, 51, 63, 0.45);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 1000;
+}
+
+.wizard__panel {
+    width: 100%;
+    max-width: 560px;
+    max-height: min(680px, 100%);
+    display: flex;
+    flex-direction: column;
+    background: var(--color-panel);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 24px 60px -20px rgba(18, 51, 63, 0.45);
+    border: 1px solid rgba(139, 131, 173, 0.35);
+    overflow: hidden;
+}
+
+.wizard__header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    background: var(--color-panel);
+    border-bottom: 1px solid rgba(139, 131, 173, 0.25);
+    /* .wizard__panel e' una colonna flex con altezza massima fissa: senza
+       questo, quando il contenuto (elenco funzioni+campi) supera lo
+       spazio disponibile il default flex-shrink:1 comprime ANCHE header
+       e ricerca invece di lasciare che sia solo .wizard__body (sotto) a
+       scorrere - successo davvero: la ricerca finiva compressa a ~19px
+       invece dei 42px dichiarati, un bug di layout scambiabile per un
+       problema di cache la prima volta. */
+    flex-shrink: 0;
+}
+
+/* Il file e' ritagliato apposta sul contenuto vero dell'icona (vedi
+   window.UNO_LOGO_SQUARE in layout.phtml) - qui deve solo essere grande,
+   niente sfondo/bordo/ombra che ricrei un "riquadro" attorno. */
+.wizard__logo {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 auto;
+}
+
+.wizard__title {
+    flex: 1;
+    font-size: 18px;
+    margin: 0;
+    letter-spacing: -0.3px;
+    color: var(--color-petrol);
+}
+
+.wizard__close {
+    border: none;
+    background: rgba(18, 51, 63, 0.06);
+    color: var(--color-petrol);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.wizard__close:hover {
+    background: rgba(18, 51, 63, 0.12);
+}
+
+/* Stessa gabbia di .field__input (altezza/raggio/font) invece di un
+   campo su misura piu' basso e piu' arrotondato: segnalato dall'utente,
+   qui dentro c'e' una ricerca vera su tutto il menu, non un dettaglio
+   decorativo che puo' permettersi di essere diverso dagli altri campi. */
+.wizard__search {
+    margin: 16px 20px 0;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(18, 51, 63, 0.16);
+    padding: 0 13px;
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    background: #fff;
+    color: var(--color-petrol);
+    outline: none;
+}
+
+.wizard__search:focus {
+    border-color: var(--color-lilac);
+}
+
+/* flex:1 + min-height:0 (non il default "auto"): e' questo elemento a
+   crescere/scorrere quando il contenuto non ci sta, non gli altri - vedi
+   la nota su .wizard__header per il bug che si vedeva senza. */
+.wizard__body {
+    padding: 16px 20px 20px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.wizard__section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    /* Era var(--color-lilac) - segnalato dall'utente insieme all'header
+       (gia' cambiato in precedenza): anche qui il lilla non convinceva.
+       Stesso teal gia' usato per le descrizioni del menu-grid, cosi'
+       il wizard non introduce una terza tonalita' per lo stesso ruolo
+       "etichetta/testo secondario". */
+    color: var(--color-teal);
+    margin: 18px 0 8px;
+}
+
+.wizard__section-title:first-child {
+    margin-top: 0;
+}
+
+.wizard__list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wizard__entry {
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: rgba(139, 131, 173, 0.07);
+}
+
+.wizard__entry-label {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--color-petrol);
+}
+
+.wizard__entry-desc {
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.66);
+    margin-top: 2px;
+}
+
+.wizard__empty {
+    font-size: 14px;
+    color: rgba(18, 51, 63, 0.55);
+}

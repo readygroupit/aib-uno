@@ -1,0 +1,19 @@
+<div class="auth-shell">
+<section class="card auth-card">
+    <h1 class="card__title"><?= $this->e($title) ?></h1>
+    <?php if ($error): ?><p class="field__help" style="color: var(--color-danger);"><?= $this->e($error) ?></p><?php endif; ?>
+    <form method="post" action="/login" class="field-stack">
+        <?= $this->csrfField() ?>
+        <div class="field">
+            <label class="field__label" for="identifier">Username o email</label>
+            <input class="field__input" type="text" id="identifier" name="identifier" required>
+        </div>
+        <div class="field">
+            <label class="field__label" for="password">Password</label>
+            <input class="field__input" type="password" id="password" name="password" required>
+        </div>
+        <button class="btn btn--primary" type="submit" style="width: 100%;">Accedi</button>
+    </form>
+    <p style="margin-top: 16px; text-align: center;"><a href="/password/dimenticata">Password dimenticata?</a></p>
+</section>
+</div>

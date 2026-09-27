@@ -1,0 +1,10 @@
+CREATE TABLE `customers` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `status` TINYINT NOT NULL DEFAULT 1,
+  `email` VARCHAR(190) NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  `created_by` INT UNSIGNED NULL,
+  `updated_at` DATETIME NULL,
+  `updated_by` INT UNSIGNED NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

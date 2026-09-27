@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Prompt\PromptToolRegistry;
+use App\Prompt\Tool\EditAppointmentTool;
+use App\Prompt\Tool\EditBlogPostTool;
+use App\Prompt\Tool\EditCampaignTool;
+use App\Prompt\Tool\EditCustomerTool;
+use App\Prompt\Tool\EditInterventionTool;
+use App\Prompt\Tool\EditInvoiceTool;
+use App\Prompt\Tool\EditLeadTool;
+use App\Prompt\Tool\EditPermissionTool;
+use App\Prompt\Tool\EditProductTool;
+use App\Prompt\Tool\EditServiceTool;
+use App\Prompt\Tool\EditTaskTool;
+use App\Prompt\Tool\EditUserTool;
+use App\Prompt\Tool\InstallPackageTool;
+use App\Prompt\Tool\ListAppointmentsTool;
+use App\Prompt\Tool\ListBlogPostsTool;
+use App\Prompt\Tool\ListCampaignsTool;
+use App\Prompt\Tool\ListCustomersTool;
+use App\Prompt\Tool\ListInterventionsTool;
+use App\Prompt\Tool\ListInvoicesTool;
+use App\Prompt\Tool\ListLeadsTool;
+use App\Prompt\Tool\ListPackagesTool;
+use App\Prompt\Tool\ListPermissionsTool;
+use App\Prompt\Tool\ListProductsTool;
+use App\Prompt\Tool\ListServicesTool;
+use App\Prompt\Tool\ListTasksTool;
+use App\Prompt\Tool\ListUsersTool;
+use App\Prompt\Tool\ShowMenuTool;
+use App\Prompt\Tool\ShowWizardTool;
+
+return static function (PromptToolRegistry $registry): void {
+    $registry->register(ShowMenuTool::class);
+    $registry->register(ShowWizardTool::class);
+    $registry->register(ListUsersTool::class);
+    $registry->register(ListPermissionsTool::class);
+    $registry->register(ListLeadsTool::class);
+    $registry->register(ListCustomersTool::class);
+    $registry->register(ListTasksTool::class);
+    $registry->register(ListAppointmentsTool::class);
+    $registry->register(ListProductsTool::class);
+    $registry->register(ListServicesTool::class);
+    $registry->register(ListInterventionsTool::class);
+    $registry->register(ListBlogPostsTool::class);
+    $registry->register(ListCampaignsTool::class);
+    $registry->register(ListInvoicesTool::class);
+    $registry->register(EditUserTool::class);
+    $registry->register(EditPermissionTool::class);
+    $registry->register(EditLeadTool::class);
+    $registry->register(EditCustomerTool::class);
+    $registry->register(EditTaskTool::class);
+    $registry->register(EditAppointmentTool::class);
+    $registry->register(EditProductTool::class);
+    $registry->register(EditServiceTool::class);
+    $registry->register(EditInterventionTool::class);
+    $registry->register(EditBlogPostTool::class);
+    $registry->register(EditCampaignTool::class);
+    $registry->register(EditInvoiceTool::class);
+    $registry->register(ListPackagesTool::class);
+    $registry->register(InstallPackageTool::class);
+};

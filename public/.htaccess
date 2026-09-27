@@ -1,0 +1,17 @@
+# I file .js importati da altri .js (import './x.js') non passano mai da
+# un tag <script>/<link> quindi non ricevono mai il '?v=' di View::asset():
+# senza questo, un F5 puo' servire una copia vecchia dal disco del browser
+# anche subito dopo aver modificato il file (successo davvero in sessione).
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>
+
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^ index.php [L]

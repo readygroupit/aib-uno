@@ -1,0 +1,458 @@
+/*
+ * Primitivi riutilizzabili (bottoni, badge, avatar, campi form, chip,
+ * tab/breadcrumb, toggle). CSS puro: markup semplice abbastanza da non
+ * meritare un componente PHP dedicato, si usano direttamente nei .phtml.
+ */
+
+/* Bottoni */
+.btn {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: var(--radius-md);
+    padding: 0 18px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+    background: none;
+}
+
+.btn--primary {
+    background: var(--color-petrol);
+    color: #fff;
+    border-color: var(--color-petrol);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 0 1px 2px rgba(18, 51, 63, 0.18);
+}
+
+.btn--secondary {
+    background: transparent;
+    color: var(--color-petrol);
+    border-color: rgba(18, 51, 63, 0.16);
+    box-shadow: 0 1px 2px rgba(18, 51, 63, 0.05);
+}
+
+.btn--accent {
+    background: var(--color-accent);
+    color: var(--color-petrol);
+    border-color: var(--color-accent);
+}
+
+.btn--ghost {
+    background: transparent;
+    color: rgba(18, 51, 63, 0.66);
+    border-color: transparent;
+    padding: 0 16px;
+}
+
+.btn--delete {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border-color: rgba(154, 63, 45, 0.35);
+}
+
+.btn:disabled,
+.btn--disabled {
+    background: rgba(18, 51, 63, 0.04);
+    color: rgba(18, 51, 63, 0.32);
+    border-color: rgba(18, 51, 63, 0.1);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn--small {
+    height: 32px;
+    font-size: 12px;
+    padding: 0 14px;
+}
+
+.btn--large {
+    height: 44px;
+    font-size: 14px;
+    padding: 0 22px;
+}
+
+/* Badge di stato + tag piccoli */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 11.5px;
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    border: 1px solid transparent;
+}
+
+.badge--success { background: #eaf1ea; color: #3d6b4f; border-color: rgba(79, 123, 92, 0.28); }
+.badge--warning { background: #f6f0df; color: #4a3a11; border-color: rgba(185, 147, 51, 0.3); }
+.badge--danger  { background: #f7ebe7; color: #8e3a29; border-color: rgba(154, 63, 45, 0.25); }
+.badge--info    { background: #e9f0ef; color: #3f5c59; border-color: rgba(95, 138, 134, 0.3); }
+.badge--accent  { background: #eeecf3; color: #474063; border-color: rgba(139, 131, 173, 0.3); }
+.badge--neutral { background: rgba(18, 51, 63, 0.05); color: rgba(18, 51, 63, 0.66); border-color: rgba(18, 51, 63, 0.12); }
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    border-radius: 7px;
+    padding: 3px 9px;
+    background: rgba(18, 51, 63, 0.043);
+    color: var(--color-petrol);
+    border: 1px solid rgba(18, 51, 63, 0.1);
+}
+
+/* Avatar: iniziali o foto, stessa gabbia */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    background: var(--color-petrol);
+    color: #fff;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 11px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar--overflow {
+    background: #eceae5;
+    color: rgba(18, 51, 63, 0.66);
+}
+
+.avatar-group {
+    display: inline-flex;
+}
+
+.avatar-group .avatar {
+    margin-left: -8px;
+    border: 2px solid var(--color-panel);
+}
+
+.avatar-group .avatar:first-child {
+    margin-left: 0;
+}
+
+/* Campi form - larghezza dentro la griglia del box che li contiene (vedi
+   .form-box__grid piu' sotto): non piu' un margin-bottom fisso, lo spazio
+   tra campi lo da' il gap della griglia. Un form FUORI da quella griglia
+   (es. login) deve avvolgere i propri campi in .field-stack qui sotto,
+   altrimenti restano attaccati l'uno all'altro - successo davvero,
+   segnalato dall'utente (bottone "Accedi" incollato al campo password). */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+/* Spaziatura verticale per un form semplice, non a griglia (login,
+   password dimenticata/reset) - stesso principio del gap della griglia,
+   solo in colonna singola. */
+.field-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.field--quarter { grid-column: span 3; }
+.field--third   { grid-column: span 4; }
+.field--half    { grid-column: span 6; }
+.field--full    { grid-column: span 12; }
+
+/*
+ * Dimensioni testo dei campi form - alzate (2026-09-26) su segnalazione
+ * diretta dell'utente: le etichette a 11.5px erano troppo piccole,
+ * problema di leggibilita'/accessibilita' reale (utente presbite),
+ * non solo estetico. Vale come standard minimo per ogni campo
+ * dell'app, non solo per il login dove e' stato notato per primo.
+ */
+.field__label {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.field__input {
+    height: 42px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(18, 51, 63, 0.16);
+    padding: 0 13px;
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    background: #fff;
+    color: var(--color-petrol);
+    outline: none;
+}
+
+.field__input:focus {
+    border-color: var(--color-petrol);
+}
+
+.field__help {
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.field--error .field__input {
+    border-color: rgba(154, 63, 45, 0.6);
+}
+
+.field--error .field__help {
+    color: var(--color-danger);
+}
+
+/* Campo autocomplete (vedi public/js/components/form.js,
+   buildAutocompleteControl) - stessa gabbia visiva di .field__input, con
+   la lista di suggerimenti sganciata dal flusso cosi' non spinge giu' i
+   campi sotto quando si apre. */
+.field__autocomplete {
+    position: relative;
+}
+
+.field__autocomplete-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid rgba(18, 51, 63, 0.16);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.field__autocomplete-item {
+    text-align: left;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-petrol);
+    padding: 7px 9px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.field__autocomplete-item:hover {
+    background: rgba(18, 51, 63, 0.06);
+}
+
+/* Messaggio di esito di un form (successo/errore) - stesso .field__help,
+   ma con sfondo tenue per farlo notare come banner, non come sotto-testo
+   di un singolo campo. */
+.form__message {
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+}
+
+.form__message--success {
+    background: rgba(79, 123, 92, 0.14);
+    color: var(--color-moss);
+}
+
+.form__message--error {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.form__message--info {
+    background: rgba(95, 138, 134, 0.14);
+    color: var(--color-teal);
+}
+
+/*
+ * Box (sotto-card) dentro una sezione di form - vedi App\View\Component\
+ * FormComponent e public/js/components/form.js. form-box__grid e' una
+ * griglia a 12 colonne: ogni .field--* dichiara quante ne occupa (vedi
+ * sopra), cosi' un campo stretto come il CAP non finisce mai a piena
+ * riga solo perche' e' l'unico rimasto in un box dopo che altri campi
+ * sono stati esclusi per questo progetto.
+ */
+.form-box {
+    background: rgba(18, 51, 63, 0.02);
+    border: 1px solid rgba(18, 51, 63, 0.07);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+}
+
+.form-box:last-child {
+    margin-bottom: 0;
+}
+
+.form-box__title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--color-petrol);
+    margin: 0 0 14px;
+}
+
+.form-box__grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 14px 16px;
+}
+
+/* Sezione = contenuto di una tab (o l'unica, se il form non ne ha piu'
+   di una - vedi buildSections() in form.js). Due colonne SOLO se ci sono
+   davvero box in entrambe le aree (vedi buildSectionContent()): niente
+   sidebar vuota quando non serve. */
+.form-section--split {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.form-section__sidebar .form-box {
+    background: rgba(18, 51, 63, 0.035);
+}
+
+.form-tabs {
+    margin-bottom: 18px;
+}
+
+.form__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+@media (max-width: 720px) {
+    .form-section--split {
+        grid-template-columns: 1fr;
+    }
+
+    .field--quarter,
+    .field--third,
+    .field--half {
+        grid-column: span 12;
+    }
+}
+
+/* Chip filtro */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-petrol);
+    color: #fff;
+    border: 1px solid var(--color-petrol);
+    border-radius: 10px;
+    padding: 0 11px;
+    height: 28px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.chip--ghost {
+    background: transparent;
+    color: var(--color-petrol);
+    border-color: rgba(18, 51, 63, 0.16);
+}
+
+/* Breadcrumb e tab */
+.breadcrumb {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(18, 51, 63, 0.65);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.tabs {
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid rgba(18, 51, 63, 0.1);
+}
+
+.tabs__item {
+    /* Reset del chrome nativo: questa classe nasce pensata per <a>, ma
+       public/js/components/form.js la usa anche su <button> (serve
+       onClick senza navigazione) - senza azzerare background/border/
+       padding/font qui, un <button> porta comunque il proprio bordo e
+       sfondo di default sotto lo stile voluto (bug reale, visto sulla
+       scheda di un contatto: le tab sembravano bottoni squadrati). */
+    appearance: none;
+    background: none;
+    border: none;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 13.5px;
+    color: rgba(18, 51, 63, 0.55);
+    padding: 0 0 12px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.tabs__item.is-active {
+    color: var(--color-petrol);
+    border-bottom-color: var(--color-petrol);
+}
+
+.tabs__count {
+    font-size: 10.5px;
+    color: rgba(18, 51, 63, 0.5);
+}
+
+/* Toggle (solo visivo per ora, nessun JS di stato) */
+.toggle {
+    display: inline-flex;
+    align-items: center;
+    width: 38px;
+    height: 22px;
+    border-radius: 10px;
+    background: rgba(18, 51, 63, 0.12);
+    border: 1px solid rgba(18, 51, 63, 0.12);
+    padding: 2px;
+    cursor: pointer;
+}
+
+.toggle__thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(18, 51, 63, 0.3);
+    transition: transform 0.15s ease;
+}
+
+.toggle.is-on {
+    background: var(--color-petrol);
+    border-color: var(--color-petrol);
+}
+
+.toggle.is-on .toggle__thumb {
+    transform: translateX(16px);
+}

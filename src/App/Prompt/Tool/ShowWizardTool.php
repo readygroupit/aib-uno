@@ -1,0 +1,172 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Prompt\Tool;
+
+use App\Core\Container;
+use App\Package\PackageManifest;
+use App\Prompt\PromptToolInterface;
+use App\Prompt\PromptToolRegistry;
+use App\Service\AuthService;
+use App\View\Component\WizardComponent;
+
+/**
+ * A differenza di ShowMenuTool (solo le capacita' con una menuLabel, le
+ * voci cliccabili del menu), qui entra ogni tool permesso: anche
+ * "modifica contatto" merita una spiegazione anche se non e' un'icona
+ * del menu. Aggiunge anche le spiegazioni dei campi dell'entita' in
+ * vista (parametro 'entity', lo stesso tag gia' usato da DataTable/
+ * FormComponent per il contesto mandato a Claude) - solo i campi che il
+ * manifest del pacchetto marca esplicitamente con 'help': un campo ovvio
+ * come "Nome" non ha bisogno di essere rispiegato, uno come "Stato del
+ * contatto" (vocabolario libero) si'.
+ *
+ * ENTITY_PACKAGES e' la mappa provvisoria tag-entita' -> nome-pacchetto:
+ * necessaria perche' il tag usato lato client (es. 'lead') non coincide
+ * col nome del pacchetto ('leads') ne' con la sua entity key interna -
+ * vedi packages/leads/package.php. Cresce una voce alla volta, quando un
+ * pacchetto ottiene una vera verticale con campi da spiegare (oggi solo
+ * 'leads' - 'user'/'permission' sono entita' del framework, non
+ * pacchetti, non hanno un manifest).
+ */
+final class ShowWizardTool implements PromptToolInterface
+{
+    private const ENTITY_PACKAGES = ['lead' => 'leads'];
+
+    /**
+     * menuLabel() torna null apposta per i tool che non sono una voce di
+     * menu cliccabile diretta (vedi la loro documentazione) - qui pero'
+     * serve comunque una riga leggibile, non il nome tecnico interno
+     * ('edit_user'). Soluzione provvisoria finche' non c'e' un secondo
+     * caso d'uso che chiarisca se merita un metodo apposito
+     * sull'interfaccia invece di questa mappa.
+     */
+    private const FALLBACK_LABELS = [
+        'show_menu' => 'Mostra il menu',
+        'edit_user' => 'Modifica utente',
+        'edit_permission' => 'Modifica permesso',
+        'edit_lead' => 'Modifica contatto',
+        'install_package' => 'Installa un pacchetto',
+    ];
+
+    private PromptToolRegistry $registry;
+    private WizardComponent $wizard;
+    private AuthService $auth;
+
+    public function __construct(Container $container)
+    {
+        $this->registry = $container->get(PromptToolRegistry::class);
+        $this->wizard = $container->get(WizardComponent::class);
+        $this->auth = $container->get(AuthService::class);
+    }
+
+    public function name(): string
+    {
+        return 'show_wizard';
+    }
+
+    public function description(): string
+    {
+        return "Mostra un modale con le funzioni disponibili e le spiegazioni dei campi meno ovvi. "
+            . "Usalo quando l'utente chiede 'cosa posso fare', 'aiuto' o simili.";
+    }
+
+    public function inputSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'entity' => [
+                    'type' => 'string',
+                    'description' => "Entita' attualmente in vista (es. 'lead'), per le spiegazioni dei campi - opzionale",
+                ],
+            ],
+        ];
+    }
+
+    public function menuLabel(): ?string
+    {
+        return null;
+    }
+
+    public function menuSection(): ?string
+    {
+        return null;
+    }
+
+    public function menuCount(): ?string
+    {
+        return null;
+    }
+
+    public function requiredPermission(): ?string
+    {
+        return null;
+    }
+
+    public function triggers(): array
+    {
+        return ['cosa posso fare', 'aiuto', 'wizard'];
+    }
+
+    public function execute(array $input): array
+    {
+        $entity = trim((string) ($input['entity'] ?? ''));
+
+        $capabilities = [];
+        foreach ($this->registry->all() as $tool) {
+            if ($tool->name() === $this->name()) {
+                continue;
+            }
+
+            $permission = $tool->requiredPermission();
+            if ($permission !== null && !$this->auth->hasPermission($permission)) {
+                continue;
+            }
+
+            $label = $tool->menuLabel()
+                ?? ($tool instanceof AbstractEditEntityTool ? $tool->wizardLabel() : null)
+                ?? self::FALLBACK_LABELS[$tool->name()] ?? $tool->name();
+            $capabilities[] = ['label' => $label, 'description' => $this->userFacingDescription($tool->description())];
+        }
+
+        return [$this->wizard->toData([
+            'capabilities' => $capabilities,
+            'fieldHelp' => $this->fieldHelp($entity),
+        ])];
+    }
+
+    /**
+     * description() e' scritta per Claude (vedi ClaudeService::converse()
+     * - descrive QUANDO scegliere questo tool, non COSA fa per un
+     * operatore che legge): la frase "Usalo quando..." e gli esempi tra
+     * parentesi che la seguono hanno senso li', non in un pannello di
+     * aiuto rivolto a una persona. Qui si mostra solo la parte
+     * descrittiva iniziale.
+     */
+    private function userFacingDescription(string $description): string
+    {
+        return trim(explode(' Usalo quando', $description)[0]);
+    }
+
+    private function fieldHelp(string $entity): array
+    {
+        $packageName = self::ENTITY_PACKAGES[$entity] ?? null;
+        if ($packageName === null) {
+            return [];
+        }
+
+        $manifest = new PackageManifest($packageName);
+        $help = [];
+        foreach ($manifest->entities() as $entityDef) {
+            foreach ($entityDef['fields'] as $field) {
+                if (!empty($field['help'])) {
+                    $help[] = ['label' => $field['label'], 'help' => $field['help']];
+                }
+            }
+        }
+
+        return $help;
+    }
+}

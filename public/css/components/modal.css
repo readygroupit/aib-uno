@@ -1,0 +1,79 @@
+/*
+ * Modale generico per avvisi (vedi public/js/modal.js) - stessa struttura
+ * overlay del wizard ma piu' compatto e con un tono neutro/di errore
+ * invece del lilla "da assistente" del wizard: deve leggersi come un
+ * avviso funzionale, non un pannello di aiuto.
+ */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(18, 51, 63, 0.45);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 1100;
+}
+
+.modal__panel {
+    width: 100%;
+    max-width: 420px;
+    background: var(--color-panel);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 24px 60px -20px rgba(18, 51, 63, 0.45);
+    overflow: hidden;
+}
+
+.modal__panel--error {
+    border-top: 3px solid var(--color-danger);
+}
+
+.modal__panel--info {
+    border-top: 3px solid var(--color-teal);
+}
+
+.modal__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px 0;
+}
+
+.modal__title {
+    flex: 1;
+    font-size: 15px;
+    margin: 0;
+}
+
+.modal__close {
+    border: none;
+    background: rgba(18, 51, 63, 0.06);
+    color: var(--color-petrol);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.modal__close:hover {
+    background: rgba(18, 51, 63, 0.12);
+}
+
+.modal__body {
+    padding: 12px 18px 18px;
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.75);
+}
+
+.modal__body ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+}
+
+.modal__body li {
+    margin-bottom: 3px;
+}

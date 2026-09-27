@@ -1,0 +1,13 @@
+# Credenziali locali (DB, chiave API Claude) - vedi local.php.dist per il template da copiare
+config/autoload/local.php
+
+# Log/cache generati a runtime, non fanno parte del codice
+data/logs/*
+!data/logs/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+
+# Metadati IDE locali (NetBeans)
+nbproject/
+
+.DS_Store

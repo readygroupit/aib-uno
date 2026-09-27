@@ -1,0 +1,699 @@
+/*
+ * Contenitore in vetro per i risultati del prompt (stat-box, data-table,
+ * ...) - separato dalla card del prompt, che ha gia' il suo trattamento in
+ * vetro e resta fuori. Creato/riusato da hero.js la prima volta che arriva
+ * un risultato. Le card al suo interno restano scatole vere e proprie (non
+ * trasparenti del tutto, altrimenti spariscono), ma con un bianco
+ * semi-trasparente piu' leggero di quello di una card normale, cosi' si
+ * vede ancora il vetro/lo sfondo colorato dietro.
+ */
+.results-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+    background: rgba(251, 250, 248, 0.42);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.6) inset, var(--shadow-card);
+}
+
+/* Creato sempre (vedi hero.js getOrCreatePanel), ma sulla home vuota resta
+   senza contenuto - un box in vetro vuoto non deve comunque comparire. */
+.results-panel:empty {
+    display: none;
+}
+
+.results-panel > .card {
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1px 2px rgba(18, 51, 63, 0.06);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+}
+
+.results-panel__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    border: none;
+    background: none;
+    color: var(--color-teal);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 2px;
+}
+
+.results-panel__back:hover {
+    color: var(--color-petrol);
+}
+
+.results-panel__back .icon svg {
+    width: 12px;
+    height: 12px;
+    display: block;
+}
+
+/*
+ * Elenco delle richieste fatte finora (solo testo, come i messaggi di una
+ * conversazione), dentro la stessa card del prompt, sopra la casella di
+ * testo. Nascosto di default (anche se non vuoto): ha senso solo nel
+ * layout a sidebar qui sotto, in modalita' compatta la card deve restare
+ * come prima, senza storico visibile al suo interno. Sfondo tenue intonato
+ * alla palette (non bianco: non deve sembrare un altro campo di testo) per
+ * farli leggere come "messaggi", non input.
+ */
+.hero__messages {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 14px 0;
+}
+
+.hero__message {
+    text-align: left;
+    border: none;
+    background: rgba(79, 123, 92, 0.14);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 12.5px;
+    color: var(--color-petrol);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hero__message:hover {
+    background: rgba(79, 123, 92, 0.22);
+}
+
+.hero__message--active {
+    background: rgba(79, 123, 92, 0.32);
+    font-weight: 600;
+}
+
+/*
+ * Layout a sidebar: si attiva solo quando c'e' gia' uno storico (classe
+ * .has-history, aggiunta da hero.js al primo risultato) E lo schermo e'
+ * abbastanza largo da ospitarla senza stringere il contenuto - a schermata
+ * vuota, o sotto la soglia, resta tutto impilato e centrato come prima
+ * (nessun cambiamento in quei casi).
+ *
+ * Le due colonne diventano un "app shell" a se': altezza fissa pari alla
+ * viewport meno il padding verticale di .page-stack (32px sopra + 32px
+ * sotto), ognuna scorre per conto proprio - non e' piu' la pagina intera a
+ * scorrere, come il menu laterale di un gestionale classico che non si
+ * muove insieme al contenuto.
+ */
+@media (min-width: 1280px) {
+    .page-stack:has(.component-stack.has-history) {
+        max-width: none;
+    }
+
+    .component-stack.has-history {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        grid-template-areas: 'prompt content';
+        gap: 24px;
+        height: calc(100vh - 64px);
+    }
+
+    .component-stack.has-history .hero-wrap {
+        grid-area: prompt;
+        margin: 0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* .hero__card e' gia' un flex column-friendly .card (vedi sopra): qui
+       lo si fa crescere per riempire tutta l'altezza della colonna, con i
+       messaggi che si prendono lo spazio che avanza e scorrono, mentre
+       casella e pulsanti restano della loro altezza naturale in fondo. */
+    .component-stack.has-history .hero__card {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .component-stack.has-history .hero__messages {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .component-stack.has-history .results-panel {
+        grid-area: content;
+        height: 100%;
+        overflow-y: auto;
+    }
+}
+
+.hero-wrap {
+    width: 100%;
+    margin: 10vh auto 0;
+    transition: margin 0.4s ease;
+}
+
+.hero-wrap--top {
+    margin-top: 0;
+}
+
+.hero-wrap--top .hero__intro {
+    display: none;
+}
+
+.hero__intro {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    justify-content: center;
+    margin: 0 0 22px;
+}
+
+.hero__logo--big {
+    display: block;
+    width: 76px;
+    height: 76px;
+    flex: 0 0 auto;
+}
+
+.hero__greeting {
+    text-align: left;
+}
+
+.hero__greeting-line1 {
+    margin: 0 0 4px;
+    color: var(--color-petrol);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 26px;
+}
+
+.hero__greeting-line2 {
+    margin: 0;
+    color: var(--color-teal);
+    font-size: 16px;
+}
+
+.hero__card {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    background: rgba(251, 250, 248, 0.5);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 1px 1px rgba(255, 255, 255, 0.6) inset, var(--shadow-card);
+}
+
+/*
+ * Riflesso leggero tipo metallo, non un vero effetto lucido: una fascia
+ * diagonale chiara e sfumata, ferma (niente animazione - "non esagerato").
+ * Dipinto prima dei figli (::before = primo nell'ordine di stacking), quindi
+ * il box bianco opaco della textarea e i pulsanti restano sopra e cliccabili.
+ */
+.hero__card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, rgba(255, 255, 255, 0.5) 0%, transparent 22%, transparent 78%, rgba(255, 255, 255, 0.22) 100%);
+    pointer-events: none;
+}
+
+/*
+ * Riquadro bianco opaco per la textarea, distinto dalla card trasparente
+ * che lo contiene: sotto, nella zona che resta trasparente, vanno i
+ * pulsanti della toolbar.
+ */
+.hero__input-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(18, 51, 63, 0.1);
+}
+
+.hero__logo--inline {
+    display: none;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    margin-top: 3px;
+}
+
+.hero-wrap--top .hero__logo--inline {
+    display: block;
+}
+
+.hero__input {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    resize: none;
+    font: inherit;
+    font-size: 14.5px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+}
+
+.hero__input:focus {
+    outline: none;
+}
+
+.hero__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 4px;
+}
+
+.hero__toolbar-spacer {
+    flex: 1;
+}
+
+/*
+ * Stessa struttura/logica del menu azioni di data-table.js
+ * (.data-table__actions-*: trigger + pannello assoluto, .is-open a
+ * comparire, chiusura sul click fuori) ma in un namespace suo perche'
+ * vive nella toolbar del prompt, non in una riga di tabella - due usi
+ * troppo diversi per condividere le stesse classi senza accoppiarli.
+ */
+.hero__profile-dropdown {
+    position: relative;
+    display: inline-flex;
+}
+
+.hero__profile-menu {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0;
+    z-index: 10;
+    min-width: 170px;
+    background: var(--color-panel);
+    border: var(--hairline);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    padding: 6px;
+}
+
+.hero__profile-menu.is-open {
+    display: block;
+}
+
+.hero__profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 13.5px;
+    color: var(--color-petrol);
+    text-decoration: none;
+}
+
+.hero__profile-menu-item:hover {
+    background: rgba(18, 51, 63, 0.06);
+}
+
+.hero__profile-menu-item .icon svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+    flex: 0 0 auto;
+}
+
+.hero__icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    border: var(--hairline);
+    background: var(--color-canvas);
+    color: var(--color-petrol);
+    cursor: pointer;
+    padding: 0;
+}
+
+.hero__icon-btn:hover {
+    background: rgba(18, 51, 63, 0.08);
+}
+
+.hero__icon-btn .icon svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+}
+
+/*
+ * Pulsante wizard: l'icona di Uno e' gia' un'illustrazione a se' (sfondo
+ * petrolio arrotondato, non un glifo a linee come mic/+) - incorniciarla
+ * in un altro box chiaro come gli altri pulsanti crea un "riquadro dentro
+ * al riquadro" (segnalato dall'utente con uno screenshot). Stessa area
+ * cliccabile 34x34 degli altri .hero__icon-btn (allineamento/tocco), ma
+ * senza sfondo/bordo: l'icona stessa riempie lo spazio.
+ */
+.hero__icon-btn--logo {
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.hero__icon-btn--logo:hover {
+    background: rgba(18, 51, 63, 0.06);
+    border-radius: var(--radius-md);
+}
+
+.hero__icon-logo {
+    width: 32px;
+    height: 32px;
+    display: block;
+}
+
+.hero__icon-btn.is-listening {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: #fff;
+    animation: heroMicPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes heroMicPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(142, 58, 41, 0.35); }
+    50% { box-shadow: 0 0 0 6px rgba(142, 58, 41, 0); }
+}
+
+.hero__attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 4px;
+}
+
+.hero__attachments:empty {
+    display: none;
+}
+
+.hero__attachment-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-canvas);
+    border: var(--hairline);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.hero__attachment-remove {
+    border: none;
+    background: none;
+    color: var(--color-danger);
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+.hero__reply {
+    padding: 0 4px;
+    color: var(--color-teal);
+    min-height: 1.2em;
+}
+
+.hero__reply:empty {
+    display: none;
+}
+
+/*
+ * Menu riorganizzato in sezioni filtrabili + ricerca (vedi menu-grid.js
+ * e ShowMenuTool::SECTIONS per la tassonomia) - prima era una griglia
+ * piatta senza alcuna gerarchia/filtro, andava bene con 5-6 voci ma non
+ * scalava oltre. Eyebrow + titolo a sinistra, filtri + ricerca a destra
+ * sulla stessa fascia, a capo su schermi stretti.
+ */
+.menu-grid__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.menu-grid__eyebrow {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-teal);
+    margin: 0 0 4px;
+}
+
+.menu-grid__heading .card__title {
+    margin: 0;
+}
+
+.menu-grid__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+/*
+ * Bianco (non piu' canvas) e con un bordo per definirsi da solo sul
+ * grigio della pagina - prima "galleggiava" dentro la card bianca del
+ * menu e bastava un tono leggermente piu' cupo per distinguersi. Stesso
+ * motivo per cui la voce attiva sotto e' diventata una tinta piena
+ * invece di un altro bianco (bianco su bianco sarebbe invisibile).
+ */
+.menu-grid__tabs {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    background: var(--color-panel);
+    border: var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+}
+
+/*
+ * Elemento a se', non il colore del bottone attivo (vedi createSlidingIndicator
+ * in dom.js) - scorre/si allarga verso il tab cliccato invece di
+ * "comparire" gia' colorato in un punto diverso (segnalato dall'utente).
+ */
+.menu-grid__tab-indicator {
+    position: absolute;
+    background: var(--color-petrol);
+    border-radius: var(--radius-md);
+    transition: left 0.25s ease, width 0.25s ease, top 0.25s ease;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.menu-grid__tab {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: none;
+    border-radius: var(--radius-md);
+    padding: 7px 12px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-petrol);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.menu-grid__tab:hover {
+    background: rgba(18, 51, 63, 0.06);
+}
+
+.menu-grid__tab.is-active {
+    color: #fff;
+    font-weight: 600;
+}
+
+.menu-grid__tab.is-active:hover {
+    background: none;
+}
+
+.menu-grid__tab-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+}
+
+.menu-grid__search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 12px;
+    background: #fff;
+    border: 1px solid rgba(18, 51, 63, 0.16);
+    border-radius: var(--radius-md);
+}
+
+.menu-grid__search-wrap .icon svg {
+    width: 14px;
+    height: 14px;
+    color: rgba(18, 51, 63, 0.45);
+    display: block;
+}
+
+.menu-grid__search {
+    border: none;
+    background: none;
+    outline: none;
+    font: inherit;
+    font-size: 13.5px;
+    min-width: 160px;
+    color: var(--color-petrol);
+}
+
+.menu-grid__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+}
+
+.menu-grid__empty {
+    text-align: center;
+    color: rgba(18, 51, 63, 0.55);
+    font-size: 13.5px;
+    padding: 28px 0 8px;
+}
+
+/*
+ * Padding quasi raddoppiato (16px -> 26px) rispetto alla primissima
+ * versione - segnalato dall'utente come "streminziti", voleva almeno il
+ * 50% in piu'. flex-column con il footer spinto in fondo (margin-top:
+ * auto su .menu-grid__item-footer) invece di centrare tutto il
+ * contenuto, cosi' badge/contatore restano sempre in alto e il tag di
+ * sezione sempre in basso anche quando la descrizione varia di lunghezza.
+ *
+ * Sfondo bianco (var(--color-panel), non piu' canvas) con ombra a
+ * riposo come una .card normale, non solo in hover: da quando il menu
+ * non e' piu' avvolto in una card bianca (vedi menu-grid.js), queste
+ * tessere sono l'UNICA superficie bianca sullo sfondo grigio della
+ * pagina - prima potevano restare canvas perche' galleggiavano dentro
+ * un contenitore bianco piu' grande, ora sarebbero grigio su grigio.
+ */
+.menu-grid__item {
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    background: var(--color-panel);
+    border: var(--hairline);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 22px;
+    min-height: 168px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: opacity 0.35s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.menu-grid__item:hover {
+    transform: translateY(-2px);
+}
+
+.menu-grid__item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+/* Stessa lingua "squircle" di .avatar in kit.css (radius fisso, non
+   50%) invece di un cerchio pieno - coerente col resto del design system. */
+.menu-grid__badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+    flex: 0 0 auto;
+}
+
+.menu-grid__count {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--color-petrol);
+}
+
+.menu-grid__label {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 15.5px;
+    margin-bottom: 6px;
+}
+
+.menu-grid__description {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-teal);
+}
+
+.menu-grid__item-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: var(--hairline);
+}
+
+.menu-grid__item-tag {
+    font-size: 12px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.menu-grid__item-arrow {
+    color: var(--color-teal);
+    transition: transform 0.15s ease;
+}
+
+.menu-grid__item-arrow .icon svg {
+    width: 12px;
+    height: 12px;
+    display: block;
+}
+
+.menu-grid__item:hover .menu-grid__item-arrow {
+    transform: translateX(3px);
+}

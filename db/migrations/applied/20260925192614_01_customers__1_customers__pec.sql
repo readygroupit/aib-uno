@@ -1,0 +1,1 @@
+ALTER TABLE `customers` ADD COLUMN `pec` VARCHAR(190) NULL;

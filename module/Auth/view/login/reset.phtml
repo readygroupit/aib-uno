@@ -1,0 +1,18 @@
+<div class="auth-shell">
+<section class="card auth-card">
+    <h1 class="card__title"><?= $this->e($title) ?></h1>
+    <?php if ($done): ?>
+        <p>Password aggiornata. <a href="/login">Vai al login</a></p>
+    <?php else: ?>
+        <?php if ($error): ?><p class="field__help" style="color: var(--color-danger);"><?= $this->e($error) ?></p><?php endif; ?>
+        <form method="post" action="/password/reset/<?= $this->e($token) ?>" class="field-stack">
+            <?= $this->csrfField() ?>
+            <div class="field">
+                <label class="field__label" for="password">Nuova password</label>
+                <input class="field__input" type="password" id="password" name="password" required minlength="8">
+            </div>
+            <button class="btn btn--primary" type="submit" style="width: 100%;">Imposta</button>
+        </form>
+    <?php endif; ?>
+</section>
+</div>

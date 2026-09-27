@@ -1,0 +1,18 @@
+<div class="auth-shell">
+<section class="card auth-card">
+    <h1 class="card__title"><?= $this->e($title) ?></h1>
+    <?php if ($sent): ?>
+        <p>Se l'account esiste, riceverai un'email con le istruzioni per reimpostare la password.</p>
+    <?php else: ?>
+        <form method="post" action="/password/dimenticata" class="field-stack">
+            <?= $this->csrfField() ?>
+            <div class="field">
+                <label class="field__label" for="identifier">Username o email</label>
+                <input class="field__input" type="text" id="identifier" name="identifier" required>
+            </div>
+            <button class="btn btn--primary" type="submit" style="width: 100%;">Invia</button>
+        </form>
+    <?php endif; ?>
+    <p style="margin-top: 16px; text-align: center;"><a href="/login">Torna al login</a></p>
+</section>
+</div>

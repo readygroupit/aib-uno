@@ -1,0 +1,1 @@
+ALTER TABLE `cases` ADD COLUMN `closed_at` DATETIME NULL;

@@ -67,7 +67,12 @@ function buildCellContent(column, value) {
         return el('span', { className: `badge badge--${SECTION_VARIANTS[value]}` }, [SECTION_LABELS[value] || String(value)]);
     }
 
-    if (column.key === 'stage') {
+    // 'stage' resta il caso implicito (nessuna colonna deve dichiararsi),
+    // 'badge: true' e' l'opt-in esplicito per un'altra colonna di stato
+    // che non si chiama 'stage' (es. completeness_status) ma merita
+    // comunque lo stesso trattamento visivo - stessa euristica per
+    // parole chiave, il nome colonna non conta per quella.
+    if (column.key === 'stage' || column.badge === true) {
         return el('span', { className: `badge badge--${stageVariant(String(value))}` }, [String(value)]);
     }
 

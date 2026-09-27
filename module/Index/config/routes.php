@@ -7,7 +7,9 @@ use Index\Controller\BlogController;
 use Index\Controller\CampaignsController;
 use Index\Controller\CasesController;
 use Index\Controller\CatalogController;
+use Index\Controller\CommunicationsController;
 use Index\Controller\CustomersController;
+use Index\Controller\DocumentRequestsController;
 use Index\Controller\EntityReferenceController;
 use Index\Controller\GeoController;
 use Index\Controller\IndexController;
@@ -142,6 +144,8 @@ return [
     ...entityRoutes('campaigns', '/campagne', CampaignsController::class),
     ...entityRoutes('invoices', '/fatture', InvoicesController::class),
     ...entityRoutes('cases', '/pratiche', CasesController::class),
+    ...entityRoutes('document_requests', '/documenti-richiesti', DocumentRequestsController::class),
+    ...entityRoutes('communications', '/comunicazioni', CommunicationsController::class),
 
     'geo-search-municipalities' => [
         'path' => '/geo/comuni/cerca',

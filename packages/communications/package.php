@@ -32,11 +32,14 @@ return [
                     'sql' => 'VARCHAR(50)',
                     'label' => 'Tipo entita collegata',
                     'base' => true,
+                    'help' => "Es. 'cases', 'leads', 'customers' - il nome del pacchetto a cui questa comunicazione si riferisce.",
                 ],
                 'entity_id' => [
                     'sql' => 'INT UNSIGNED',
                     'label' => 'Id entita collegata',
                     'base' => true,
+                    'format' => 'integer',
+                    'help' => "L'id della riga specifica dentro 'Tipo entita collegata' (es. la pratica numero 12).",
                 ],
                 'channel' => [
                     'sql' => 'VARCHAR(20)',

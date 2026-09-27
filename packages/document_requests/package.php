@@ -35,11 +35,13 @@ return [
                     'label' => 'Pratica',
                     'base' => true,
                     'references' => ['package' => 'cases', 'table' => 'cases', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/cases/cerca'],
                 ],
                 'document_type' => [
                     'sql' => 'VARCHAR(50)',
                     'label' => 'Tipo documento',
                     'base' => true,
+                    'help' => "Codice libero del progetto (es. 'documento identita', 'biglietto', 'ricevuta', 'delega').",
                 ],
                 'completeness_status' => [
                     'sql' => 'VARCHAR(20)',
@@ -51,6 +53,7 @@ return [
                     'label' => 'File caricato',
                     'defaultRequired' => false,
                     'references' => ['table' => 'attachments', 'column' => 'id'],
+                    'help' => "Id della riga in 'attachments' quando il file e' stato caricato - resta vuoto finche' manca (nessun selettore file ancora, va inserito a mano).",
                 ],
                 'requested_at' => [
                     'sql' => 'DATETIME',
@@ -66,6 +69,30 @@ return [
                     'sql' => 'TEXT',
                     'label' => 'Note',
                     'defaultRequired' => false,
+                ],
+            ],
+            'layout' => [
+                'sections' => [
+                    [
+                        'label' => null,
+                        'boxes' => [
+                            [
+                                'title' => 'Documento',
+                                'area' => 'main',
+                                'fields' => ['document_type', 'completeness_status', 'notes'],
+                            ],
+                            [
+                                'title' => 'File',
+                                'area' => 'main',
+                                'fields' => ['attachment_id'],
+                            ],
+                            [
+                                'title' => 'Collegamento e date',
+                                'area' => 'sidebar',
+                                'fields' => ['case_id', 'requested_at', 'reviewed_at'],
+                            ],
+                        ],
+                    ],
                 ],
             ],
         ],

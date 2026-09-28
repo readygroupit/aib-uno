@@ -7,6 +7,10 @@ import './components/dashboard-header.js';
 import './components/funnel.js';
 import './components/approval-queue.js';
 import './components/agent-panel.js';
+import './components/profile-header.js';
+import './components/permission-summary.js';
+import './components/activity-feed.js';
+import './components/profile-layout.js';
 
 function boot() {
     const root = document.getElementById('page-root');

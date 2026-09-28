@@ -93,6 +93,11 @@ return [
         'controller' => ProfileController::class,
         'action' => 'edit',
     ],
+    'profile-password' => [
+        'path' => '/profilo/password',
+        'controller' => ProfileController::class,
+        'action' => 'changePassword',
+    ],
     'permissions' => [
         'path' => '/permessi',
         'controller' => PermissionsController::class,

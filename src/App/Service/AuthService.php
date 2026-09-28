@@ -110,6 +110,32 @@ final class AuthService
         }
     }
 
+    /**
+     * Cambio password "sono loggato, conosco quella attuale" (dalla
+     * pagina Il mio profilo) - diverso da resetPassword() sopra, che e'
+     * il flusso "l'ho dimenticata" via email/token. Richiede comunque la
+     * password attuale anche se l'utente e' gia' autenticato: una
+     * sessione rubata non deve bastare a cambiare la password.
+     */
+    public function changePassword(int $userId, string $currentPassword, string $newPassword): bool
+    {
+        if (strlen($newPassword) < 8) {
+            return false;
+        }
+
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->container->get(UserRepository::class);
+        $user = $userRepository->find($userId);
+
+        if ($user === null || !password_verify($currentPassword, (string) $user->passwordHash)) {
+            return false;
+        }
+
+        $userRepository->update($userId, ['password_hash' => password_hash($newPassword, PASSWORD_DEFAULT)]);
+
+        return true;
+    }
+
     public function resetPassword(string $token, string $newPassword): bool
     {
         if ($token === '' || strlen($newPassword) < 8) {

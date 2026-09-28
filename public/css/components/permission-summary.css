@@ -1,0 +1,50 @@
+.permission-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.permission-summary__title {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: rgba(18, 51, 63, 0.63);
+}
+
+.permission-summary__subtitle {
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.permission-summary__group {
+    padding-top: 10px;
+    border-top: 1px solid rgba(18, 51, 63, 0.06);
+}
+
+.permission-summary__group:first-of-type {
+    border-top: none;
+    padding-top: 0;
+}
+
+.permission-summary__domain {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.permission-summary__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.permission-summary__empty {
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.55);
+}

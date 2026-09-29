@@ -85,15 +85,22 @@ function renderResultsEntry(panel, entry) {
     if (!entry) return;
 
     if (resultsHistoryIndex > 0) {
+        // Solo il chevron, in un quadratino - non piu' un link a piena
+        // riga con etichetta (segnalato dall'utente: costava una riga
+        // intera per un gesto che dovrebbe stare vicino al titolo del
+        // risultato). Il testo resta nel title/aria-label per chi usa
+        // uno screen reader.
         panel.appendChild(
             el(
                 'button',
                 {
                     type: 'button',
                     className: 'results-panel__back',
+                    title: 'Risultato precedente',
+                    'aria-label': 'Risultato precedente',
                     onClick: () => goToIndex(resultsHistoryIndex - 1),
                 },
-                [icon('arrow-left'), 'Risultato precedente']
+                [icon('chevron-left')]
             )
         );
     }

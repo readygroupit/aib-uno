@@ -116,7 +116,7 @@ function renderResultsEntry(panel, entry) {
 // l'input.
 function renderAssistantBubble(text) {
     return el('div', { className: 'hero__bubble-row' }, [
-        el('span', { className: 'hero__mascot' }, [el('img', { src: window.UNO_LOGO_SQUARE, alt: '' })]),
+        el('img', { src: window.UNO_LOGO_SQUARE, alt: '', className: 'hero__mascot' }),
         el('div', { className: 'hero__bubble hero__bubble--assistant' }, [text]),
     ]);
 }
@@ -520,12 +520,11 @@ export function mountPromptShell(root, initialComponents) {
         toolbar.appendChild(dictation.micButton);
     }
 
-    // Icona piccola in linea con la casella - visibile solo quando il
-    // prompt e' gia' in alto (schermata vuota della home esclusa: in
-    // quello stato il logo grande sopra e' nascosto, e senza nessuna
-    // icona non si capirebbe piu' che "e'" Uno).
-    const logoInline = el('img', { src: window.UNO_LOGO, alt: 'Uno', className: 'hero__logo hero__logo--inline' });
-    const inputRow = el('div', { className: 'hero__input-row' }, [logoInline, input]);
+    // Niente piu' logo in linea con la casella (segnalato dall'utente):
+    // il logo ormai fa gia' da avatar dell'assistente nel transcript
+    // (vedi renderAssistantBubble/.hero__mascot) - ripeterlo anche qui
+    // era ridondante.
+    const inputRow = el('div', { className: 'hero__input-row' }, [input]);
 
     const card = el('section', { className: 'card hero__card' }, [
         messagesEl,

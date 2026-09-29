@@ -114,23 +114,20 @@
     align-items: flex-start;
 }
 
-/* Avatar dell'assistente: il logo quadrato vero dell'app (stesso asset
-   del pulsante wizard di prima), non un personaggio inventato. */
+/*
+ * Avatar dell'assistente: il logo quadrato vero dell'app (stesso asset
+ * del pulsante wizard di prima), non un personaggio inventato. Solo
+ * dimensione, nessun contorno/sfondo/riflesso propri (segnalato
+ * dall'utente): il PNG e' gia' una sferetta con bordi arrotondati e
+ * riflesso incorporati nell'immagine stessa - incorniciarlo in un'altra
+ * icona quadrata con lo stesso trattamento creava un "box dentro al box"
+ * e rimpiccioliva il logo vero dentro un riquadro colorato che non
+ * serviva.
+ */
 .hero__mascot {
     width: 30px;
     height: 30px;
     flex: none;
-    border-radius: 10px;
-    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 55%);
-    background-color: var(--color-teal-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.hero__mascot img {
-    width: 18px;
-    height: 18px;
     display: block;
 }
 
@@ -350,18 +347,6 @@
     background: rgba(255, 255, 255, 0.94);
     border-radius: var(--radius-lg);
     box-shadow: 0 1px 3px rgba(18, 51, 63, 0.1);
-}
-
-.hero__logo--inline {
-    display: none;
-    width: 34px;
-    height: 34px;
-    flex: 0 0 auto;
-    margin-top: 3px;
-}
-
-.hero-wrap--top .hero__logo--inline {
-    display: block;
 }
 
 .hero__input {

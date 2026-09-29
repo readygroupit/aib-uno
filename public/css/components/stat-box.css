@@ -32,7 +32,7 @@
 .stat-box__dot--lilac { background: var(--color-lilac); box-shadow: 0 0 0 3px rgba(139, 131, 173, 0.15); }
 .stat-box__dot--brass { background: var(--color-brass); box-shadow: 0 0 0 3px rgba(185, 147, 51, 0.15); }
 .stat-box__dot--teal { background: var(--color-teal); box-shadow: 0 0 0 3px rgba(95, 138, 134, 0.15); }
-.stat-box__dot--danger { background: var(--color-danger); box-shadow: 0 0 0 3px rgba(142, 58, 41, 0.15); }
+.stat-box__dot--danger { background: var(--color-danger); box-shadow: 0 0 0 3px rgba(162, 59, 44, 0.15); }
 
 .stat-box__value-row {
     display: flex;
@@ -108,31 +108,28 @@
     border-color: rgba(18, 51, 63, 0.16);
 }
 
-/* Sfondo tinto (gradiente leggero, non un blocco piatto saturo) invece
-   del solito bianco - solo per la card "protagonista" (vedi 'hero' in
-   StatBoxComponent). Il testo resta scuro/leggibile su tutte le varianti
-   (niente bianco su colore chiaro): stesso principio gia' notato per
-   l'header del wizard, meglio un accento riconoscibile che un blocco
-   pesante da rileggere ogni volta che si apre la pagina. */
+/* Bordo intero color d'accento (non piu' una striscia solo in alto - la
+   striscia era stata scelta in risposta a un tint pieno giudicato troppo
+   tenue, ma confrontata con un riferimento esterno preciso risultava
+   comunque sbagliata: l'utente l'ha corretta chiedendo esplicitamente un
+   "bordo unico tutto intorno", vedi sessione Clienti) + sfondo con velo
+   diagonale bianco sopra il tint colorato, stessa ricetta degli avatar
+   (gloss). Il VALORE numerico non viene piu' tinto del colore hero: nel
+   riferimento resta sempre scuro pieno (--color-petrol) a prescindere
+   dalla card - l'accento vive nel bordo/sfondo/pallino, non nel numero
+   (un numero colorato leggeva "meno nero" di quanto l'utente si
+   aspettasse). */
 .stat-box--hero {
     position: relative;
-    /* Striscia piena SOLO in alto (non solo il gradiente di sfondo,
-       troppo tenue da sola per "staccare" davvero - segnalato
-       dall'utente): il colore pieno vive li', 4px, non spalmato su
-       tutta la card - resta leggibile, ma si vede subito qual e' la
-       card protagonista scorrendo la pagina. Sotto/lati restano il
-       bordo hairline di sempre (--stat-hero-border), non lo stesso
-       colore pieno su tutti i lati (sarebbe tornato "un blocco"). */
-    border: var(--hairline);
-    border-top: 4px solid var(--stat-hero-color, var(--color-petrol));
+    border: 1px solid var(--stat-hero-border, rgba(18, 51, 63, 0.3));
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.15) 60%),
+        var(--stat-hero-bg, var(--color-panel));
 }
 
-.stat-box--hero .stat-box__label { color: rgba(18, 51, 63, 0.68); }
-.stat-box--hero .stat-box__value { color: var(--stat-hero-color, var(--color-petrol)); }
-
-.stat-box--hero-petrol { --stat-hero-color: var(--color-petrol); background: linear-gradient(155deg, rgba(18, 51, 63, 0.12), rgba(18, 51, 63, 0.02)); }
-.stat-box--hero-moss { --stat-hero-color: var(--color-moss); background: linear-gradient(155deg, rgba(79, 123, 92, 0.18), rgba(79, 123, 92, 0.03)); }
-.stat-box--hero-lilac { --stat-hero-color: var(--color-lilac); background: linear-gradient(155deg, rgba(139, 131, 173, 0.2), rgba(139, 131, 173, 0.03)); }
-.stat-box--hero-brass { --stat-hero-color: var(--color-brass); background: linear-gradient(155deg, rgba(185, 147, 51, 0.2), rgba(185, 147, 51, 0.03)); }
-.stat-box--hero-teal { --stat-hero-color: var(--color-teal); background: linear-gradient(155deg, rgba(95, 138, 134, 0.2), rgba(95, 138, 134, 0.03)); }
-.stat-box--hero-danger { --stat-hero-color: var(--color-danger); background: linear-gradient(155deg, rgba(142, 58, 41, 0.16), rgba(142, 58, 41, 0.03)); }
+.stat-box--hero-petrol { --stat-hero-border: rgba(18, 51, 63, 0.3); --stat-hero-bg: #e4e8ea; }
+.stat-box--hero-moss { --stat-hero-border: rgba(79, 123, 92, 0.3); --stat-hero-bg: #eaf1ea; }
+.stat-box--hero-lilac { --stat-hero-border: rgba(139, 131, 173, 0.3); --stat-hero-bg: #eeecf3; }
+.stat-box--hero-brass { --stat-hero-border: rgba(185, 147, 51, 0.3); --stat-hero-bg: #f6f0df; }
+.stat-box--hero-teal { --stat-hero-border: rgba(95, 138, 134, 0.3); --stat-hero-bg: #e9f0ef; }
+.stat-box--hero-danger { --stat-hero-border: rgba(162, 59, 44, 0.3); --stat-hero-bg: #f6e6e2; }

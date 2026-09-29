@@ -28,11 +28,18 @@ use App\View\Component\StatBoxComponent;
  */
 final class ListCustomersTool implements PromptToolInterface
 {
-    /** valore stage => [badge variant, ordine nel percorso pratica 1-4] */
+    /**
+     * valore stage => [badge variant, ordine nel percorso pratica 1-4].
+     * Mapping colori allineato al riferimento esterno confermato
+     * dall'utente (non piu' una scelta arbitraria): 'reclamo inviato' e'
+     * un neutro deciso (non teal), 'in conciliazione' e' il teal (non il
+     * verde di 'success', che nel riferimento non e' mai usato per uno
+     * stage) - vedi badge--strong in kit.css.
+     */
     private const STAGE_META = [
         'raccolta documenti' => ['variant' => 'accent', 'step' => 1],
-        'reclamo inviato' => ['variant' => 'info', 'step' => 2],
-        'in conciliazione' => ['variant' => 'success', 'step' => 3],
+        'reclamo inviato' => ['variant' => 'strong', 'step' => 2],
+        'in conciliazione' => ['variant' => 'info', 'step' => 3],
         'rimborsato' => ['variant' => 'warning', 'step' => 4],
         'respinta' => ['variant' => 'danger', 'step' => 4],
     ];
@@ -194,15 +201,18 @@ final class ListCustomersTool implements PromptToolInterface
         $stageMeta = self::STAGE_META[$stage] ?? null;
         $docsTotal = $entry['docsTotal'];
         $docsComplete = $entry['docsComplete'];
+        $isCompany = $customer->companyName !== null && trim("{$customer->firstName}{$customer->lastName}") !== '';
 
         return [
             'id' => $customer->id,
             'avatarInitials' => $initials,
+            'isCompany' => $isCompany,
             'name' => $name,
-            'companyTag' => $customer->companyName !== null && trim("{$customer->firstName}{$customer->lastName}") !== '' ? 'Azienda' : null,
+            'companyTag' => $isCompany ? 'Azienda' : null,
             'email' => $customer->email,
+            'phone' => $customer->phone,
             'flightLabel' => $lead !== null && $lead['flight_route'] !== null
-                ? trim(($lead['airline'] ?? '') . ' · ' . $lead['flight_route'])
+                ? trim(($lead['airline'] ?? '') . ' · ' . $this->arrowRoute($lead['flight_route']))
                 : null,
             'disservizioLabel' => $lead['disservice_type'] ?? null,
             'stageLabel' => $stage !== null ? ucfirst($stage) : null,
@@ -212,8 +222,14 @@ final class ListCustomersTool implements PromptToolInterface
             'amountValue' => $refund !== null ? number_format((float) ($refund['amount_claimed'] ?? 0), 0, ',', '.') . ' €' : null,
             'amountCaption' => $this->amountCaption($refund),
             'filterBucket' => $this->filterBucket($stage, $docsTotal, $docsComplete),
-            'detail' => $this->buildDetail($customer, $case, $lead, $refund, $name, $stage, $stageMeta, $docsTotal, $docsComplete),
+            'detail' => $this->buildDetail($customer, $case, $lead, $refund, $name, $isCompany, $stage, $stageMeta, $docsTotal, $docsComplete),
         ];
+    }
+
+    /** "BGY-BCN" -> "BGY → BCN": stessa tratta reale, solo tipografia (mai un dato inventato). */
+    private function arrowRoute(string $route): string
+    {
+        return str_replace('-', ' → ', $route);
     }
 
     private function amountCaption(?array $refund): ?string
@@ -243,6 +259,7 @@ final class ListCustomersTool implements PromptToolInterface
         ?array $lead,
         ?array $refund,
         string $name,
+        bool $isCompany,
         ?string $stage,
         ?array $stageMeta,
         int $docsTotal,
@@ -250,8 +267,10 @@ final class ListCustomersTool implements PromptToolInterface
     ): array {
         return [
             'name' => $name,
-            'typeLabel' => $customer->companyName !== null && trim("{$customer->firstName}{$customer->lastName}") !== '' ? 'Azienda' : 'Privato',
-            'volo' => $lead !== null && $lead['flight_route'] !== null ? $lead['flight_route'] : null,
+            // Il nome vero dell'azienda (non la generica etichetta "Azienda"),
+            // e' un dato reale gia' sul cliente - piu' utile a colpo d'occhio.
+            'typeLabel' => $isCompany ? $customer->companyName : 'Privato',
+            'volo' => $lead !== null && $lead['flight_route'] !== null ? $this->arrowRoute($lead['flight_route']) : null,
             'vettore' => $lead['airline'] ?? null,
             'disservizio' => $lead['disservice_type'] ?? null,
             'importo' => $refund !== null ? number_format((float) ($refund['amount_claimed'] ?? 0), 0, ',', '.') . ' € richiesti' : null,
@@ -295,10 +314,15 @@ final class ListCustomersTool implements PromptToolInterface
             if ($step === 1) {
                 $state = 'done';
             }
+            $isRespintaOutcome = $step === 5 && ($stageMeta['variant'] ?? null) === 'danger';
             $timeline[] = [
-                'label' => $step === 5 && ($stageMeta['variant'] ?? null) === 'danger' ? 'Esito: respinta' : $label,
+                'label' => $isRespintaOutcome ? 'Esito: respinta' : $label,
                 'date' => $dates[$step] !== null ? date('d/m', strtotime($dates[$step])) : null,
                 'state' => $state,
+                // Il pallino "corrente" e' oro ovunque tranne qui: l'esito
+                // di una pratica respinta non e' un traguardo da festeggiare
+                // con lo stesso colore di una in corso - vedi claim-table.js.
+                'danger' => $isRespintaOutcome,
             ];
         }
 

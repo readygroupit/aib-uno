@@ -8,9 +8,9 @@
 
 .claim-table__title {
     font-family: var(--font-heading);
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 600;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.6px;
     margin: 0;
 }
 
@@ -19,77 +19,342 @@
     gap: 10px;
 }
 
+/* --- Layout principale: flex, non grid - cosi' quando il pannello
+   dettaglio viene chiuso (vedi claim-detail__close in claim-table.js) la
+   tabella riprende subito tutta la larghezza invece di lasciare una
+   colonna vuota (una grid a colonne fisse non si "richiuderebbe" da
+   sola). --- */
 .claim-table__layout {
-    display: grid;
-    grid-template-columns: 2.2fr 1fr;
-    gap: 20px;
-    align-items: start;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
     margin-top: 20px;
 }
 
 .claim-table__main {
+    flex: 1;
+    min-width: 0;
+}
+
+/* --- Card che avvolge filtri + ricerca + tabella. Per questa schermata
+   il riferimento le vuole insieme in un solo riquadro (a differenza del
+   componente data-table.js generico, dove la barra filtri sta apposta
+   FUORI dalla card bianca - vedi il commento in data-table.css: scelta
+   diversa, confermata valida li', non generalizzata qui). --- */
+.claim-table__panel {
+    background: var(--color-panel);
+    border: var(--hairline);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    padding: 16px 16px 10px;
+}
+
+.claim-table__toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0 4px 14px;
+}
+
+.claim-table__tabs {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    background: rgba(18, 51, 63, 0.04);
+    border: 1px solid rgba(18, 51, 63, 0.08);
+}
+
+.claim-table__tabs-indicator {
+    position: absolute;
+    background: #fff;
+    border-radius: var(--radius-md);
+    box-shadow: 0 1px 2px rgba(18, 51, 63, 0.08), 0 6px 14px -10px rgba(18, 51, 63, 0.4);
+    transition: left 0.25s ease, width 0.25s ease, top 0.25s ease;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.claim-table__tab {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 30px;
+    padding: 0 11px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: none;
+    font-family: var(--font-heading);
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(18, 51, 63, 0.62);
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.claim-table__tab:hover {
+    color: var(--color-petrol);
+}
+
+.claim-table__tab.is-active {
+    color: var(--color-petrol);
+    font-weight: 600;
+}
+
+.claim-table__tab-count {
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-family: var(--font-heading);
+    font-size: 10.5px;
+    font-weight: 600;
+    background: rgba(18, 51, 63, 0.05);
+    color: rgba(18, 51, 63, 0.7);
+}
+
+.claim-table__tab.is-active .claim-table__tab-count {
+    background: rgba(18, 51, 63, 0.08);
+}
+
+.claim-table__search {
+    margin-left: auto;
+    width: 240px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: var(--radius-md);
+    background: #fff;
+    border: 1px solid rgba(18, 51, 63, 0.12);
+}
+
+.claim-table__search .icon svg {
+    width: 13px;
+    height: 13px;
+    color: rgba(18, 51, 63, 0.5);
+    display: block;
+}
+
+.claim-table__search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--color-petrol);
+}
+
+/* --- Griglia condivisa fra intestazione e righe: stesse colonne per
+   entrambe, cosi' restano sempre allineate. --- */
+.claim-table__row-grid {
+    display: grid;
+    grid-template-columns: minmax(180px, 2.2fr) minmax(140px, 1.6fr) minmax(130px, 1.3fr) minmax(80px, 1.1fr) 90px;
+    gap: 14px;
+    align-items: center;
+}
+
+.claim-table__head {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(18, 51, 63, 0.04);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(18, 51, 63, 0.58);
+}
+
+.claim-table__amount-head {
+    text-align: right;
+}
+
+.claim-table__body {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    min-width: 0;
+}
+
+/* --- Ogni riga e' un <button>, una propria "card" arrotondata (non piu'
+   un <tr> con bordo inferiore) - stesso linguaggio delle card della
+   pagina invece di un tavolo classico, con un piccolo distacco (margin-
+   top) fra una riga e l'altra invece della riga divisoria continua. --- */
+.claim-table__row {
+    width: 100%;
+    padding: 12px;
+    margin-top: 4px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.claim-table__row:hover {
+    background: #fff;
+}
+
+.claim-table__row.is-selected {
+    background: #fff;
+    border-color: rgba(18, 51, 63, 0.18);
+    box-shadow: 0 12px 26px -20px rgba(18, 51, 63, 0.45);
+}
+
+.claim-table__empty {
+    text-align: center;
+    padding: 30px 0;
+    color: rgba(18, 51, 63, 0.5);
+}
+
+/* --- Avatar: quadrato smussato con un velo diagonale chiaro sopra il
+   colore pieno (non un cerchio piatto) - stesso linguaggio del pallino
+   delle stat-box, ma con un tocco di lucentezza in piu' perche' qui e'
+   un elemento piu' grande e protagonista della riga. Colore diverso per
+   dare un indizio visivo in piu' su privato/azienda, oltre al badge. --- */
+.claim-avatar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 55%);
+}
+
+.claim-avatar--personal { background-color: var(--color-teal-dark); }
+.claim-avatar--company { background-color: var(--color-brass); }
+
+.claim-avatar--md {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    font-size: 11.5px;
+}
+
+.claim-avatar--lg {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    font-size: 14px;
 }
 
 .claim-table__cell-customer {
     display: flex;
     align-items: center;
-    gap: 10px;
-}
-
-.claim-table__avatar {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: var(--color-petrol);
-    color: #fff;
-    font-size: 11.5px;
-    font-weight: 600;
+    gap: 11px;
+    min-width: 0;
 }
 
 .claim-table__customer-text {
     display: flex;
     flex-direction: column;
+    gap: 2px;
     min-width: 0;
 }
 
 .claim-table__customer-name-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .claim-table__customer-name {
+    font-family: var(--font-heading);
     font-weight: 600;
     font-size: 13.5px;
-}
-
-.claim-table__customer-email {
-    font-size: 11.5px;
-    color: rgba(18, 51, 63, 0.55);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 180px;
+}
+
+.claim-table__biz-tag {
+    flex-shrink: 0;
+    padding: 1px 6px;
+    font-size: 10px;
+}
+
+.claim-table__customer-sub {
+    font-size: 11.5px;
+    color: rgba(18, 51, 63, 0.58);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .claim-table__flight {
     display: flex;
     flex-direction: column;
-    font-size: 13px;
+    gap: 2px;
+    min-width: 0;
+}
+
+.claim-table__flight-route {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 12.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .claim-table__flight-sub {
     font-size: 11.5px;
-    color: rgba(18, 51, 63, 0.55);
+    color: rgba(18, 51, 63, 0.58);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+
+.claim-table__stage-cell {
+    display: flex;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* --- Badge di stato + pallino pieno: il badge riusa .badge/.badge--* di
+   kit.css (stessa tinta soffusa di sfondo/testo/bordo del resto
+   dell'app), il pallino aggiunge il colore pieno della categoria -
+   stesso principio delle stat-box, qui dentro il badge invece che a
+   fianco dell'etichetta. --- */
+.claim-table__stage {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+}
+
+.claim-table__stage-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    display: block;
+}
+
+.claim-table__stage-dot--accent { background: var(--color-lilac); }
+.claim-table__stage-dot--strong { background: var(--color-petrol); }
+.claim-table__stage-dot--info { background: var(--color-teal); }
+.claim-table__stage-dot--warning { background: var(--color-brass); }
+.claim-table__stage-dot--danger { background: var(--color-danger); }
+.claim-table__stage-dot--neutral { background: rgba(18, 51, 63, 0.4); }
 
 .claim-table__docs {
     display: flex;
@@ -98,8 +363,9 @@
 }
 
 .claim-table__docs-label {
-    font-size: 12px;
-    color: rgba(18, 51, 63, 0.66);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: rgba(18, 51, 63, 0.7);
 }
 
 .claim-table__docs-empty {
@@ -112,62 +378,48 @@
 }
 
 .claim-table__docs-seg {
-    width: 16px;
+    flex: 1;
+    max-width: 22px;
     height: 4px;
     border-radius: 2px;
-    background: rgba(18, 51, 63, 0.12);
+    background: rgba(18, 51, 63, 0.1);
 }
 
-.claim-table__docs-seg.is-complete {
-    background: var(--color-moss);
-}
-
-.claim-table__amount-cell {
-    text-align: right;
-}
+/* Lilla finche' la pratica non ha TUTTI i documenti completi, verde solo
+   quando lo sono davvero (stesso principio "onesto" del percorso pratica
+   nel pannello dettaglio: il colore racconta lo stato vero, non solo
+   "qualcosa e' stato caricato"). */
+.claim-table__docs-seg.is-partial { background: var(--color-lilac); }
+.claim-table__docs-seg.is-complete { background: var(--color-moss); }
 
 .claim-table__amount {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+    gap: 2px;
+    text-align: right;
 }
 
 .claim-table__amount-value {
     font-family: var(--font-heading);
     font-weight: 600;
-    font-size: 14.5px;
+    font-size: 14px;
+    letter-spacing: -0.2px;
 }
 
 .claim-table__amount-caption {
-    font-size: 11px;
-    color: rgba(18, 51, 63, 0.5);
-}
-
-.claim-table__row {
-    cursor: pointer;
-    transition: background 0.12s ease;
-}
-
-.claim-table__row:hover {
-    background: rgba(18, 51, 63, 0.03);
-}
-
-.claim-table__row.is-selected {
-    background: rgba(139, 131, 173, 0.08);
-}
-
-.claim-table__empty {
-    text-align: center;
-    padding: 30px 0;
-    color: rgba(18, 51, 63, 0.5);
+    font-size: 10.5px;
+    color: rgba(18, 51, 63, 0.55);
 }
 
 /* --- Pannello dettaglio laterale --- */
 
 .claim-detail {
+    flex: none;
+    width: 320px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 16px;
     position: sticky;
     top: 20px;
 }
@@ -181,47 +433,63 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 14px;
-}
-
-.claim-detail__avatar {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--color-petrol);
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
 }
 
 .claim-detail__header-text {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
+    gap: 2px;
 }
 
 .claim-detail__name {
     font-family: var(--font-heading);
     font-weight: 600;
     font-size: 16px;
+    letter-spacing: -0.3px;
 }
 
 .claim-detail__type {
     font-size: 11.5px;
-    color: rgba(18, 51, 63, 0.55);
+    color: rgba(18, 51, 63, 0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+.claim-detail__close {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(18, 51, 63, 0.12);
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.claim-detail__close .icon svg {
+    width: 11px;
+    height: 11px;
+    color: var(--color-petrol);
+    display: block;
+}
+
+.claim-detail__close:hover {
+    background: rgba(18, 51, 63, 0.04);
+}
+
+/* --- Blocco fatti: una card sola con un divisore per riga (non un
+   bordo sopra+sotto attorno al blocco intero). --- */
 .claim-detail__fields {
     display: flex;
     flex-direction: column;
-    gap: 9px;
-    padding: 12px 0;
-    border-top: 1px solid rgba(18, 51, 63, 0.08);
-    border-bottom: 1px solid rgba(18, 51, 63, 0.08);
-    margin-bottom: 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(18, 51, 63, 0.08);
+    background: rgba(255, 255, 255, 0.6);
 }
 
 .claim-detail__field {
@@ -229,16 +497,18 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(18, 51, 63, 0.06);
+    font-size: 12px;
 }
 
 .claim-detail__field-label {
-    font-size: 12px;
-    color: rgba(18, 51, 63, 0.55);
+    color: rgba(18, 51, 63, 0.58);
 }
 
 .claim-detail__field-value {
-    font-size: 12.5px;
     font-weight: 600;
+    color: #12333f;
     text-align: right;
 }
 
@@ -248,83 +518,69 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: rgba(18, 51, 63, 0.5);
-    margin: 4px 0 10px;
+    margin: 0;
 }
 
+/* Box "prossima azione": tinta lilla (non oro - riservato ai badge di
+   stato "rimborsato"), stessa famiglia della categoria crm nella
+   tassonomia delle sezioni. */
 .claim-detail__suggestion {
-    margin-top: 14px;
-    padding: 12px;
-    background: rgba(229, 201, 121, 0.18);
-    border: 1px solid rgba(185, 147, 51, 0.3);
+    padding: 12px 14px;
     border-radius: var(--radius-md);
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.15) 60%),
+        linear-gradient(120deg, #e7e4f0, #eeecf3 60%, #f3f1f6);
+    border: 1px solid rgba(139, 131, 173, 0.28);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .claim-detail__suggestion-title {
     display: block;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #8a6a1f;
-    margin-bottom: 3px;
+    font-family: var(--font-heading);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #2e2848;
 }
 
 .claim-detail__suggestion-body {
     font-size: 12px;
-    color: rgba(18, 51, 63, 0.75);
+    line-height: 1.5;
+    color: #4c4668;
     margin: 0;
 }
 
 .claim-detail__actions {
     display: flex;
     gap: 8px;
-    margin-top: 16px;
 }
 
 .claim-detail__actions .btn {
     flex: 1;
 }
 
-/* --- Timeline percorso pratica --- */
-
+/* --- Timeline percorso pratica: righe impilate con un semplice gap (non
+   piu' una linea verticale di collegamento fra i pallini). --- */
 .claim-timeline {
     display: flex;
     flex-direction: column;
+    gap: 10px;
 }
 
 .claim-timeline__step {
-    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 6px 0 6px 4px;
-}
-
-.claim-timeline__step::before {
-    content: '';
-    position: absolute;
-    left: 8px;
-    top: -2px;
-    bottom: -2px;
-    width: 1px;
-    background: rgba(18, 51, 63, 0.14);
-}
-
-.claim-timeline__step:first-child::before {
-    top: 50%;
-}
-
-.claim-timeline__step:last-child::before {
-    bottom: 50%;
 }
 
 .claim-timeline__dot {
-    position: relative;
-    z-index: 1;
     flex-shrink: 0;
-    width: 9px;
-    height: 9px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: var(--color-panel);
-    border: 2px solid rgba(18, 51, 63, 0.25);
+    background: transparent;
+    border: 1.5px solid rgba(18, 51, 63, 0.25);
 }
 
 .claim-timeline__step--done .claim-timeline__dot {
@@ -335,14 +591,19 @@
 .claim-timeline__step--current .claim-timeline__dot {
     background: var(--color-brass);
     border-color: var(--color-brass);
-    box-shadow: 0 0 0 3px rgba(185, 147, 51, 0.2);
+    box-shadow: 0 0 0 4px rgba(185, 147, 51, 0.13);
 }
 
-.claim-timeline__text {
-    flex: 1;
+/* Esito respinto: il pallino "corrente" finale e' rosso, non oro - non
+   e' un traguardo raggiunto come per una pratica rimborsata. */
+.claim-timeline__step--current.claim-timeline__step--danger .claim-timeline__dot {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 4px rgba(162, 59, 44, 0.13);
 }
 
 .claim-timeline__label {
+    flex: 1;
     font-size: 12.5px;
     font-weight: 500;
     color: rgba(18, 51, 63, 0.45);
@@ -350,21 +611,26 @@
 
 .claim-timeline__step--done .claim-timeline__label,
 .claim-timeline__step--current .claim-timeline__label {
-    color: var(--color-petrol);
+    color: #12333f;
     font-weight: 600;
 }
 
 .claim-timeline__date {
     font-size: 11px;
-    color: rgba(18, 51, 63, 0.45);
+    color: rgba(18, 51, 63, 0.5);
 }
 
 @media (max-width: 960px) {
     .claim-table__layout {
-        grid-template-columns: 1fr;
+        flex-direction: column;
     }
 
     .claim-detail {
+        width: 100%;
         position: static;
+    }
+
+    .claim-table__row-grid {
+        grid-template-columns: minmax(160px, 2fr) minmax(120px, 1.4fr) minmax(110px, 1.1fr) 90px 90px;
     }
 }

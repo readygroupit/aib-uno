@@ -7,13 +7,14 @@
     --color-petrol: #12333f;
     --color-brass: #b99333;
     --color-teal: #5f8a86;
+    --color-teal-dark: #1f5566;
     --color-lilac: #8b83ad;
     --color-moss: #4f7b5c;
     --color-canvas: #f1f0ec;
     --color-panel: #fbfaf8;
     --color-accent: #e5c979;
-    --color-danger: #8e3a29;
-    --color-danger-bg: #f4e2dd;
+    --color-danger: #a23b2c;
+    --color-danger-bg: #f6e6e2;
 
     --radius-sm: 9px;
     --radius-md: 11px;

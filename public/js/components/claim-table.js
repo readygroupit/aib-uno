@@ -1,10 +1,18 @@
 import { registerComponent, renderComponent } from './registry.js';
 import { el, createSlidingIndicator } from '../dom.js';
+import { icon } from '../icons.js';
 
-const VARIANT_LABELS = { accent: 'lilac', info: 'info', success: 'success', warning: 'warning', danger: 'danger', neutral: 'neutral' };
+function avatar(row, size) {
+    const className = `claim-avatar claim-avatar--${size} ` + (row.isCompany ? 'claim-avatar--company' : 'claim-avatar--personal');
+    return el('span', { className }, [row.avatarInitials]);
+}
 
-function badge(text, variant) {
-    return el('span', { className: `badge badge--${VARIANT_LABELS[variant] || 'neutral'}` }, [text]);
+function stageBadge(label, variant) {
+    const v = variant || 'neutral';
+    return el('span', { className: `claim-table__stage badge badge--${v}` }, [
+        el('span', { className: `claim-table__stage-dot claim-table__stage-dot--${v}` }),
+        label,
+    ]);
 }
 
 function docsProgress(total, complete) {
@@ -12,62 +20,65 @@ function docsProgress(total, complete) {
         return el('span', { className: 'claim-table__docs-empty' }, ['—']);
     }
 
+    const done = complete === total;
     const segments = [];
     for (let i = 0; i < total; i++) {
-        segments.push(el('span', { className: 'claim-table__docs-seg' + (i < complete ? ' is-complete' : '') }));
+        const state = i >= complete ? '' : done ? ' is-complete' : ' is-partial';
+        segments.push(el('span', { className: 'claim-table__docs-seg' + state }));
     }
 
     return el('div', { className: 'claim-table__docs' }, [
-        el('span', { className: 'claim-table__docs-label' }, [complete === total ? 'Completi' : `${complete} di ${total}`]),
+        el('span', { className: 'claim-table__docs-label' }, [done ? 'Completi' : `${complete} di ${total}`]),
         el('div', { className: 'claim-table__docs-bar' }, segments),
     ]);
 }
 
 function buildRow(row, onSelect) {
+    const subtitle = [row.email, row.phone].filter(Boolean).join(' · ');
+
     const cells = [
-        el('td', {}, [
-            el('div', { className: 'claim-table__cell-customer' }, [
-                el('span', { className: 'claim-table__avatar' }, [row.avatarInitials]),
-                el('div', { className: 'claim-table__customer-text' }, [
-                    el('div', { className: 'claim-table__customer-name-row' }, [
-                        el('span', { className: 'claim-table__customer-name' }, [row.name]),
-                        row.companyTag ? el('span', { className: 'badge badge--neutral' }, [row.companyTag]) : null,
-                    ]),
-                    el('span', { className: 'claim-table__customer-email' }, [row.email || '']),
+        el('span', { className: 'claim-table__cell-customer' }, [
+            avatar(row, 'md'),
+            el('span', { className: 'claim-table__customer-text' }, [
+                el('span', { className: 'claim-table__customer-name-row' }, [
+                    el('span', { className: 'claim-table__customer-name' }, [row.name]),
+                    row.companyTag ? el('span', { className: 'badge badge--warning claim-table__biz-tag' }, [row.companyTag]) : null,
                 ]),
+                el('span', { className: 'claim-table__customer-sub' }, [subtitle]),
             ]),
         ]),
-        el('td', {}, [
-            el('div', { className: 'claim-table__flight' }, [
-                el('span', {}, [row.flightLabel || '—']),
-                row.disservizioLabel ? el('span', { className: 'claim-table__flight-sub' }, [row.disservizioLabel]) : null,
-            ]),
+        el('span', { className: 'claim-table__flight' }, [
+            el('span', { className: 'claim-table__flight-route' }, [row.flightLabel || '—']),
+            row.disservizioLabel ? el('span', { className: 'claim-table__flight-sub' }, [row.disservizioLabel]) : null,
         ]),
-        el('td', {}, [row.stageLabel ? badge(row.stageLabel, row.stageVariant) : '—']),
-        el('td', {}, [docsProgress(row.docsTotal, row.docsComplete)]),
-        el('td', { className: 'claim-table__amount-cell' }, [
-            el('div', { className: 'claim-table__amount' }, [
-                el('span', { className: 'claim-table__amount-value' }, [row.amountValue || '—']),
-                row.amountCaption ? el('span', { className: 'claim-table__amount-caption' }, [row.amountCaption]) : null,
-            ]),
+        el('span', { className: 'claim-table__stage-cell' }, [row.stageLabel ? stageBadge(row.stageLabel, row.stageVariant) : '—']),
+        docsProgress(row.docsTotal, row.docsComplete),
+        el('span', { className: 'claim-table__amount' }, [
+            el('span', { className: 'claim-table__amount-value' }, [row.amountValue || '—']),
+            row.amountCaption ? el('span', { className: 'claim-table__amount-caption' }, [row.amountCaption]) : null,
         ]),
     ];
 
-    const tr = el('tr', { className: 'claim-table__row', onClick: () => onSelect(row) }, cells);
+    const rowEl = el('button', {
+        type: 'button',
+        className: 'claim-table__row claim-table__row-grid',
+        onClick: () => onSelect(row),
+    }, cells);
+    rowEl.dataset.id = String(row.id);
 
-    return tr;
+    return rowEl;
 }
 
 function timelineNode(steps) {
-    return el('div', { className: 'claim-timeline' }, steps.map((step) =>
-        el('div', { className: 'claim-timeline__step claim-timeline__step--' + step.state }, [
+    return el('div', { className: 'claim-timeline' }, steps.map((step) => {
+        const className = ['claim-timeline__step', 'claim-timeline__step--' + step.state, step.danger ? 'claim-timeline__step--danger' : null]
+            .filter(Boolean).join(' ');
+        return el('div', { className }, [
             el('span', { className: 'claim-timeline__dot' }),
-            el('div', { className: 'claim-timeline__text' }, [
-                el('span', { className: 'claim-timeline__label' }, [step.label]),
-            ]),
+            el('span', { className: 'claim-timeline__label' }, [step.label]),
             step.date ? el('span', { className: 'claim-timeline__date' }, [step.date]) : null,
-        ])
-    ));
+        ]);
+    }));
 }
 
 function detailField(label, value) {
@@ -78,7 +89,7 @@ function detailField(label, value) {
     ]);
 }
 
-function renderDetailPanel(row) {
+function renderDetailPanel(row, onClose) {
     const panel = el('aside', { className: 'card claim-detail' });
     if (!row) {
         panel.appendChild(el('p', { className: 'claim-detail__empty' }, ['Seleziona un cliente dall\'elenco.']));
@@ -88,11 +99,17 @@ function renderDetailPanel(row) {
     const d = row.detail;
 
     panel.appendChild(el('div', { className: 'claim-detail__header' }, [
-        el('span', { className: 'claim-detail__avatar' }, [row.avatarInitials]),
+        avatar(row, 'lg'),
         el('div', { className: 'claim-detail__header-text' }, [
             el('span', { className: 'claim-detail__name' }, [d.name]),
             el('span', { className: 'claim-detail__type' }, [d.typeLabel]),
         ]),
+        el('button', {
+            type: 'button',
+            className: 'claim-detail__close',
+            onClick: onClose,
+            'aria-label': 'Chiudi dettaglio',
+        }, [icon('close')]),
     ]));
 
     const fields = [
@@ -128,8 +145,8 @@ function renderDetailPanel(row) {
 }
 
 function buildFilterBar(data, applyFilter) {
-    const tabsContainer = el('div', { className: 'data-table__filter-tabs' });
-    const moveIndicator = createSlidingIndicator(tabsContainer, 'data-table__filter-indicator');
+    const tabsContainer = el('div', { className: 'claim-table__tabs' });
+    const moveIndicator = createSlidingIndicator(tabsContainer, 'claim-table__tabs-indicator');
 
     let activeValue = data.filterTabs[0]?.value ?? null;
 
@@ -138,16 +155,16 @@ function buildFilterBar(data, applyFilter) {
             'button',
             {
                 type: 'button',
-                className: 'data-table__filter-tab' + (tab.value === activeValue ? ' is-active' : ''),
+                className: 'claim-table__tab' + (tab.value === activeValue ? ' is-active' : ''),
                 onClick: (e) => {
                     activeValue = tab.value;
-                    tabsContainer.querySelectorAll('.data-table__filter-tab').forEach((b) => b.classList.remove('is-active'));
+                    tabsContainer.querySelectorAll('.claim-table__tab').forEach((b) => b.classList.remove('is-active'));
                     e.currentTarget.classList.add('is-active');
                     moveIndicator(e.currentTarget);
                     applyFilter(activeValue, searchInput.value.trim().toLowerCase());
                 },
             },
-            [`${tab.label} `, el('span', { className: 'data-table__filter-count' }, [String(tab.count)])]
+            [`${tab.label} `, el('span', { className: 'claim-table__tab-count' }, [String(tab.count)])]
         );
         tabsContainer.appendChild(button);
         return button;
@@ -157,18 +174,22 @@ function buildFilterBar(data, applyFilter) {
 
     const searchInput = el('input', {
         type: 'text',
-        className: 'data-table__filter-search',
         placeholder: 'Nome, email, volo...',
     });
     searchInput.addEventListener('input', () => applyFilter(activeValue, searchInput.value.trim().toLowerCase()));
 
-    const searchWrap = el('div', { className: 'data-table__filter-search-wrap' }, [searchInput]);
+    const searchWrap = el('label', { className: 'claim-table__search' }, [
+        icon('search'),
+        searchInput,
+    ]);
 
-    return el('div', { className: 'data-table__toolbar' }, [tabsContainer, searchWrap]);
+    return el('div', { className: 'claim-table__toolbar' }, [tabsContainer, searchWrap]);
 }
 
 function renderClaimTable(data) {
     const rows = data.rows || [];
+    let selectedId = rows[0]?.id ?? null;
+    let closed = false;
 
     const headerActions = el('div', { className: 'claim-table__actions' }, [
         data.exportHref ? el('a', { className: 'btn btn--secondary', href: data.exportHref }, ['Esporta']) : null,
@@ -182,18 +203,32 @@ function renderClaimTable(data) {
 
     const statsGrid = el('div', { className: 'stat-grid' }, (data.stats || []).map(renderComponent).filter(Boolean));
 
-    const tbody = el('tbody', {});
+    const body = el('div', { className: 'claim-table__body' });
     const detailContainer = el('div', { className: 'claim-table__detail-slot' });
 
-    function selectRow(row, rowEl) {
-        tbody.querySelectorAll('tr').forEach((tr) => tr.classList.remove('is-selected'));
-        if (rowEl) rowEl.classList.add('is-selected');
+    function renderDetail() {
         detailContainer.textContent = '';
-        detailContainer.appendChild(renderDetailPanel(row));
+        if (closed) {
+            return;
+        }
+        const row = rows.find((r) => r.id === selectedId) || null;
+        detailContainer.appendChild(renderDetailPanel(row, () => {
+            closed = true;
+            renderDetail();
+        }));
+    }
+
+    function selectRow(row) {
+        selectedId = row.id;
+        closed = false;
+        body.querySelectorAll('.claim-table__row').forEach((rowEl) => {
+            rowEl.classList.toggle('is-selected', rowEl.dataset.id === String(row.id));
+        });
+        renderDetail();
     }
 
     function renderRows(filterValue, query) {
-        tbody.textContent = '';
+        body.textContent = '';
         const filtered = rows.filter((row) => {
             const matchesBucket = !filterValue || filterValue === 'tutti' || row.filterBucket === filterValue;
             const haystack = [row.name, row.email, row.flightLabel, row.disservizioLabel].filter(Boolean).join(' ').toLowerCase();
@@ -202,39 +237,42 @@ function renderClaimTable(data) {
         });
 
         if (filtered.length === 0) {
-            tbody.appendChild(el('tr', {}, [el('td', { className: 'claim-table__empty', colspan: '5' }, [data.emptyMessage])]));
+            body.appendChild(el('div', { className: 'claim-table__empty' }, [data.emptyMessage]));
+            selectedId = null;
+            renderDetail();
             return;
         }
 
-        filtered.forEach((row, i) => {
-            const tr = buildRow(row, (r) => selectRow(r, tr));
-            if (i === 0) tr.classList.add('is-selected');
-            tbody.appendChild(tr);
+        if (!filtered.some((r) => r.id === selectedId)) {
+            selectedId = filtered[0].id;
+            closed = false;
+        }
+
+        filtered.forEach((row) => {
+            const rowEl = buildRow(row, selectRow);
+            if (row.id === selectedId) {
+                rowEl.classList.add('is-selected');
+            }
+            body.appendChild(rowEl);
         });
+
+        renderDetail();
     }
 
-    const filterBar = data.filterTabs.length > 0
-        ? buildFilterBar(data, renderRows)
-        : null;
+    const filterBar = data.filterTabs.length > 0 ? buildFilterBar(data, renderRows) : null;
 
-    renderRows(data.filterTabs[0]?.value ?? null, '');
-    selectRow(rows[0] || null, tbody.querySelector('tr'));
-
-    const table = el('table', { className: 'data-table__table' }, [
-        el('thead', {}, [
-            el('tr', {}, [
-                el('th', {}, ['Cliente']),
-                el('th', {}, ['Volo e disservizio']),
-                el('th', {}, ['Stato pratica']),
-                el('th', {}, ['Documenti']),
-                el('th', { className: 'claim-table__amount-cell' }, ['Importo']),
-            ]),
-        ]),
-        tbody,
+    const head = el('div', { className: 'claim-table__row-grid claim-table__head' }, [
+        el('span', {}, ['Cliente']),
+        el('span', {}, ['Volo e disservizio']),
+        el('span', {}, ['Stato pratica']),
+        el('span', {}, ['Documenti']),
+        el('span', { className: 'claim-table__amount-head' }, ['Importo']),
     ]);
 
-    const tableCard = el('div', { className: 'data-table__card' }, [table]);
-    const mainCol = el('div', { className: 'claim-table__main' }, [filterBar, tableCard].filter(Boolean));
+    renderRows(data.filterTabs[0]?.value ?? null, '');
+
+    const panel = el('div', { className: 'claim-table__panel' }, [filterBar, head, body].filter(Boolean));
+    const mainCol = el('div', { className: 'claim-table__main' }, [panel]);
 
     return el('div', {}, [
         header,

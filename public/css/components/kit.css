@@ -52,7 +52,7 @@
 .btn--delete {
     background: var(--color-danger-bg);
     color: var(--color-danger);
-    border-color: rgba(154, 63, 45, 0.35);
+    border-color: rgba(162, 59, 44, 0.35);
 }
 
 .btn:disabled,
@@ -90,10 +90,16 @@
 
 .badge--success { background: #eaf1ea; color: #3d6b4f; border-color: rgba(79, 123, 92, 0.28); }
 .badge--warning { background: #f6f0df; color: #4a3a11; border-color: rgba(185, 147, 51, 0.3); }
-.badge--danger  { background: #f7ebe7; color: #8e3a29; border-color: rgba(154, 63, 45, 0.25); }
+.badge--danger  { background: #f6e6e2; color: #8a2f22; border-color: rgba(162, 59, 44, 0.25); }
 .badge--info    { background: #e9f0ef; color: #3f5c59; border-color: rgba(95, 138, 134, 0.3); }
 .badge--accent  { background: #eeecf3; color: #474063; border-color: rgba(139, 131, 173, 0.3); }
 .badge--neutral { background: rgba(18, 51, 63, 0.05); color: rgba(18, 51, 63, 0.66); border-color: rgba(18, 51, 63, 0.12); }
+/* Come .badge--neutral ma "pieno" invece di attenuato: per stati attivi
+   che non hanno un colore dedicato nella tassonomia a 5 categorie (es.
+   "reclamo inviato" nel percorso pratica Assilevi) ma non devono comunque
+   leggere come spenti/secondari - testo a piena opacita' invece del 66%
+   di .badge--neutral. */
+.badge--strong  { background: rgba(18, 51, 63, 0.06); color: #12333f; border-color: rgba(18, 51, 63, 0.14); }
 
 .tag {
     display: inline-flex;
@@ -212,7 +218,7 @@
 }
 
 .field--error .field__input {
-    border-color: rgba(154, 63, 45, 0.6);
+    border-color: rgba(162, 59, 44, 0.6);
 }
 
 .field--error .field__help {

@@ -1,11 +1,6 @@
 <div class="auth-shell">
-<div class="auth-brand">
-    <img class="auth-brand__logo" src="<?= $this->asset('/img/uno-icon-circle-transparent.png') ?>" alt="">
-    <h1 class="auth-brand__title">Uno</h1>
-    <p class="auth-brand__tagline">Il livello intelligente che collega contatti, pratiche, documenti e rimborsi in un unico processo tracciabile.</p>
-</div>
-<div class="auth-form-panel">
 <section class="card auth-card">
+    <img class="auth-card__logo" src="<?= $this->asset('/img/aibrains.png') ?>" alt="aiBrains">
     <h1 class="card__title"><?= $this->e($title) ?></h1>
     <?php if ($error): ?><p class="field__help" style="color: var(--color-danger);"><?= $this->e($error) ?></p><?php endif; ?>
     <form method="post" action="/login" class="field-stack">
@@ -22,5 +17,4 @@
     </form>
     <p style="margin-top: 16px; text-align: center;"><a href="/password/dimenticata">Password dimenticata?</a></p>
 </section>
-</div>
 </div>

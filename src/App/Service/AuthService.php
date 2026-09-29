@@ -8,11 +8,17 @@ use App\Core\Container;
 use App\Model\User;
 use App\Repository\PasswordResetRepository;
 use App\Repository\PermissionRepository;
+use App\Repository\ProfileRepository;
 use App\Repository\UserRepository;
 
 /**
  * Login/logout, permessi effettivi in sessione, recupero password.
- * $_SESSION['user'] = ['id', 'profileId', 'username', 'permissions' => string[]].
+ * $_SESSION['user'] = ['id', 'profileId', 'username', 'firstName',
+ * 'lastName', 'profileName', 'permissions' => string[]]. Nome/ruolo sono
+ * cache-ati qui allo stesso modo dei permessi (vedi hasPermission()):
+ * letti una volta al login, non si aggiornano finche' non si rientra se
+ * un admin rinomina l'utente o gli cambia profilo nel frattempo - stesso
+ * compromesso gia' accettato, non una svista nuova.
  */
 final class AuthService
 {
@@ -45,12 +51,19 @@ final class AuthService
                 continue;
             }
 
+            /** @var ProfileRepository $profileRepository */
+            $profileRepository = $this->container->get(ProfileRepository::class);
+            $profile = $candidate->profileId !== null ? $profileRepository->find($candidate->profileId) : null;
+
             session_regenerate_id(true);
 
             $_SESSION['user'] = [
                 'id' => $candidate->id,
                 'profileId' => $candidate->profileId,
                 'username' => $candidate->username,
+                'firstName' => $candidate->firstName,
+                'lastName' => $candidate->lastName,
+                'profileName' => $profile->name ?? '',
                 'permissions' => $this->computeEffectivePermissionCodes((int) $candidate->id, (int) $candidate->profileId),
             ];
 

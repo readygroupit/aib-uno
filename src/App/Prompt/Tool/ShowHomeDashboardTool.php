@@ -9,7 +9,6 @@ use App\Prompt\PromptToolInterface;
 use App\Repository\CaseFileRepository;
 use App\Repository\DocumentRequestRepository;
 use App\Repository\LeadRepository;
-use App\Repository\ProfileRepository;
 use App\Repository\RefundRepository;
 use App\Repository\TaskRepository;
 use App\Repository\UserRepository;
@@ -38,7 +37,6 @@ final class ShowHomeDashboardTool implements PromptToolInterface
     private TaskRepository $tasks;
     private RefundRepository $refunds;
     private UserRepository $users;
-    private ProfileRepository $profiles;
     private AuthService $auth;
     private StatBoxComponent $statBox;
     private DashboardHeaderComponent $header;
@@ -63,7 +61,6 @@ final class ShowHomeDashboardTool implements PromptToolInterface
         $this->tasks = $container->get(TaskRepository::class);
         $this->refunds = $container->get(RefundRepository::class);
         $this->users = $container->get(UserRepository::class);
-        $this->profiles = $container->get(ProfileRepository::class);
         $this->auth = $container->get(AuthService::class);
         $this->statBox = $container->get(StatBoxComponent::class);
         $this->header = $container->get(DashboardHeaderComponent::class);
@@ -149,7 +146,6 @@ final class ShowHomeDashboardTool implements PromptToolInterface
 
         $userId = $this->auth->currentUserId();
         $user = $userId !== null ? $this->users->find($userId) : null;
-        $profile = $user?->profileId !== null ? $this->profiles->find($user->profileId) : null;
 
         $rangeTabs = [];
         foreach (self::RANGES as $key => $def) {
@@ -159,9 +155,6 @@ final class ShowHomeDashboardTool implements PromptToolInterface
         return $this->header->toData([
             'dateLabel' => mb_strtoupper($dateLabel),
             'greeting' => 'Buongiorno' . ($user?->firstName !== null ? ", {$user->firstName}" : ''),
-            'userInitials' => $user !== null ? mb_strtoupper(mb_substr((string) $user->firstName, 0, 1) . mb_substr((string) $user->lastName, 0, 1)) : '',
-            'userName' => $user !== null ? trim("{$user->firstName} {$user->lastName}") : '',
-            'userRole' => $profile->name ?? '',
             'rangeTabs' => $rangeTabs,
         ]);
     }

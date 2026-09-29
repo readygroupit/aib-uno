@@ -30,23 +30,13 @@ function renderDashboardHeader(data) {
         el('h1', { className: 'dashboard-header__greeting' }, [data.greeting]),
     ]);
 
-    const rightChildren = [];
+    // Chi e' collegato vive nel menu profilo (vedi hero.js) - questo box
+    // lo duplicava qui in cima alla home (segnalato dall'utente).
     const rangeTabs = buildRangeTabs(data.rangeTabs);
-    if (rangeTabs) rightChildren.push(rangeTabs);
-
-    if (data.userName) {
-        rightChildren.push(el('div', { className: 'dashboard-header__user' }, [
-            el('span', { className: 'dashboard-header__avatar' }, [data.userInitials || '']),
-            el('div', { className: 'dashboard-header__user-text' }, [
-                el('span', { className: 'dashboard-header__user-name' }, [data.userName]),
-                el('span', { className: 'dashboard-header__user-role' }, [data.userRole || '']),
-            ]),
-        ]));
-    }
 
     return el('div', { className: 'dashboard-header' }, [
         left,
-        el('div', { className: 'dashboard-header__right' }, rightChildren),
+        el('div', { className: 'dashboard-header__right' }, rangeTabs ? [rangeTabs] : []),
     ]);
 }
 

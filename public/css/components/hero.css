@@ -407,7 +407,7 @@
     bottom: calc(100% + 6px);
     left: 0;
     z-index: 10;
-    min-width: 170px;
+    min-width: 190px;
     background: var(--color-panel);
     border: var(--hairline);
     border-radius: var(--radius-md);
@@ -417,6 +417,63 @@
 
 .hero__profile-menu.is-open {
     display: block;
+}
+
+/*
+ * Chi e' collegato, come prima voce del menu invece che come box a se'
+ * in cima alla home (segnalato dall'utente: la stessa informazione
+ * viveva in due posti). Stesso linguaggio (cerchietto+nome+ruolo) del
+ * vecchio dashboard-header__user, solo spostato qui.
+ */
+.hero__profile-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+}
+
+.hero__profile-identity-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--color-petrol);
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.hero__profile-identity-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.hero__profile-identity-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-petrol);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hero__profile-identity-role {
+    font-size: 11px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+/* Non tocca i bordi laterali del dropdown (segnalato dall'utente) -
+   margine invece di un bordo a piena larghezza sul contenitore. */
+.hero__profile-menu-divider {
+    height: 1px;
+    margin: 6px 10px;
+    background: rgba(18, 51, 63, 0.08);
 }
 
 /*

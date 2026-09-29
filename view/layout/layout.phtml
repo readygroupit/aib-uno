@@ -1,3 +1,18 @@
+<?php
+// Chi e' collegato, per il blocco identita' in cima al menu profilo
+// (vedi hero.js) - letto direttamente da $_SESSION['user'] (stesso dato
+// cache-ato al login da AuthService, niente query qui): null se non
+// autenticato (login/password dimenticata/reset), window.UNO_USER
+// resta null e hero.js semplicemente non disegna quel blocco.
+$unoUser = isset($_SESSION['user']['id']) ? [
+    'initials' => mb_strtoupper(
+        mb_substr((string) ($_SESSION['user']['firstName'] ?? ''), 0, 1)
+        . mb_substr((string) ($_SESSION['user']['lastName'] ?? ''), 0, 1)
+    ),
+    'name' => trim(($_SESSION['user']['firstName'] ?? '') . ' ' . ($_SESSION['user']['lastName'] ?? '')),
+    'role' => $_SESSION['user']['profileName'] ?? '',
+] : null;
+?>
 <!doctype html>
 <html lang="it">
 <head>
@@ -54,6 +69,8 @@
       header, letto lato server da Request::csrfHeader().
     -->
     <script>window.UNO_CSRF = <?= json_encode(\App\Core\Csrf::token()) ?>;</script>
+    <!-- Blocco identita' in cima al menu profilo (vedi hero.js) - null sulle pagine non autenticate, calcolato qui sopra. -->
+    <script>window.UNO_USER = <?= json_encode($unoUser) ?>;</script>
     <script type="module" src="<?= $this->asset('/js/app.js') ?>"></script>
 </head>
 <body>

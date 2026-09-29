@@ -453,7 +453,25 @@ export function mountPromptShell(root, initialComponents) {
     // toolbar - spostato qui perche' non serve subito disponibile come
     // casa/menu (segnalato dall'utente): e' un aiuto da consultare
     // all'occorrenza, sta bene un click in piu' di distanza.
-    const profileMenu = el('div', { className: 'hero__profile-menu' }, [
+    // Chi e' collegato, in cima al menu invece che come box a se' in
+    // testa alla home (segnalato dall'utente: duplicava la stessa
+    // informazione in due punti diversi) - window.UNO_USER e' null sulle
+    // pagine non autenticate, ma il pulsante profilo (quindi questo menu)
+    // esiste solo dopo il login, quindi qui e' sempre valorizzato.
+    const profileMenuChildren = [];
+    if (window.UNO_USER) {
+        profileMenuChildren.push(
+            el('div', { className: 'hero__profile-identity' }, [
+                el('span', { className: 'hero__profile-identity-avatar' }, [window.UNO_USER.initials || '']),
+                el('div', { className: 'hero__profile-identity-text' }, [
+                    el('span', { className: 'hero__profile-identity-name' }, [window.UNO_USER.name || '']),
+                    el('span', { className: 'hero__profile-identity-role' }, [window.UNO_USER.role || '']),
+                ]),
+            ]),
+            el('div', { className: 'hero__profile-menu-divider' })
+        );
+    }
+    profileMenuChildren.push(
         el(
             'button',
             {
@@ -467,8 +485,10 @@ export function mountPromptShell(root, initialComponents) {
         el('a', { className: 'hero__profile-menu-item', href: '/logout' }, [
             icon('arrow-right-from-bracket'),
             'Esci',
-        ]),
-    ]);
+        ])
+    );
+
+    const profileMenu = el('div', { className: 'hero__profile-menu' }, profileMenuChildren);
 
     const profileButton = el(
         'button',

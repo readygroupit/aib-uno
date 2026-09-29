@@ -16,4 +16,5 @@ final class User extends AbstractModel
     public ?string $firstName = null;
     public ?string $lastName = null;
     public ?string $lastLoginAt = null;
+    public ?string $onboardingDismissedAt = null;
 }

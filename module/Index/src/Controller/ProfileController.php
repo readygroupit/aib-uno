@@ -94,4 +94,23 @@ final class ProfileController extends AuthController
 
         return $this->renderPage($components, ['title' => 'Il mio profilo']);
     }
+
+    /**
+     * "Ho capito, non mostrarmelo piu'" sul tour di benvenuto (vedi
+     * onboarding.js) - chiamata dall'overlay su QUALUNQUE pagina, non
+     * solo da /profilo: risponde solo JSON (l'overlay si chiude da se',
+     * niente pagina da riverniciare).
+     */
+    public function dismissOnboardingAction(): void
+    {
+        /** @var AuthService $auth */
+        $auth = $this->container->get(AuthService::class);
+        $userId = $auth->currentUserId();
+
+        if ($userId !== null) {
+            $auth->dismissOnboarding($userId);
+        }
+
+        $this->json(['ok' => true]);
+    }
 }

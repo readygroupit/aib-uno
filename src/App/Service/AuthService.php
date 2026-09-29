@@ -14,11 +14,15 @@ use App\Repository\UserRepository;
 /**
  * Login/logout, permessi effettivi in sessione, recupero password.
  * $_SESSION['user'] = ['id', 'profileId', 'username', 'firstName',
- * 'lastName', 'profileName', 'permissions' => string[]]. Nome/ruolo sono
- * cache-ati qui allo stesso modo dei permessi (vedi hasPermission()):
- * letti una volta al login, non si aggiornano finche' non si rientra se
- * un admin rinomina l'utente o gli cambia profilo nel frattempo - stesso
- * compromesso gia' accettato, non una svista nuova.
+ * 'lastName', 'profileName', 'onboardingSeen', 'permissions' => string[]].
+ * Nome/ruolo sono cache-ati qui allo stesso modo dei permessi (vedi
+ * hasPermission()): letti una volta al login, non si aggiornano finche'
+ * non si rientra se un admin rinomina l'utente o gli cambia profilo nel
+ * frattempo - stesso compromesso gia' accettato, non una svista nuova.
+ * 'onboardingSeen' invece va aggiornato ANCHE a meta' sessione (vedi
+ * dismissOnboarding()): a differenza di nome/ruolo/permessi, deve
+ * smettere di riapparire nella stessa sessione in cui viene chiuso, non
+ * al prossimo login.
  */
 final class AuthService
 {
@@ -64,6 +68,7 @@ final class AuthService
                 'firstName' => $candidate->firstName,
                 'lastName' => $candidate->lastName,
                 'profileName' => $profile->name ?? '',
+                'onboardingSeen' => $candidate->onboardingDismissedAt !== null,
                 'permissions' => $this->computeEffectivePermissionCodes((int) $candidate->id, (int) $candidate->profileId),
             ];
 
@@ -84,6 +89,23 @@ final class AuthService
     public function hasPermission(string $code): bool
     {
         return in_array($code, $_SESSION['user']['permissions'] ?? [], true);
+    }
+
+    /**
+     * "Ho capito, non mostrarmelo piu'" sul tour di benvenuto (vedi
+     * onboarding.js) - scrive sul DB (resta cosi' anche al prossimo
+     * login/da un altro browser) E sulla sessione corrente (cosi' non
+     * riappare nemmeno cambiando pagina prima di rifare il login).
+     */
+    public function dismissOnboarding(int $userId): void
+    {
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->container->get(UserRepository::class);
+        $userRepository->update($userId, ['onboarding_dismissed_at' => date('Y-m-d H:i:s')]);
+
+        if (($_SESSION['user']['id'] ?? null) === $userId) {
+            $_SESSION['user']['onboardingSeen'] = true;
+        }
     }
 
     /**

@@ -48,6 +48,10 @@ CREATE TABLE users (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     last_login_at DATETIME NULL,
+    -- Quando l'utente ha chiuso il tour di benvenuto con "Ho capito, non
+    -- mostrarmelo piu'" (vedi onboarding.js) - NULL = non ancora visto,
+    -- riappare a ogni accesso finche' non viene valorizzato.
+    onboarding_dismissed_at DATETIME NULL,
     status TINYINT NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL,
     created_by INT UNSIGNED NULL,

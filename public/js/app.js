@@ -1,4 +1,5 @@
 import { mountPromptShell } from './components/hero.js';
+import { openOnboarding } from './onboarding.js';
 import './auth.js';
 import './components/data-table.js';
 import './components/stat-box.js';
@@ -32,4 +33,13 @@ function boot() {
     mountPromptShell(root, payload.components);
 }
 
-document.addEventListener('DOMContentLoaded', boot);
+document.addEventListener('DOMContentLoaded', () => {
+    boot();
+
+    // Tour di benvenuto: window.UNO_SHOW_ONBOARDING e' gia' false sulle
+    // pagine non autenticate (vedi layout.phtml), niente da controllare
+    // qui oltre al flag stesso.
+    if (window.UNO_SHOW_ONBOARDING) {
+        openOnboarding();
+    }
+});

@@ -12,6 +12,12 @@ $unoUser = isset($_SESSION['user']['id']) ? [
     'name' => trim(($_SESSION['user']['firstName'] ?? '') . ' ' . ($_SESSION['user']['lastName'] ?? '')),
     'role' => $_SESSION['user']['profileName'] ?? '',
 ] : null;
+
+// Tour di benvenuto (vedi onboarding.js): si apre da solo finche' non
+// viene chiuso con "Ho capito" (vedi AuthService::dismissOnboarding()).
+// false anche da disconnessi - l'overlay non ha senso senza il menu
+// profilo che lo ospita concettualmente.
+$unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onboardingSeen'] ?? false);
 ?>
 <!doctype html>
 <html lang="it">
@@ -32,6 +38,7 @@ $unoUser = isset($_SESSION['user']['id']) ? [
     <link rel="stylesheet" href="<?= $this->asset('/css/components/stat-box.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/hero.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/wizard.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/onboarding.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/modal.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/dashboard-header.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/funnel.css') ?>">
@@ -71,6 +78,7 @@ $unoUser = isset($_SESSION['user']['id']) ? [
     <script>window.UNO_CSRF = <?= json_encode(\App\Core\Csrf::token()) ?>;</script>
     <!-- Blocco identita' in cima al menu profilo (vedi hero.js) - null sulle pagine non autenticate, calcolato qui sopra. -->
     <script>window.UNO_USER = <?= json_encode($unoUser) ?>;</script>
+    <script>window.UNO_SHOW_ONBOARDING = <?= json_encode($unoShowOnboarding) ?>;</script>
     <script type="module" src="<?= $this->asset('/js/app.js') ?>"></script>
 </head>
 <body>

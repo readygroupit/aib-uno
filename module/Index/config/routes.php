@@ -98,6 +98,11 @@ return [
         'controller' => ProfileController::class,
         'action' => 'changePassword',
     ],
+    'onboarding-dismiss' => [
+        'path' => '/onboarding/dismiss',
+        'controller' => ProfileController::class,
+        'action' => 'dismissOnboarding',
+    ],
     'permissions' => [
         'path' => '/permessi',
         'controller' => PermissionsController::class,

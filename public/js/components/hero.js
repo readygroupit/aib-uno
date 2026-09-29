@@ -25,11 +25,12 @@ let conversationHistory = [];
 // vista, non lo affianca al precedente. L'indice 0 e' sempre il contenuto
 // REALE della pagina su cui ci si trova (quello che il server ha
 // renderizzato, prompt: null - non e' stato "chiesto" con un messaggio) -
-// da li' in poi ogni voce e' un risultato del prompt. Se si torna
-// indietro e poi si invia qualcosa di nuovo, gli eventuali risultati
-// "futuri" oltre il punto in cui ci si trova vengono scartati, come la
-// cronologia di un browser. Limitato per non crescere senza fine in una
-// sessione lunga.
+// da li' in poi ogni voce e' un risultato del prompt, con la propria
+// bolla di risposta e gli eventuali suggerimenti di follow-up (vedi
+// PromptConversationalInterface lato server). Se si torna indietro e poi
+// si invia qualcosa di nuovo, gli eventuali risultati "futuri" oltre il
+// punto in cui ci si trova vengono scartati, come la cronologia di un
+// browser. Limitato per non crescere senza fine in una sessione lunga.
 let resultsHistory = [];
 let resultsHistoryIndex = -1;
 const MAX_RESULTS_HISTORY = 20;
@@ -38,7 +39,6 @@ const MAX_RESULTS_HISTORY = 20;
 // modulo invece che richiedere di passare questi riferimenti ovunque.
 let resultsPanel = null;
 let messagesEl = null;
-let replyEl = null;
 
 // Tipi di entita' (es. 'user') presenti nei componenti appena mostrati -
 // non le righe, solo il tipo: serve a dire a Claude "l'operatore ha
@@ -101,33 +101,82 @@ function renderResultsEntry(panel, entry) {
     mountComponents(panel, entry.components);
 }
 
-// Elenco delle richieste fatte finora (solo il testo del prompt, non le
-// risposte - come una conversazione di cui si vedono solo i messaggi
-// inviati), dentro la stessa card del prompt, sopra la casella di testo.
-// L'ingresso 0 (il contenuto reale della pagina, prompt: null) non
-// compare qui: non e' stato "chiesto" con un messaggio, e' semplicemente
-// la pagina su cui si e' arrivati. Cliccare un messaggio richiama lo
-// stesso risultato senza doverlo richiedere di nuovo.
-function renderMessages(container) {
-    container.textContent = '';
-    resultsHistory.forEach((entry, index) => {
-        if (!entry.prompt) return;
-        container.appendChild(
+// Bolla di risposta lato assistente: avatar (il logo quadrato vero
+// dell'app, non un personaggio inventato - "mascotte" resta un modo di
+// dire, non un asset a se') + testo. Usata sia per le risposte vere sia
+// per notifiche di sistema brevi (es. "non c'e' un risultato precedente"),
+// stesso linguaggio visivo invece di un'area di testo separata sotto
+// l'input.
+function renderAssistantBubble(text) {
+    return el('div', { className: 'hero__bubble-row' }, [
+        el('span', { className: 'hero__mascot' }, [el('img', { src: window.UNO_LOGO_SQUARE, alt: '' })]),
+        el('div', { className: 'hero__bubble hero__bubble--assistant' }, [text]),
+    ]);
+}
+
+function renderUserBubble(text, active, onClick) {
+    return el(
+        'button',
+        {
+            type: 'button',
+            className: 'hero__bubble hero__bubble--user' + (active ? ' hero__bubble--active' : ''),
+            onClick: onClick || null,
+        },
+        [text]
+    );
+}
+
+// Chip "prova a chiedere": domande di follow-up dichiarate dal tool
+// stesso (PromptConversationalInterface::followUpSuggestions()), non
+// generate da Claude a ogni risposta (costerebbe una chiamata anche per
+// un match locale gratuito). Cliccarne una la esegue davvero come nuovo
+// prompt (window.unoSubmitPrompt, gia' usato dal wizard).
+function renderSuggestions(suggestions) {
+    return el('div', { className: 'hero__suggestions' }, [
+        el('span', { className: 'hero__suggestions-label' }, ['Prova a chiedere']),
+        ...suggestions.map((text) =>
             el(
                 'button',
                 {
                     type: 'button',
-                    className: 'hero__message' + (index === resultsHistoryIndex ? ' hero__message--active' : ''),
-                    onClick: () => goToIndex(index),
+                    className: 'hero__suggestion-chip',
+                    onClick: () => window.unoSubmitPrompt(text),
                 },
-                [entry.prompt]
+                [icon('sparkle'), text]
             )
-        );
+        ),
+    ]);
+}
+
+// Transcript completo: ogni voce di resultsHistory con un prompt (l'indice
+// 0, il contenuto reale della pagina, non ne ha - non e' stato "chiesto")
+// diventa una bolla utente cliccabile (richiama quel risultato, stessa
+// funzione di goToIndex) seguita dalla bolla assistente con la sua
+// risposta, se ne ha una. I suggerimenti di follow-up compaiono solo
+// sotto lo scambio ATTUALMENTE in vista, non sotto ognuno - altrimenti
+// una conversazione lunga si riempirebbe di chip ripetute.
+function renderTranscript(container) {
+    container.textContent = '';
+
+    resultsHistory.forEach((entry, index) => {
+        if (!entry.prompt) return;
+
+        container.appendChild(renderUserBubble(entry.prompt, index === resultsHistoryIndex, () => goToIndex(index)));
+        if (entry.reply) {
+            container.appendChild(renderAssistantBubble(entry.reply));
+        }
     });
+
+    const current = resultsHistory[resultsHistoryIndex];
+    if (current && current.suggestions && current.suggestions.length) {
+        container.appendChild(renderSuggestions(current.suggestions));
+    }
+
+    container.scrollTop = container.scrollHeight;
 }
 
 // Punto unico per "vai a questo risultato dello storico" - usato dal
-// pulsante "Risultato precedente", dai messaggi cliccabili, e da
+// pulsante "Risultato precedente", dalle bolle utente cliccabili, e da
 // popstate (tasto indietro/avanti del browser). Aggiorna anche la barra
 // degli indirizzi se il risultato corrisponde a una pagina vera e non ci
 // siamo gia' (evita un pushState ridondante quando si arriva qui perche'
@@ -137,7 +186,7 @@ function goToIndex(index) {
     resultsHistoryIndex = index;
     const entry = resultsHistory[index];
     renderResultsEntry(resultsPanel, entry);
-    renderMessages(messagesEl);
+    renderTranscript(messagesEl);
     if (entry.url && window.location.pathname !== entry.url) {
         window.history.pushState(null, '', entry.url);
     }
@@ -174,7 +223,15 @@ function submitPrompt(wrapEl, text) {
 
     wrapEl.classList.add('hero-wrap--top');
     wrapEl.parentElement.classList.add('has-history');
-    replyEl.textContent = '...';
+
+    // Bolla utente subito + un "..." lato assistente mentre si aspetta,
+    // appesi direttamente al transcript gia' stabile (non ancora dentro
+    // resultsHistory: se la richiesta fallisce non deve restare un
+    // risultato fantasma navigabile, vedi il .catch() piu' sotto).
+    renderTranscript(messagesEl);
+    messagesEl.appendChild(renderUserBubble(text, true));
+    messagesEl.appendChild(renderAssistantBubble('...'));
+    messagesEl.scrollTop = messagesEl.scrollHeight;
 
     // Entita' del risultato ATTUALMENTE in vista (che coincide con
     // l'ultimo inviato solo se non si e' tornati indietro nello storico)
@@ -199,7 +256,6 @@ function submitPrompt(wrapEl, text) {
         .then((res) => res.json())
         .then((data) => {
             conversationHistory = data.history || conversationHistory;
-            replyEl.textContent = data.reply || '';
 
             if (data.components && data.components.length) {
                 const url = extractUrl(data.components);
@@ -207,6 +263,8 @@ function submitPrompt(wrapEl, text) {
                 resultsHistory = resultsHistory.slice(0, resultsHistoryIndex + 1);
                 resultsHistory.push({
                     prompt: text,
+                    reply: data.reply || '',
+                    suggestions: data.suggestions || [],
                     components: data.components,
                     entities: extractEntities(data.components),
                     url,
@@ -217,7 +275,7 @@ function submitPrompt(wrapEl, text) {
                 resultsHistoryIndex = resultsHistory.length - 1;
 
                 renderResultsEntry(resultsPanel, resultsHistory[resultsHistoryIndex]);
-                renderMessages(messagesEl);
+                renderTranscript(messagesEl);
 
                 // Il risultato corrisponde a una pagina vera (es. la
                 // richiesta era "lista permessi" mentre si era su
@@ -228,10 +286,28 @@ function submitPrompt(wrapEl, text) {
                 if (url && window.location.pathname !== url) {
                     window.history.pushState(null, '', url);
                 }
+            } else {
+                // Nessun componente (domanda di chiarimento, permesso
+                // negato, richiesta non capita): niente nuovo "posto" da
+                // visitare, il pannello risultati resta quello di prima -
+                // solo la bolla di risposta, sostituendo il "..." appeso
+                // sopra.
+                renderTranscript(messagesEl);
+                messagesEl.appendChild(renderUserBubble(text, true));
+                messagesEl.appendChild(renderAssistantBubble(data.reply || '...'));
+                if (data.suggestions && data.suggestions.length) {
+                    messagesEl.appendChild(renderSuggestions(data.suggestions));
+                }
+                messagesEl.scrollTop = messagesEl.scrollHeight;
             }
         })
         .catch(() => {
-            replyEl.textContent = 'Errore di comunicazione con il server.';
+            renderTranscript(messagesEl);
+            messagesEl.appendChild(renderUserBubble(text, true));
+            messagesEl.appendChild(
+                renderAssistantBubble("Non sono riuscito a contattare il server. Controlla la connessione e riprova.")
+            );
+            messagesEl.scrollTop = messagesEl.scrollHeight;
         });
 }
 
@@ -249,7 +325,6 @@ export function mountPromptShell(root, initialComponents) {
         placeholder: 'Cosa vuoi fare?',
         rows: 2,
     });
-    replyEl = el('div', { className: 'hero__reply' });
     const attachmentsEl = el('div', { className: 'hero__attachments' });
     messagesEl = el('div', { className: 'hero__messages' });
 
@@ -314,7 +389,9 @@ export function mountPromptShell(root, initialComponents) {
             if (resultsHistoryIndex > 0) {
                 goToIndex(resultsHistoryIndex - 1);
             } else {
-                replyEl.textContent = "Non c'e' un risultato precedente.";
+                renderTranscript(messagesEl);
+                messagesEl.appendChild(renderAssistantBubble("Non c'e' un risultato precedente."));
+                messagesEl.scrollTop = messagesEl.scrollHeight;
             }
             input.value = '';
             input.focus();
@@ -338,32 +415,47 @@ export function mountPromptShell(root, initialComponents) {
         [icon('plus')]
     );
 
-    // Sempre visibile, su ogni pagina (non e' un risultato, e' chrome del
-    // prompt) - l'entita' passata e' quella del risultato ATTUALMENTE in
-    // vista (stesso identico ragionamento del contesto mandato a /prompt
-    // in submitPrompt() qui sotto), cosi' il wizard sa di quale campo/
-    // entita' spiegare senza che l'operatore lo debba specificare.
-    const wizardButton = el(
+    // Entita' del risultato ATTUALMENTE in vista - riusata sia dalla voce
+    // "Cosa posso fare?" del menu profilo sia dal contesto mandato a
+    // /prompt in submitPrompt(), stesso identico ragionamento: il wizard
+    // deve sapere di quale campo/entita' spiegare senza che l'operatore
+    // lo debba specificare.
+    const activeEntities = () => {
+        const activeEntry = resultsHistoryIndex >= 0 ? resultsHistory[resultsHistoryIndex] : null;
+        return activeEntry && activeEntry.entities.length ? activeEntry.entities[0] : null;
+    };
+
+    // Casa e menu: le due destinazioni "di sempre" che mancavano (segnalato
+    // dall'utente - nessun modo rapido di tornare alla home o al menu).
+    // Passano dal prompt (window.unoSubmitPrompt) invece che da un <a
+    // href> per restare nel meccanismo SPA esistente - un link vero
+    // ricaricherebbe tutto perdendo lo storico dei risultati.
+    const homeButton = el(
         'button',
-        {
-            type: 'button',
-            className: 'hero__icon-btn hero__icon-btn--logo',
-            title: 'Cosa posso fare?',
-            onClick: () => {
-                const activeEntry = resultsHistoryIndex >= 0 ? resultsHistory[resultsHistoryIndex] : null;
-                openWizard(activeEntry && activeEntry.entities.length ? activeEntry.entities[0] : null);
-            },
-        },
-        [el('img', { src: window.UNO_LOGO_SQUARE, alt: '', className: 'hero__icon-logo' })]
+        { type: 'button', className: 'hero__icon-btn', title: 'Vai alla home', onClick: () => window.unoSubmitPrompt('home') },
+        [icon('home')]
+    );
+    const menuButton = el(
+        'button',
+        { type: 'button', className: 'hero__icon-btn', title: 'Mostra il menu', onClick: () => window.unoSubmitPrompt('menu') },
+        [icon('grid')]
     );
 
-    // Unico punto di tutta l'app dove si arriva al proprio profilo o al
-    // logout (prima non esisteva chrome persistente di nessun tipo) -
-    // messo subito a sinistra di "Esegui" invece che nel gruppo con
-    // +/microfono/wizard perche' concettualmente e' un'altra cosa:
-    // quelli agiscono sul prompt, questo sull'account di chi lo sta
-    // usando.
+    // Unico punto di tutta l'app dove si arriva al proprio profilo, al
+    // wizard o al logout. Il wizard era prima un'icona a se' nella
+    // toolbar - spostato qui perche' non serve subito disponibile come
+    // casa/menu (segnalato dall'utente): e' un aiuto da consultare
+    // all'occorrenza, sta bene un click in piu' di distanza.
     const profileMenu = el('div', { className: 'hero__profile-menu' }, [
+        el(
+            'button',
+            {
+                type: 'button',
+                className: 'hero__profile-menu-item',
+                onClick: () => openWizard(activeEntities()),
+            },
+            [icon('help'), 'Cosa posso fare?']
+        ),
         el('a', { className: 'hero__profile-menu-item', href: '/profilo' }, [icon('user'), 'Il mio profilo']),
         el('a', { className: 'hero__profile-menu-item', href: '/logout' }, [
             icon('arrow-right-from-bracket'),
@@ -391,13 +483,17 @@ export function mountPromptShell(root, initialComponents) {
 
     const toolbar = el('div', { className: 'hero__toolbar' }, [
         attachButton,
-        wizardButton,
+        homeButton,
+        menuButton,
         el('div', { className: 'hero__toolbar-spacer' }),
         el('div', { className: 'hero__profile-dropdown' }, [profileButton, profileMenu]),
         // "Esegui", non "Invia": non si sta mandando un messaggio, si sta
         // chiedendo di eseguire un'operazione - stessa parola usata dal
         // comando vocale (TRIGGER_WORD in speech.js), cosi' testo e voce
         // corrispondono anche concettualmente, non solo come scorciatoia.
+        // Resta anche se Invio da tastiera fa la stessa cosa (segnalato
+        // dall'utente): un'azione cosi' centrale merita un'affordance
+        // visibile, non solo una scorciatoia implicita.
         el('button', { type: 'button', className: 'btn btn--primary', onClick: send }, ['Esegui']),
     ]);
 
@@ -420,7 +516,6 @@ export function mountPromptShell(root, initialComponents) {
         attachmentsEl,
         inputRow,
         toolbar,
-        replyEl,
         fileInput,
     ]);
 
@@ -494,7 +589,7 @@ export function mountPromptShell(root, initialComponents) {
         if (cachedIndex !== -1) {
             resultsHistoryIndex = cachedIndex;
             renderResultsEntry(resultsPanel, resultsHistory[cachedIndex]);
-            renderMessages(messagesEl);
+            renderTranscript(messagesEl);
             return;
         }
 

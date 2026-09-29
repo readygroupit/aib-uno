@@ -60,43 +60,135 @@
 }
 
 /*
- * Elenco delle richieste fatte finora (solo testo, come i messaggi di una
- * conversazione), dentro la stessa card del prompt, sopra la casella di
- * testo. Nascosto di default (anche se non vuoto): ha senso solo nel
- * layout a sidebar qui sotto, in modalita' compatta la card deve restare
- * come prima, senza storico visibile al suo interno. Sfondo tenue intonato
- * alla palette (non bianco: non deve sembrare un altro campo di testo) per
- * farli leggere come "messaggi", non input.
+ * Transcript della conversazione (bolle utente/assistente, non piu' un
+ * elenco piatto di sole richieste), dentro la stessa card del prompt,
+ * sopra la casella di testo. Nascosto di default (anche se non vuoto):
+ * ha senso solo nel layout a sidebar qui sotto, in modalita' compatta la
+ * card deve restare come prima, senza storico visibile al suo interno.
  */
 .hero__messages {
     display: none;
     flex-direction: column;
-    gap: 4px;
+    gap: 10px;
     padding: 14px 14px 0;
 }
 
-.hero__message {
-    text-align: left;
+/* Bolla utente: angoli arrotondati tranne quello in basso a destra, che
+   resta vivo - la "punta" verso l'input sotto, stesso trucco grafico di
+   qualunque chat. E' anche il vecchio pulsante "richiama questo
+   risultato" (era .hero__message): resta cliccabile, solo restyled. */
+.hero__bubble--user {
+    align-self: flex-end;
+    max-width: 85%;
+    padding: 9px 13px;
     border: none;
-    background: rgba(79, 123, 92, 0.14);
-    border-radius: var(--radius-md);
-    padding: 8px 10px;
+    border-radius: 14px 14px 4px 14px;
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 58%);
+    background-color: var(--color-petrol);
+    color: #fff;
     font: inherit;
     font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.hero__bubble--user.hero__bubble--active {
+    box-shadow: 0 0 0 2px rgba(18, 51, 63, 0.35);
+}
+
+.hero__bubble-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+/* Avatar dell'assistente: il logo quadrato vero dell'app (stesso asset
+   del pulsante wizard di prima), non un personaggio inventato. */
+.hero__mascot {
+    width: 30px;
+    height: 30px;
+    flex: none;
+    border-radius: 10px;
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 55%);
+    background-color: var(--color-teal-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero__mascot img {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+/* Bolla assistente: stessa idea della bolla utente ma speculare (l'angolo
+   vivo e' in alto a sinistra, verso l'avatar) e chiara invece che scura. */
+.hero__bubble--assistant {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 14px;
+    border-radius: 4px 14px 14px 14px;
+    background: #fff;
+    border: 1px solid rgba(18, 51, 63, 0.1);
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: rgba(18, 51, 63, 0.78);
+}
+
+.hero__bubble--assistant strong {
+    color: var(--color-petrol);
+    font-weight: 600;
+}
+
+/* Chip "prova a chiedere": domande di follow-up dichiarate dal tool
+   (vedi PromptConversationalInterface lato server), non generate a ogni
+   risposta - un click le esegue davvero come nuovo prompt. */
+.hero__suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.hero__suggestions-label {
+    padding: 0 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(18, 51, 63, 0.5);
+}
+
+/* Bordo/sfondo bianco translucido invece di un colore pieno: .hero__card
+   e' gia' vetro smerigliato (background rgba + backdrop-filter, vedi
+   sotto), la chip riprende la stessa lucentezza invece di stonare come
+   un blocco opaco sopra. */
+.hero__suggestion-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    font: 500 12.5px var(--font-body);
     color: var(--color-petrol);
     cursor: pointer;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-align: left;
 }
 
-.hero__message:hover {
-    background: rgba(79, 123, 92, 0.22);
+.hero__suggestion-chip:hover {
+    background: #fff;
 }
 
-.hero__message--active {
-    background: rgba(79, 123, 92, 0.32);
-    font-weight: 600;
+.hero__suggestion-chip .icon svg {
+    width: 12px;
+    height: 12px;
+    flex: none;
+    color: var(--color-lilac);
+    display: block;
 }
 
 /*
@@ -319,11 +411,23 @@
     display: block;
 }
 
+/*
+ * Puo' essere sia <a> (profilo/logout) sia <button> (wizard, "Cosa posso
+ * fare?" - non ha una sua pagina) - i reset qui sotto (bordo/sfondo/
+ * font/cursore/allineamento/larghezza) servono solo al caso <button>,
+ * stesso bug gia' preso una volta con .data-table__actions-menu-item.
+ */
 .hero__profile-menu-item {
     display: flex;
     align-items: center;
+    width: 100%;
     gap: 9px;
     padding: 8px 10px;
+    border: none;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
     border-radius: var(--radius-sm);
     font-size: 13.5px;
     color: var(--color-petrol);
@@ -362,31 +466,6 @@
 .hero__icon-btn .icon svg {
     width: 15px;
     height: 15px;
-    display: block;
-}
-
-/*
- * Pulsante wizard: l'icona di Uno e' gia' un'illustrazione a se' (sfondo
- * petrolio arrotondato, non un glifo a linee come mic/+) - incorniciarla
- * in un altro box chiaro come gli altri pulsanti crea un "riquadro dentro
- * al riquadro" (segnalato dall'utente con uno screenshot). Stessa area
- * cliccabile 34x34 degli altri .hero__icon-btn (allineamento/tocco), ma
- * senza sfondo/bordo: l'icona stessa riempie lo spazio.
- */
-.hero__icon-btn--logo {
-    background: none;
-    border: none;
-    padding: 0;
-}
-
-.hero__icon-btn--logo:hover {
-    background: rgba(18, 51, 63, 0.06);
-    border-radius: var(--radius-md);
-}
-
-.hero__icon-logo {
-    width: 32px;
-    height: 32px;
     display: block;
 }
 
@@ -431,16 +510,6 @@
     font: inherit;
     cursor: pointer;
     padding: 0;
-}
-
-.hero__reply {
-    padding: 0 4px;
-    color: var(--color-teal);
-    min-height: 1.2em;
-}
-
-.hero__reply:empty {
-    display: none;
 }
 
 /*

@@ -107,9 +107,16 @@ final class ShowHomeDashboardTool implements PromptToolInterface
         return null;
     }
 
+    /**
+     * 'home' come frase scorciatoia: serve al pulsante "casa" della
+     * toolbar del prompt (vedi hero.js) per tornare alla home restando
+     * nel meccanismo SPA esistente (window.unoSubmitPrompt), invece di
+     * un link <a href="/"> che ricaricherebbe l'intera pagina perdendo
+     * lo storico dei risultati.
+     */
     public function triggers(): array
     {
-        return [];
+        return ['home', 'torna alla home', 'vai alla home'];
     }
 
     public function execute(array $input): array
@@ -125,6 +132,12 @@ final class ShowHomeDashboardTool implements PromptToolInterface
             $this->buildApprovalQueue(),
             $this->buildAgentPanel(),
         ];
+
+        // Permette a extractUrl() (hero.js) di aggiornare la barra degli
+        // indirizzi su '/' come per qualunque altro risultato che
+        // corrisponde a una pagina vera - altrimenti il tasto indietro
+        // del browser non avrebbe nulla da "disfare" per questo passaggio.
+        $components[0]['url'] = '/';
 
         return $components;
     }

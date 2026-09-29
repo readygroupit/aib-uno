@@ -20,6 +20,11 @@ final class ClaimTableComponent extends AbstractComponent
         return [
             'type' => 'claim-table',
             'title' => $config['title'] ?? '',
+            // Letto da hero.js extractUrl(): permette al prompt di
+            // aggiornare la barra degli indirizzi quando questo risultato
+            // corrisponde a una pagina vera (es. "elenco clienti" chiesto
+            // da un'altra pagina porta davvero su /clienti).
+            'url' => $config['url'] ?? null,
             'createHref' => $config['createHref'] ?? null,
             'createLabel' => $config['createLabel'] ?? null,
             'exportHref' => $config['exportHref'] ?? null,

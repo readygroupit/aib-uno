@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Prompt\Tool;
 
 use App\Core\Container;
+use App\Prompt\PromptConversationalInterface;
 use App\Prompt\PromptToolInterface;
 use App\Repository\CustomerRepository;
 use App\View\Component\ClaimTableComponent;
@@ -26,7 +27,7 @@ use App\View\Component\StatBoxComponent;
  * un reclamo Assilevi, non lo stato generico di una entita' qualunque -
  * vedi STAGE_META qui sotto, l'unica fonte di etichetta/colore/ordine.
  */
-final class ListCustomersTool implements PromptToolInterface
+final class ListCustomersTool implements PromptToolInterface, PromptConversationalInterface
 {
     /**
      * valore stage => [badge variant, ordine nel percorso pratica 1-4].
@@ -108,6 +109,7 @@ final class ListCustomersTool implements PromptToolInterface
 
         return [$this->claimTable->toData([
             'title' => 'Clienti',
+            'url' => '/clienti',
             'createHref' => '/clienti/nuovo',
             'createLabel' => 'Nuovo cliente',
             'exportHref' => '/clienti/esporta',
@@ -116,6 +118,74 @@ final class ListCustomersTool implements PromptToolInterface
             'rows' => $rows,
             'emptyMessage' => 'Nessun cliente. Aggiungine uno per iniziare.',
         ])];
+    }
+
+    /**
+     * Frase reale sul risultato appena calcolato, non un segnaposto -
+     * ricalcola findWithClaimSummary() (stesso motivo del commento su
+     * CustomerRepository: un giro in piu' accettabile ai volumi di una
+     * demo). Chiamata solo quando il match e' locale/gratuito (vedi
+     * PromptController::respondWithTool()), mai da Claude - quello
+     * scrive gia' la propria frase.
+     */
+    public function replySummary(array $input): ?string
+    {
+        $data = $this->customers->findWithClaimSummary();
+        $total = count($data);
+        if ($total === 0) {
+            return 'Non ci sono ancora clienti registrati.';
+        }
+
+        $withDocsIncomplete = 0;
+        $inConciliazione = 0;
+        $companyContacts = [];
+        foreach ($data as $entry) {
+            if ($entry['docsTotal'] > 0 && $entry['docsComplete'] < $entry['docsTotal']) {
+                $withDocsIncomplete++;
+            }
+            if (($entry['case']['stage'] ?? null) === 'in conciliazione') {
+                $inConciliazione++;
+            }
+            $customer = $entry['customer'];
+            $contactName = trim("{$customer->firstName} {$customer->lastName}");
+            if ($customer->companyName !== null && $contactName !== '') {
+                $companyContacts[] = $contactName;
+            }
+        }
+
+        $sentence = $total === 1 ? '1 cliente attivo.' : "{$total} clienti attivi.";
+
+        $parts = [];
+        if ($withDocsIncomplete === 1) {
+            $parts[] = 'per 1 manca ancora un documento';
+        } elseif ($withDocsIncomplete > 1) {
+            $parts[] = "per {$withDocsIncomplete} mancano ancora dei documenti";
+        }
+        if ($inConciliazione === 1) {
+            $parts[] = '1 ha una conciliazione aperta';
+        } elseif ($inConciliazione > 1) {
+            $parts[] = "{$inConciliazione} hanno una conciliazione aperta";
+        }
+        if ($parts !== []) {
+            $sentence .= ' ' . ucfirst(implode(' e ', $parts)) . '.';
+        }
+
+        if (count($companyContacts) === 1) {
+            $sentence .= " {$companyContacts[0]} e' l'unica con pratica aziendale.";
+        } elseif (count($companyContacts) > 1) {
+            $sentence .= ' ' . count($companyContacts) . ' hanno una pratica aziendale.';
+        }
+
+        return $sentence;
+    }
+
+    public function followUpSuggestions(): array
+    {
+        return [
+            'Chi ha documenti mancanti?',
+            'Clienti sullo stesso volo',
+            'Pratiche respinte da valutare',
+        ];
     }
 
     /** @param list<array> $data vedi CustomerRepository::findWithClaimSummary() */

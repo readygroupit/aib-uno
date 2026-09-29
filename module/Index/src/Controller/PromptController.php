@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Index\Controller;
 
 use App\Controller\AuthController;
+use App\Prompt\PromptConversationalInterface;
 use App\Prompt\PromptToolInterface;
 use App\Prompt\PromptToolRegistry;
 use App\Service\AuthService;
@@ -20,7 +21,7 @@ final class PromptController extends AuthController
         $context = is_array($body['context'] ?? null) ? $body['context'] : [];
 
         if ($message === '') {
-            $this->json(['reply' => 'Scrivi o pronuncia una richiesta.', 'components' => [], 'history' => $history]);
+            $this->json(['reply' => 'Scrivi o pronuncia una richiesta.', 'components' => [], 'suggestions' => [], 'history' => $history]);
             return;
         }
 
@@ -60,12 +61,18 @@ final class PromptController extends AuthController
         try {
             $outcome = $claude->converse($message, $history, $context);
         } catch (\Throwable $e) {
-            $this->json(['reply' => "Errore nel contattare Claude: {$e->getMessage()}", 'components' => [], 'history' => $history], 500);
+            $this->json([
+                'reply' => "Non sono riuscito a contattare Claude ({$e->getMessage()}). Riprova tra poco, oppure riformula la richiesta usando una delle frasi che conosco a memoria (es. \"elenco clienti\", \"lista pratiche\").",
+                'components' => [],
+                'suggestions' => [],
+                'history' => $history,
+            ], 500);
             return;
         }
 
         $history[] = ['role' => 'user', 'content' => $message];
         $components = [];
+        $suggestions = [];
         $reply = $outcome['reply'];
 
         if ($outcome['toolName'] !== null) {
@@ -77,12 +84,21 @@ final class PromptController extends AuthController
             } else {
                 $components = $result['components'];
                 $reply ??= '';
+                if ($tool instanceof PromptConversationalInterface) {
+                    $suggestions = $tool->followUpSuggestions();
+                }
             }
+        } elseif ($reply === null || trim($reply) === '') {
+            // Claude non ha scelto nessun tool ED e' rimasto senza niente
+            // da dire: e' il caso "non ho capito la richiesta" - una
+            // bolla vuota sotto l'input sarebbe peggio di un errore
+            // esplicito (segnalato dall'utente).
+            $reply = "Non sono sicuro di aver capito. Puoi riformulare la richiesta, magari con un nome piu' preciso (es. \"apri pratica 12\" invece di \"quella pratica\")?";
         }
 
         $history[] = ['role' => 'assistant', 'content' => $reply ?? ''];
 
-        $this->json(['reply' => $reply, 'components' => $components, 'history' => $history]);
+        $this->json(['reply' => $reply, 'components' => $components, 'suggestions' => $suggestions, 'history' => $history]);
     }
 
     private function matchLocalTool(PromptToolRegistry $registry, string $message): ?PromptToolInterface
@@ -169,12 +185,25 @@ final class PromptController extends AuthController
     private function respondWithTool(PromptToolInterface $tool, array $input, string $message, array $history): void
     {
         $result = $this->executeToolWithPermission($tool, $input);
-        $reply = $result['denied'] ? 'Non hai il permesso per eseguire questa richiesta.' : '';
+        $suggestions = [];
+
+        if ($result['denied']) {
+            $reply = 'Non hai il permesso per eseguire questa richiesta.';
+        } else {
+            // Nessuna chiamata Claude qui (match locale/verbo contestuale,
+            // gratuito) - la frase viene da PromptConversationalInterface
+            // se il tool la implementa, altrimenti resta vuota (il client
+            // non mostra una bolla assistente senza testo, vedi hero.js).
+            $reply = $tool instanceof PromptConversationalInterface ? ($tool->replySummary($input) ?? '') : '';
+            if ($tool instanceof PromptConversationalInterface) {
+                $suggestions = $tool->followUpSuggestions();
+            }
+        }
 
         $history[] = ['role' => 'user', 'content' => $message];
         $history[] = ['role' => 'assistant', 'content' => $reply];
 
-        $this->json(['reply' => $reply, 'components' => $result['components'], 'history' => $history]);
+        $this->json(['reply' => $reply, 'components' => $result['components'], 'suggestions' => $suggestions, 'history' => $history]);
     }
 
     /**

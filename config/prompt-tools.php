@@ -38,11 +38,17 @@ use App\Prompt\Tool\ListRefundsTool;
 use App\Prompt\Tool\ListServicesTool;
 use App\Prompt\Tool\ListTasksTool;
 use App\Prompt\Tool\ListUsersTool;
+use App\Prompt\Tool\ShowHomeDashboardTool;
 use App\Prompt\Tool\ShowMenuTool;
 use App\Prompt\Tool\ShowReportTool;
 use App\Prompt\Tool\ShowWizardTool;
 
 return static function (PromptToolRegistry $registry): void {
+    // Prima usato solo da IndexController per la home vera e propria -
+    // registrato anche qui perche' il pulsante "casa" della toolbar del
+    // prompt (vedi hero.js) lo raggiunge tramite window.unoSubmitPrompt
+    // ('home'), che passa sempre da matchLocalTool() su questo registro.
+    $registry->register(ShowHomeDashboardTool::class);
     $registry->register(ShowMenuTool::class);
     $registry->register(ShowWizardTool::class);
     $registry->register(ListUsersTool::class);

@@ -11,6 +11,7 @@ import './components/profile-header.js';
 import './components/permission-summary.js';
 import './components/activity-feed.js';
 import './components/profile-layout.js';
+import './components/claim-table.js';
 
 function boot() {
     const root = document.getElementById('page-root');

@@ -159,6 +159,16 @@ return [
         'action' => 'markContacted',
     ],
 
+    // Deve precedere entityRoutes('customers', ...): quella registra
+    // '/clienti/:id' (customers-edit), che essendo un pattern generico
+    // ([^/]+) matcherebbe anche 'esporta' come se fosse un id - Router::
+    // match() e' first-match-wins per ordine di dichiarazione, non per
+    // specificita' del pattern (vedi Router::compile()).
+    'customers-export' => [
+        'path' => '/clienti/esporta',
+        'controller' => CustomersController::class,
+        'action' => 'export',
+    ],
     ...entityRoutes('customers', '/clienti', CustomersController::class),
     ...entityRoutes('tasks', '/attivita', TasksController::class),
     ...entityRoutes('appointments', '/appuntamenti', AppointmentsController::class),

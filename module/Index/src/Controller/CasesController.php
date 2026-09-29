@@ -46,9 +46,14 @@ final class CasesController extends AbstractEntityController
         return 'Modifica pratica';
     }
 
+    /**
+     * Vocabolario allineato a ListCustomersTool::STAGE_META (5 stati del
+     * ciclo di vita reale di un reclamo, non piu' "non avviata" generico) -
+     * una pratica nuova comincia sempre dalla raccolta documenti.
+     */
     protected function defaultsOnCreate(): array
     {
-        return ['stage' => 'non avviata'];
+        return ['stage' => 'raccolta documenti'];
     }
 
     protected function createdMessage(): string

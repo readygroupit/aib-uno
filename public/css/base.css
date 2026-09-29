@@ -236,6 +236,28 @@ a {
     color: var(--color-petrol);
 }
 
+/*
+ * Il celestino non e' un colore nostro: e' l'autofill del browser
+ * (Chrome/Edge tingono di blu i campi che hanno compilato da soli), che
+ * ignora 'background' normale - serve questo trucco standard (un inset
+ * enorme dello stesso bianco della pillola) per farlo sparire, non un
+ * bug nel nostro CSS (segnalato dall'utente su uno screenshot).
+ */
+.auth-field__input:-webkit-autofill,
+.auth-field__input:-webkit-autofill:hover,
+.auth-field__input:-webkit-autofill:focus,
+.auth-field__input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #fff inset;
+    -webkit-text-fill-color: var(--color-petrol);
+    caret-color: var(--color-petrol);
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+.auth-field__input:autofill {
+    box-shadow: 0 0 0 1000px #fff inset;
+    color: var(--color-petrol);
+}
+
 .auth-field__toggle {
     flex: none;
     height: 26px;

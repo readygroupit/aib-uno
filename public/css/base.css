@@ -65,16 +65,31 @@ a {
     gap: 18px;
 }
 
-/* Pagine di autenticazione (login/password dimenticata/reset): la card
-   deve stare al centro dello schermo, non ancorata in alto (segnalato
-   dall'utente) - 64px = padding verticale di .page-stack (32px sopra +
-   32px sotto), tolto dall'altezza cosi' il centraggio e' rispetto allo
-   spazio visibile davvero, non alla viewport intera. */
+/*
+ * Pagine di autenticazione. .auth-shell esce dal max-width/padding di
+ * .page-stack ("breakout" CSS standard: width:100vw + margin negativo
+ * pari a meta' della differenza fra viewport e contenitore - funziona a
+ * prescindere da quanto e' stretto/largo lo schermo, non serve conoscere
+ * la larghezza reale di .page-stack) perche' sul login (vedi
+ * .auth-login-card/.auth-showcase sotto) serve tutta la larghezza per il
+ * pannello a due colonne. password-dimenticata/reset restano invece la
+ * singola card centrata di sempre (.auth-card), che il breakout non
+ * disturba: senza .auth-showcase la riga flex ha comunque un solo
+ * elemento e resta centrata su tutta la larghezza.
+ * Sfondo lasciato trasparente qui: lo sfondo radiale di body::before qui
+ * sopra copre gia' tutta la viewport, un secondo sfondo sarebbe stonato.
+ */
 .auth-shell {
-    min-height: calc(100vh - 64px);
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    margin-top: -32px;
+    margin-bottom: -32px;
+    min-height: 100vh;
+    padding: 18px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    gap: 18px;
+    box-sizing: border-box;
 }
 
 .auth-card {
@@ -86,15 +101,350 @@ a {
     text-align: center;
 }
 
-/* Solo sul login (segnalato dall'utente: il pannello a due colonne col
-   brand petrol era di troppo - tornare alla card singola di prima, al
-   massimo un logo sopra "Accedi"). Larghezza fissa con altezza libera:
-   e' un lockup orizzontale (testo+icona), non un'icona quadrata. */
-.auth-card__logo {
+/* --- Solo login: card di vetro a due colonne (vedi .auth-showcase) --- */
+
+.auth-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+}
+
+.auth-main__inner {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.auth-login-card {
+    border-radius: 24px;
+    padding: 32px 30px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    background: rgba(251, 250, 248, 0.72);
+    backdrop-filter: blur(24px) saturate(1.3);
+    -webkit-backdrop-filter: blur(24px) saturate(1.3);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 40px 80px -50px rgba(18, 51, 63, 0.5), 0 1px 2px rgba(18, 51, 63, 0.05);
+}
+
+.auth-login-card__header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+}
+
+/* Lockup orizzontale (icona+testo), altezza libera: non forzare una
+   larghezza fissa come si faceva prima con l'icona quadrata di Uno. */
+.auth-login-card__logo {
     display: block;
-    width: 170px;
-    height: auto;
-    margin: 0 auto 20px;
+    height: 44px;
+    width: auto;
+}
+
+.auth-login-card__title {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.6px;
+}
+
+.auth-login-card__tagline {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(18, 51, 63, 0.64);
+}
+
+.auth-login-card__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.auth-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.auth-field__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(18, 51, 63, 0.8);
+}
+
+.auth-field__label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.auth-field__forgot {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(18, 51, 63, 0.62);
+    text-decoration: none;
+}
+
+.auth-field__forgot:hover {
+    color: var(--color-petrol);
+}
+
+/* Bordo/ombra cambiano al focus di CHI STA DENTRO (:focus-within), non
+   serve JS per replicare lo stato attivo/non attivo. */
+.auth-field__box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 46px;
+    padding: 0 8px 0 14px;
+    border-radius: 13px;
+    background: #fff;
+    border: 1px solid rgba(18, 51, 63, 0.14);
+    box-shadow: inset 0 1px 2px rgba(18, 51, 63, 0.04);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-field__box:focus-within {
+    border-color: var(--color-petrol);
+    box-shadow: 0 0 0 4px rgba(18, 51, 63, 0.08);
+}
+
+.auth-field__icon {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    color: rgba(18, 51, 63, 0.5);
+    display: block;
+}
+
+.auth-field__input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font: 400 14px var(--font-body);
+    color: var(--color-petrol);
+}
+
+.auth-field__toggle {
+    flex: none;
+    height: 26px;
+    padding: 0 9px;
+    border-radius: 8px;
+    border: 1px solid rgba(18, 51, 63, 0.1);
+    background: rgba(18, 51, 63, 0.04);
+    font: 600 11px var(--font-heading);
+    color: rgba(18, 51, 63, 0.7);
+    cursor: pointer;
+}
+
+.auth-error {
+    margin: 0;
+    padding: 9px 12px;
+    border-radius: 11px;
+    font-size: 12px;
+    color: #8a2f22;
+    background: #f6e6e2;
+    border: 1px solid rgba(162, 59, 44, 0.25);
+}
+
+/* Checkbox vera (input reale, non un bottone che finge di esserlo -
+   serializza davvero 'remember' nel POST) ma nascosta visivamente: il
+   quadratino disegnato e' il fratello successivo, pilotato con :checked
+   ~ invece che con classi JS. */
+.auth-remember {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+    font: 500 12.5px var(--font-body);
+    color: rgba(18, 51, 63, 0.75);
+}
+
+.auth-remember__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.auth-remember__box {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 6px;
+    border: 1px solid rgba(18, 51, 63, 0.25);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.auth-remember__check {
+    width: 10px;
+    height: 10px;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.1s;
+}
+
+.auth-remember__input:checked ~ .auth-remember__box {
+    background: var(--color-petrol);
+    border-color: var(--color-petrol);
+}
+
+.auth-remember__input:checked ~ .auth-remember__box .auth-remember__check {
+    opacity: 1;
+}
+
+.auth-remember__input:focus-visible ~ .auth-remember__box {
+    box-shadow: 0 0 0 3px rgba(18, 51, 63, 0.18);
+}
+
+/* .btn.auth-submit (due classi, non una) - kit.css con le regole base
+   di .btn carica DOPO base.css: a parita' di specificita' vincerebbe
+   lui per ordine nel foglio, qui serve scavalcarlo davvero. */
+.btn.auth-submit {
+    width: 100%;
+    height: 46px;
+    border-radius: 13px;
+    font-size: 14px;
+}
+
+.auth-trust {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(18, 51, 63, 0.08);
+    font-size: 11.5px;
+    color: rgba(18, 51, 63, 0.58);
+}
+
+.auth-trust__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3d6b4f;
+    box-shadow: 0 0 0 3px rgba(61, 107, 79, 0.15);
+    display: block;
+}
+
+.auth-copyright {
+    margin: 0;
+    text-align: center;
+    font-size: 11.5px;
+    color: rgba(18, 51, 63, 0.5);
+}
+
+.auth-copyright a {
+    color: rgba(18, 51, 63, 0.62);
+}
+
+/* --- Pannello destro: proposta di valore, non un modulo funzionale -
+   sparisce sotto i 960px (vedi la media query in fondo), il form basta
+   da solo su schermi stretti. --- */
+.auth-showcase {
+    flex: 1.1;
+    min-width: 0;
+    max-width: 760px;
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+    padding: 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 40px;
+    background:
+        radial-gradient(600px 420px at 85% 105%, rgba(229, 201, 121, 0.45), transparent 65%),
+        radial-gradient(520px 420px at 0% 0%, rgba(95, 138, 134, 0.4), transparent 60%),
+        linear-gradient(160deg, #1a4250, #12333f 55%, #0d2833);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 40px 80px -50px rgba(18, 51, 63, 0.7);
+}
+
+.auth-showcase__badge {
+    align-self: flex-start;
+    padding: 5px 11px;
+    border-radius: 9px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    background: rgba(229, 201, 121, 0.1);
+    border: 1px solid rgba(229, 201, 121, 0.3);
+}
+
+.auth-showcase__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    max-width: 520px;
+}
+
+.auth-showcase__heading {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 40px;
+    line-height: 1.08;
+    font-weight: 600;
+    letter-spacing: -1.4px;
+    color: #fff;
+}
+
+.auth-showcase__text {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.74);
+}
+
+.auth-showcase__pillars {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.auth-showcase__pillar {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.auth-showcase__pillar-title {
+    font: 600 13px var(--font-heading);
+    color: #fff;
+}
+
+.auth-showcase__pillar-text {
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.64);
+}
+
+@media (max-width: 960px) {
+    .auth-showcase {
+        display: none;
+    }
 }
 
 .card {

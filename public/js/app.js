@@ -1,4 +1,5 @@
 import { mountPromptShell } from './components/hero.js';
+import './auth.js';
 import './components/data-table.js';
 import './components/stat-box.js';
 import './components/menu-grid.js';

@@ -20,11 +20,41 @@ final class LoginController extends AbstractController
         }
 
         $error = null;
+        // Di default spuntato (comodo per la maggior parte degli accessi),
+        // ma dopo un tentativo fallito riflette cio' che era stato inviato
+        // invece di ripristinare lo stato iniziale.
+        $remember = true;
         if ($this->request->getMethod() === 'POST') {
             $identifier = (string) $this->request->get('identifier', '');
             $password = (string) $this->request->get('password', '');
+            $remember = (string) $this->request->get('remember', '') !== '';
 
             if ($auth->login($identifier, $password) !== null) {
+                // "Resta connesso": durata vera del cookie di sessione (30
+                // giorni), non solo un checkbox che non fa nulla.
+                // session_set_cookie_params() non e' utilizzabile qui: PHP
+                // lo vieta a sessione gia' attiva (public/index.php chiama
+                // session_start() prima ancora di arrivare a questo
+                // controller) - genera solo un warning silenzioso, il
+                // cookie resterebbe quello "di sessione" di sempre.
+                // setcookie() invece rimanda lo STESSO cookie di sessione
+                // (stesso nome, stesso id appena rigenerato da login()) con
+                // una scadenza esplicita: il browser tiene per buono
+                // l'ultimo Set-Cookie per quel nome, questo sovrascrive
+                // quello automatico di session_start(). Senza spunta resta
+                // il default (cookie che scade alla chiusura del browser).
+                if ($remember) {
+                    $params = session_get_cookie_params();
+                    setcookie(session_name(), session_id(), [
+                        'expires' => time() + 60 * 60 * 24 * 30,
+                        'path' => $params['path'] ?: '/',
+                        'domain' => $params['domain'],
+                        'secure' => $params['secure'],
+                        'httponly' => $params['httponly'],
+                        'samesite' => $params['samesite'] ?: 'Lax',
+                    ]);
+                }
+
                 $this->redirect('/');
 
                 return '';
@@ -33,7 +63,7 @@ final class LoginController extends AbstractController
             $error = 'Credenziali non valide.';
         }
 
-        return $this->render('login/login', ['title' => 'Accedi', 'error' => $error]);
+        return $this->render('login/login', ['title' => 'Accedi', 'error' => $error, 'remember' => $remember]);
     }
 
     public function logoutAction(): void

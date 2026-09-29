@@ -1,20 +1,76 @@
 <div class="auth-shell">
-<section class="card auth-card">
-    <img class="auth-card__logo" src="<?= $this->asset('/img/aibrains.png') ?>" alt="aiBrains">
-    <h1 class="card__title"><?= $this->e($title) ?></h1>
-    <?php if ($error): ?><p class="field__help" style="color: var(--color-danger);"><?= $this->e($error) ?></p><?php endif; ?>
-    <form method="post" action="/login" class="field-stack">
+  <main class="auth-main">
+    <div class="auth-main__inner">
+      <form method="post" action="/login" class="auth-login-card">
         <?= $this->csrfField() ?>
-        <div class="field">
-            <label class="field__label" for="identifier">Username o email</label>
-            <input class="field__input" type="text" id="identifier" name="identifier" required>
+        <div class="auth-login-card__header">
+            <img class="auth-login-card__logo" src="<?= $this->asset('/img/aibrains.png') ?>" alt="aiBrains">
+            <div>
+                <h1 class="auth-login-card__title">Bentornato</h1>
+                <p class="auth-login-card__tagline">Accedi al tuo spazio di lavoro per continuare.</p>
+            </div>
         </div>
-        <div class="field">
-            <label class="field__label" for="password">Password</label>
-            <input class="field__input" type="password" id="password" name="password" required>
+
+        <div class="auth-login-card__fields">
+            <label class="auth-field">
+                <span class="auth-field__label">Username o email</span>
+                <span class="auth-field__box">
+                    <!-- Stesse icone (Font Awesome 7 Pro regular) di public/js/icons.js - qui inline perche' questa pagina e' renderizzata solo lato server, senza il registro icone JS. -->
+                    <svg class="auth-field__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M144 128a80 80 0 1 1 160 0 80 80 0 1 1 -160 0zm208 0a128 128 0 1 0 -256 0 128 128 0 1 0 256 0zM48 480c0-70.7 57.3-128 128-128l96 0c70.7 0 128 57.3 128 128l0 8c0 13.3 10.7 24 24 24s24-10.7 24-24l0-8c0-97.2-78.8-176-176-176l-96 0C78.8 304 0 382.8 0 480l0 8c0 13.3 10.7 24 24 24s24-10.7 24-24l0-8z"/></svg>
+                    <input class="auth-field__input" type="text" id="identifier" name="identifier" placeholder="nome@azienda.it" autocomplete="username" required>
+                </span>
+            </label>
+            <label class="auth-field">
+                <span class="auth-field__label-row">
+                    <span class="auth-field__label">Password</span>
+                    <a class="auth-field__forgot" href="/password/dimenticata">Password dimenticata?</a>
+                </span>
+                <span class="auth-field__box">
+                    <svg class="auth-field__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="currentColor" d="M112 96l0 64 160 0 0-64c0-44.2-35.8-80-80-80s-80 35.8-80 80zM64 160l0-64C64 25.3 121.3-32 192-32S320 25.3 320 96l0 64c35.3 0 64 28.7 64 64l0 224c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 224c0-35.3 28.7-64 64-64zm208 48l-160 0 0 0-48 0 0 0c-8.8 0-16 7.2-16 16l0 224c0 8.8 7.2 16 16 16l256 0c8.8 0 16-7.2 16-16l0-224c0-8.8-7.2-16-16-16l0 0-48 0 0 0z"/></svg>
+                    <input class="auth-field__input" type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+                    <button type="button" class="auth-field__toggle" data-auth-password-toggle="password">Mostra</button>
+                </span>
+            </label>
+            <?php if ($error): ?><p class="auth-error"><?= $this->e($error) ?></p><?php endif; ?>
+            <label class="auth-remember">
+                <input class="auth-remember__input" type="checkbox" name="remember" <?php if ($remember): ?>checked<?php endif; ?>>
+                <span class="auth-remember__box">
+                    <svg class="auth-remember__check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M438 68.5c10.8 7.7 13.2 22.7 5.5 33.5l-264 368c-4.1 5.7-10.5 9.4-17.5 9.9S148 478 143 473L7 337c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0L157 419 404.5 74c7.7-10.8 22.7-13.2 33.5-5.5z"/></svg>
+                </span>
+                Resta connesso su questo dispositivo
+            </label>
         </div>
-        <button class="btn btn--primary" type="submit" style="width: 100%;">Accedi</button>
-    </form>
-    <p style="margin-top: 16px; text-align: center;"><a href="/password/dimenticata">Password dimenticata?</a></p>
-</section>
+
+        <button class="btn btn--primary auth-submit" type="submit">Accedi</button>
+
+        <div class="auth-trust">
+            <span class="auth-trust__dot"></span>
+            Ambiente privato · connessione cifrata
+        </div>
+      </form>
+      <p class="auth-copyright">© <?= date('Y') ?> aiBrains · <a href="#">Privacy</a> · <a href="#">Assistenza</a></p>
+    </div>
+  </main>
+
+  <aside class="auth-showcase">
+    <span class="auth-showcase__badge">Private AI</span>
+    <div class="auth-showcase__copy">
+        <h2 class="auth-showcase__heading">Agenti intelligenti che lavorano con te, non al posto tuo.</h2>
+        <p class="auth-showcase__text">Lead, pratiche e documenti in un unico spazio. Ogni azione importante passa dalla tua approvazione.</p>
+    </div>
+    <div class="auth-showcase__pillars">
+        <div class="auth-showcase__pillar">
+            <span class="auth-showcase__pillar-title">Dati privati</span>
+            <span class="auth-showcase__pillar-text">Nessun dato esce dal tuo ambiente.</span>
+        </div>
+        <div class="auth-showcase__pillar">
+            <span class="auth-showcase__pillar-title">Human in the loop</span>
+            <span class="auth-showcase__pillar-text">Decidi tu cosa approvare.</span>
+        </div>
+        <div class="auth-showcase__pillar">
+            <span class="auth-showcase__pillar-title">Tracciabile</span>
+            <span class="auth-showcase__pillar-text">Ogni azione resta nel registro.</span>
+        </div>
+    </div>
+  </aside>
 </div>

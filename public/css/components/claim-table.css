@@ -135,8 +135,8 @@
 }
 
 .claim-table__search .icon svg {
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
     color: rgba(18, 51, 63, 0.5);
     display: block;
 }
@@ -472,8 +472,8 @@
 }
 
 .claim-detail__close .icon svg {
-    width: 11px;
-    height: 11px;
+    width: 13px;
+    height: 13px;
     color: var(--color-petrol);
     display: block;
 }

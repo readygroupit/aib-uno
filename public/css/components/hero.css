@@ -65,8 +65,8 @@
 }
 
 .results-panel__back .icon svg {
-    width: 15px;
-    height: 15px;
+    width: 18px;
+    height: 18px;
     color: #fff;
     display: block;
 }
@@ -193,8 +193,8 @@
 }
 
 .hero__suggestion-chip .icon svg {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
     flex: none;
     color: var(--color-lilac);
     display: block;
@@ -443,8 +443,8 @@
 }
 
 .hero__profile-menu-item .icon svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     display: block;
     flex: 0 0 auto;
 }
@@ -468,8 +468,8 @@
 }
 
 .hero__icon-btn .icon svg {
-    width: 15px;
-    height: 15px;
+    width: 18px;
+    height: 18px;
     display: block;
 }
 
@@ -634,8 +634,8 @@
 }
 
 .menu-grid__search-wrap .icon svg {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
     color: rgba(18, 51, 63, 0.45);
     display: block;
 }
@@ -762,8 +762,8 @@
 }
 
 .menu-grid__item-arrow .icon svg {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
     display: block;
 }
 

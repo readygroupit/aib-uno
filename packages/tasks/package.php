@@ -53,6 +53,7 @@ return [
                     'defaultRequired' => true,
                     'format' => 'integer',
                     'references' => ['table' => 'users', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/users/cerca'],
                 ],
                 'completed_at' => [
                     'sql' => 'DATETIME',

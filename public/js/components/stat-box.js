@@ -85,7 +85,9 @@ function renderStatBox(data) {
         }, [data.delta]));
     }
 
-    const className = 'card stat-box' + (data.href ? ' stat-box--clickable' : '');
+    const className = 'card stat-box'
+        + (data.href ? ' stat-box--clickable' : '')
+        + (data.hero ? ' stat-box--hero stat-box--hero-' + (data.dotColor || 'petrol') : '');
     const section = el(data.href ? 'a' : 'section', { className, href: data.href || null }, [
         header,
         el('div', { className: 'stat-box__value-row' }, valueChildren),

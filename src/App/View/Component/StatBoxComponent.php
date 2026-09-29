@@ -37,6 +37,13 @@ final class StatBoxComponent extends AbstractComponent
             // della card) invece della linea di default - vedi
             // stat-box.js buildBarSparkline().
             'sparklineStyle' => $config['sparklineStyle'] ?? 'line',
+            // Sfondo tinto nel colore della card invece del solito bianco
+            // (dotColor riusato, non un colore a parte) - un tocco per
+            // card "protagonista" di una schermata (es. il totale di una
+            // lista), non per ogni card indiscriminatamente: vedi
+            // AbstractListEntityTool::execute(), l'unico chiamante che lo
+            // accende di default oggi.
+            'hero' => (bool) ($config['hero'] ?? false),
         ];
     }
 }

@@ -83,7 +83,8 @@ final class ListUsersTool implements PromptToolInterface
             'label' => 'Totale utenti',
             'value' => (string) $result['total'],
             'comparison' => 'attivi, esclusi quelli eliminati',
-            'sparkline' => [3, 3, 4, 4, 4, 5, $result['total']],
+            'hero' => true,
+            'dotColor' => \App\Support\Sections::color($this->menuSection()),
         ]);
 
         $table = $this->dataTable->toData([

@@ -116,6 +116,9 @@
 }
 
 .wizard__section-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
@@ -132,6 +135,23 @@
 .wizard__section-title:first-child {
     margin-top: 0;
 }
+
+/* Un accento minimo (un pallino, non un blocco di colore) per
+   distinguere le sezioni a colpo d'occhio - stessa tassonomia del menu,
+   coerente col resto ma senza ripetere l'header tinto gia' scartato qui
+   sopra: qui il colore resta un dettaglio, non l'elemento dominante. */
+.wizard__section-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-petrol);
+    flex-shrink: 0;
+}
+
+.wizard__section-dot--moss { background: var(--color-moss); }
+.wizard__section-dot--lilac { background: var(--color-lilac); }
+.wizard__section-dot--brass { background: var(--color-brass); }
+.wizard__section-dot--teal { background: var(--color-teal); }
 
 .wizard__list {
     display: flex;

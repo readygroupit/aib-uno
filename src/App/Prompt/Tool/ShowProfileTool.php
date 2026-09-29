@@ -233,7 +233,7 @@ final class ShowProfileTool implements PromptToolInterface
         ));
 
         return [
-            $statBox->toData(['label' => 'Contatti assegnati', 'value' => (string) $leads->count(['assigned_user_id' => $userId]), 'href' => '/contatti', 'dotColor' => 'moss']),
+            $statBox->toData(['label' => 'Contatti assegnati', 'value' => (string) $leads->count(['assigned_user_id' => $userId]), 'href' => '/contatti', 'dotColor' => 'moss', 'hero' => true]),
             $statBox->toData(['label' => 'Pratiche assegnate', 'value' => (string) $cases->count(['assigned_user_id' => $userId]), 'href' => '/pratiche', 'dotColor' => 'lilac']),
             $statBox->toData(['label' => 'Attivita\' da completare', 'value' => (string) $openTasks, 'href' => '/attivita', 'dotColor' => 'brass']),
         ];

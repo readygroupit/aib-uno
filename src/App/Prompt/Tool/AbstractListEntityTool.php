@@ -7,6 +7,7 @@ namespace App\Prompt\Tool;
 use App\Core\Container;
 use App\Prompt\PromptToolInterface;
 use App\Repository\AbstractRepository;
+use App\Support\Sections;
 use App\View\Component\DataTableComponent;
 use App\View\Component\StatBoxComponent;
 
@@ -116,11 +117,18 @@ abstract class AbstractListEntityTool implements PromptToolInterface
         $result = $this->repository->paginate($page, $this->perPage(), [], $this->orderBy());
         $rows = array_map(static fn ($model) => $model->toDisplayArray(), $result['items']);
 
+        // 'hero' + colore di sezione invece del solito bianco: e' la
+        // card protagonista di una lista, e il colore corrisponde
+        // davvero al dominio (stessa tassonomia del menu), non e' scelto
+        // a caso - vedi App\Support\Sections. Ogni pacchetto costruito
+        // su questa base lo ottiene gratis, nessuna modifica per
+        // pacchetto necessaria.
         $stats = $this->statBox->toData([
             'label' => $this->statLabel(),
             'value' => (string) $result['total'],
             'comparison' => $this->statComparison(),
-            'sparkline' => [3, 3, 4, 4, 4, 5, $result['total']],
+            'hero' => true,
+            'dotColor' => Sections::color($this->menuSection()),
         ]);
 
         $table = $this->dataTable->toData([

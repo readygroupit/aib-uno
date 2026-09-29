@@ -91,19 +91,19 @@ final class ShowReportTool implements PromptToolInterface
         $accepted = $this->refunds->sumAcceptedAmount();
 
         return [
+            $this->stat('Valore rimborsi accettati', number_format($accepted, 2, ',', '.') . ' €', 'somma di tutte le pratiche', '/rimborsi', 'teal', true),
             $this->stat('Pratiche aperte', (string) $this->cases->count(), 'attive, escluse quelle eliminate', '/pratiche', 'lilac'),
             $this->stat('Nuovi contatti', (string) $this->leads->countCreatedSince($weekAgo), 'ultimi 7 giorni', '/contatti', 'moss'),
             $this->stat('Comunicazioni inviate', (string) $this->communications->countSentSince($weekAgo), 'ultimi 7 giorni', '/comunicazioni', 'moss'),
             $this->stat('Attivita\' in scadenza', (string) $this->tasks->countDueBy($threeDaysAhead), 'non completate, entro 3 giorni', '/attivita', 'lilac'),
             $this->stat('Duplicati contatti sospetti', (string) count($this->leads->findDuplicateCandidates(200)), 'da rivedere in "Duplicati contatti"', '/contatti/duplicati', 'brass'),
-            $this->stat('Valore rimborsi accettati', number_format($accepted, 2, ',', '.') . ' €', 'somma di tutte le pratiche', '/rimborsi', 'teal'),
             $this->breakdown('Pratiche per stato', $this->cases->countGroupedBy('stage')),
             $this->breakdown('Documenti per stato completezza', $this->documentRequests->countGroupedBy('completeness_status')),
             $this->breakdown('Rimborsi per stato pagamento', $this->refunds->countGroupedBy('payment_status')),
         ];
     }
 
-    private function stat(string $label, string $value, string $comparison, string $href, string $dotColor): array
+    private function stat(string $label, string $value, string $comparison, string $href, string $dotColor, bool $hero = false): array
     {
         return $this->statBox->toData([
             'label' => $label,
@@ -111,6 +111,7 @@ final class ShowReportTool implements PromptToolInterface
             'comparison' => $comparison,
             'href' => $href,
             'dotColor' => $dotColor,
+            'hero' => $hero,
         ]);
     }
 

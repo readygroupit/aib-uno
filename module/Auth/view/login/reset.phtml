@@ -1,4 +1,10 @@
 <div class="auth-shell">
+<div class="auth-brand">
+    <img class="auth-brand__logo" src="<?= $this->asset('/img/uno-icon-circle-transparent.png') ?>" alt="">
+    <h1 class="auth-brand__title">Uno</h1>
+    <p class="auth-brand__tagline">Il livello intelligente che collega contatti, pratiche, documenti e rimborsi in un unico processo tracciabile.</p>
+</div>
+<div class="auth-form-panel">
 <section class="card auth-card">
     <h1 class="card__title"><?= $this->e($title) ?></h1>
     <?php if ($done): ?>
@@ -15,4 +21,5 @@
         </form>
     <?php endif; ?>
 </section>
+</div>
 </div>

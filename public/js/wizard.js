@@ -40,18 +40,28 @@ function buildEntry(label, description) {
 function renderWizard(data) {
     closeWizard();
 
-    const capabilities = (data.capabilities || []).map((c) => buildEntry(c.label, c.description));
-    const fieldHelp = (data.fieldHelp || []).map((f) => buildEntry(f.label, f.help));
-
+    const groups = data.groups || [];
+    const allEntries = [];
     const body = el('div', { className: 'wizard__body' });
 
-    body.appendChild(el('h3', { className: 'wizard__section-title' }, ['Cosa puoi fare qui']));
-    body.appendChild(
-        capabilities.length
-            ? el('div', { className: 'wizard__list' }, capabilities.map((c) => c.node))
-            : el('p', { className: 'wizard__empty' }, ['Nessuna funzione disponibile con i permessi attuali.'])
-    );
+    groups.forEach((group) => {
+        const entries = group.items.map((c) => buildEntry(c.label, c.description));
+        allEntries.push(...entries);
 
+        body.appendChild(
+            el('h3', { className: 'wizard__section-title' }, [
+                el('span', { className: 'wizard__section-dot wizard__section-dot--' + (group.dotColor || 'petrol') }),
+                group.label,
+            ])
+        );
+        body.appendChild(el('div', { className: 'wizard__list' }, entries.map((c) => c.node)));
+    });
+
+    if (groups.length === 0) {
+        body.appendChild(el('p', { className: 'wizard__empty' }, ['Nessuna funzione disponibile con i permessi attuali.']));
+    }
+
+    const fieldHelp = (data.fieldHelp || []).map((f) => buildEntry(f.label, f.help));
     if (fieldHelp.length) {
         body.appendChild(el('h3', { className: 'wizard__section-title' }, ['Campi da conoscere']));
         body.appendChild(el('div', { className: 'wizard__list' }, fieldHelp.map((f) => f.node)));
@@ -64,7 +74,7 @@ function renderWizard(data) {
     });
     searchInput.addEventListener('input', () => {
         const query = searchInput.value.trim().toLowerCase();
-        [...capabilities, ...fieldHelp].forEach((entry) => {
+        [...allEntries, ...fieldHelp].forEach((entry) => {
             entry.node.style.display = entry.haystack.includes(query) ? '' : 'none';
         });
     });

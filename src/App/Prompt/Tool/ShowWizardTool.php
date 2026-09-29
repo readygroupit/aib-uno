@@ -9,6 +9,7 @@ use App\Package\PackageManifest;
 use App\Prompt\PromptToolInterface;
 use App\Prompt\PromptToolRegistry;
 use App\Service\AuthService;
+use App\Support\Sections;
 use App\View\Component\WizardComponent;
 
 /**
@@ -48,6 +49,9 @@ final class ShowWizardTool implements PromptToolInterface
         'edit_permission' => 'Modifica permesso',
         'edit_lead' => 'Modifica contatto',
         'install_package' => 'Installa un pacchetto',
+        'show_home_dashboard' => 'Cruscotto home',
+        'show_profile' => 'Il mio profilo',
+        'edit_communication' => 'Modifica comunicazione',
     ];
 
     private PromptToolRegistry $registry;
@@ -110,11 +114,21 @@ final class ShowWizardTool implements PromptToolInterface
         return ['cosa posso fare', 'aiuto', 'wizard'];
     }
 
+    /**
+     * Raggruppate per sezione (stessa tassonomia del menu, vedi
+     * App\Support\Sections) invece di un unico elenco piatto: con 20+
+     * capacita' ormai registrate una lista sola era diventata lunga da
+     * scorrere quanto lo era il vecchio menu a griglia prima di essere
+     * riorganizzato - stessa correzione, applicata qui di riflesso senza
+     * aspettare che venga segnalata una seconda volta. I tool senza
+     * sezione (edit_* dinamici, install_package) finiscono in "Azioni",
+     * ultimo gruppo.
+     */
     public function execute(array $input): array
     {
         $entity = trim((string) ($input['entity'] ?? ''));
 
-        $capabilities = [];
+        $grouped = [];
         foreach ($this->registry->all() as $tool) {
             if ($tool->name() === $this->name()) {
                 continue;
@@ -128,11 +142,26 @@ final class ShowWizardTool implements PromptToolInterface
             $label = $tool->menuLabel()
                 ?? ($tool instanceof AbstractEditEntityTool ? $tool->wizardLabel() : null)
                 ?? self::FALLBACK_LABELS[$tool->name()] ?? $tool->name();
-            $capabilities[] = ['label' => $label, 'description' => $this->userFacingDescription($tool->description())];
+            $sectionKey = $tool->menuSection();
+            $grouped[$sectionKey ?? '_azioni'][] = [
+                'label' => $label,
+                'description' => $this->userFacingDescription($tool->description()),
+            ];
+        }
+
+        $groups = [];
+        foreach (Sections::ALL as $key => $def) {
+            if (!isset($grouped[$key])) {
+                continue;
+            }
+            $groups[] = ['label' => $def['label'], 'dotColor' => $def['color'], 'items' => $grouped[$key]];
+        }
+        if (isset($grouped['_azioni'])) {
+            $groups[] = ['label' => 'Azioni', 'dotColor' => 'petrol', 'items' => $grouped['_azioni']];
         }
 
         return [$this->wizard->toData([
-            'capabilities' => $capabilities,
+            'groups' => $groups,
             'fieldHelp' => $this->fieldHelp($entity),
         ])];
     }

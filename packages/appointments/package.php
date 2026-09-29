@@ -54,6 +54,7 @@ return [
                     'defaultRequired' => true,
                     'format' => 'integer',
                     'references' => ['table' => 'users', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/users/cerca'],
                 ],
                 'lead_id' => [
                     'sql' => 'INT UNSIGNED',
@@ -61,6 +62,7 @@ return [
                     'defaultRequired' => true,
                     'format' => 'integer',
                     'references' => ['package' => 'leads', 'table' => 'leads', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/leads/cerca'],
                 ],
                 'customer_id' => [
                     'sql' => 'INT UNSIGNED',
@@ -68,6 +70,7 @@ return [
                     'defaultRequired' => true,
                     'format' => 'integer',
                     'references' => ['package' => 'customers', 'table' => 'customers', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/customers/cerca'],
                 ],
                 'reminder_minutes_before' => [
                     'sql' => 'SMALLINT UNSIGNED',

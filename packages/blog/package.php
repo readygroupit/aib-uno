@@ -50,6 +50,7 @@ return [
                     'defaultRequired' => true,
                     'format' => 'integer',
                     'references' => ['table' => 'users', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/users/cerca'],
                 ],
                 'stage' => [
                     'sql' => 'VARCHAR(50)',

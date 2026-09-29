@@ -107,3 +107,32 @@
     box-shadow: 0 10px 24px rgba(18, 51, 63, 0.1);
     border-color: rgba(18, 51, 63, 0.16);
 }
+
+/* Sfondo tinto (gradiente leggero, non un blocco piatto saturo) invece
+   del solito bianco - solo per la card "protagonista" (vedi 'hero' in
+   StatBoxComponent). Il testo resta scuro/leggibile su tutte le varianti
+   (niente bianco su colore chiaro): stesso principio gia' notato per
+   l'header del wizard, meglio un accento riconoscibile che un blocco
+   pesante da rileggere ogni volta che si apre la pagina. */
+.stat-box--hero {
+    position: relative;
+    /* Striscia piena SOLO in alto (non solo il gradiente di sfondo,
+       troppo tenue da sola per "staccare" davvero - segnalato
+       dall'utente): il colore pieno vive li', 4px, non spalmato su
+       tutta la card - resta leggibile, ma si vede subito qual e' la
+       card protagonista scorrendo la pagina. Sotto/lati restano il
+       bordo hairline di sempre (--stat-hero-border), non lo stesso
+       colore pieno su tutti i lati (sarebbe tornato "un blocco"). */
+    border: var(--hairline);
+    border-top: 4px solid var(--stat-hero-color, var(--color-petrol));
+}
+
+.stat-box--hero .stat-box__label { color: rgba(18, 51, 63, 0.68); }
+.stat-box--hero .stat-box__value { color: var(--stat-hero-color, var(--color-petrol)); }
+
+.stat-box--hero-petrol { --stat-hero-color: var(--color-petrol); background: linear-gradient(155deg, rgba(18, 51, 63, 0.12), rgba(18, 51, 63, 0.02)); }
+.stat-box--hero-moss { --stat-hero-color: var(--color-moss); background: linear-gradient(155deg, rgba(79, 123, 92, 0.18), rgba(79, 123, 92, 0.03)); }
+.stat-box--hero-lilac { --stat-hero-color: var(--color-lilac); background: linear-gradient(155deg, rgba(139, 131, 173, 0.2), rgba(139, 131, 173, 0.03)); }
+.stat-box--hero-brass { --stat-hero-color: var(--color-brass); background: linear-gradient(155deg, rgba(185, 147, 51, 0.2), rgba(185, 147, 51, 0.03)); }
+.stat-box--hero-teal { --stat-hero-color: var(--color-teal); background: linear-gradient(155deg, rgba(95, 138, 134, 0.2), rgba(95, 138, 134, 0.03)); }
+.stat-box--hero-danger { --stat-hero-color: var(--color-danger); background: linear-gradient(155deg, rgba(142, 58, 41, 0.16), rgba(142, 58, 41, 0.03)); }

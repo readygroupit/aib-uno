@@ -37,6 +37,7 @@ return [
                     'base' => true,
                     'format' => 'integer',
                     'references' => ['package' => 'customers', 'table' => 'customers', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/customers/cerca'],
                 ],
                 'issue_date' => [
                     'sql' => 'DATE',

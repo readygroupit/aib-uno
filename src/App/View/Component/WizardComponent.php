@@ -18,7 +18,8 @@ final class WizardComponent extends AbstractComponent
         return [
             'type' => 'wizard',
             'title' => $config['title'] ?? 'Cosa posso fare?',
-            'capabilities' => $config['capabilities'] ?? [],
+            // [{label, dotColor, items: [{label, description}]}] - vedi ShowWizardTool
+            'groups' => $config['groups'] ?? [],
             'fieldHelp' => $config['fieldHelp'] ?? [],
         ];
     }

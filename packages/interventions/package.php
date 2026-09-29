@@ -31,6 +31,7 @@ return [
                     'base' => true,
                     'format' => 'integer',
                     'references' => ['package' => 'customers', 'table' => 'customers', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/customers/cerca'],
                 ],
                 'scheduled_at' => [
                     'sql' => 'DATETIME',
@@ -56,6 +57,7 @@ return [
                     'defaultRequired' => true,
                     'format' => 'integer',
                     'references' => ['table' => 'users', 'column' => 'id'],
+                    'autocomplete' => ['source' => '/riferimenti/users/cerca'],
                 ],
                 'call_out_fee' => [
                     'sql' => 'DECIMAL(10,2)',

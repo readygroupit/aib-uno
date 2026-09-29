@@ -481,27 +481,36 @@ export function mountPromptShell(root, initialComponents) {
         [icon('user')]
     );
 
+    // "Esegui": nascosto per ora (segnalato dall'utente - Invio da
+    // tastiera basta, e' quello che usa quasi tutti), non eliminato -
+    // resta costruito e agganciato a send() cosi' un giorno il solo
+    // .hero__toolbar-execute in hero.css (display:none) va tolto per
+    // farlo ricomparire, senza dover rimettere in piedi questo pezzo.
+    const executeButton = el(
+        'button',
+        { type: 'button', className: 'btn btn--primary hero__toolbar-execute', onClick: send },
+        ['Esegui']
+    );
+
+    // Casa/menu/profilo raggruppati a sinistra (identita' e navigazione),
+    // allega/microfono a destra (azioni sull'input) - disposizione chiesta
+    // dall'utente al posto del vecchio ordine con un solo spacer a caso.
     const toolbar = el('div', { className: 'hero__toolbar' }, [
-        attachButton,
         homeButton,
         menuButton,
-        el('div', { className: 'hero__toolbar-spacer' }),
         el('div', { className: 'hero__profile-dropdown' }, [profileButton, profileMenu]),
-        // "Esegui", non "Invia": non si sta mandando un messaggio, si sta
-        // chiedendo di eseguire un'operazione - stessa parola usata dal
-        // comando vocale (TRIGGER_WORD in speech.js), cosi' testo e voce
-        // corrispondono anche concettualmente, non solo come scorciatoia.
-        // Resta anche se Invio da tastiera fa la stessa cosa (segnalato
-        // dall'utente): un'azione cosi' centrale merita un'affordance
-        // visibile, non solo una scorciatoia implicita.
-        el('button', { type: 'button', className: 'btn btn--primary', onClick: send }, ['Esegui']),
+        el('div', { className: 'hero__toolbar-spacer' }),
+        executeButton,
+        attachButton,
     ]);
 
     const dictation = attachDictation(input, send);
     stopMic = dictation.stopMic;
     resetSpeechState = dictation.resetSpeechState;
     if (dictation.micButton) {
-        toolbar.insertBefore(dictation.micButton, toolbar.children[1]);
+        // Ultimo della toolbar, subito dopo allega - stesso cluster
+        // "azioni sull'input" a destra.
+        toolbar.appendChild(dictation.micButton);
     }
 
     // Icona piccola in linea con la casella - visibile solo quando il

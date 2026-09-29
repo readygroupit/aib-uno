@@ -381,6 +381,13 @@
     flex: 1;
 }
 
+/* Nascosto (non eliminato dal markup, vedi hero.js) su richiesta
+   dell'utente: Invio da tastiera basta per eseguire, il pulsante era
+   ridondante. Per farlo ricomparire basta togliere questa regola. */
+.hero__toolbar-execute {
+    display: none;
+}
+
 /*
  * Stessa struttura/logica del menu azioni di data-table.js
  * (.data-table__actions-*: trigger + pannello assoluto, .is-open a

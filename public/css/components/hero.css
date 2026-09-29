@@ -397,11 +397,15 @@
     display: inline-flex;
 }
 
+/* left:0 (non piu' right:0) - il profilo e' finito a sinistra della
+   toolbar insieme a casa/menu (prima stava a destra, vicino a Esegui):
+   aprire verso sinistra da li' lo faceva sporgere fuori dalla card,
+   verso destra c'e' invece tutto lo spazio libero della toolbar. */
 .hero__profile-menu {
     display: none;
     position: absolute;
     bottom: calc(100% + 6px);
-    right: 0;
+    left: 0;
     z-index: 10;
     min-width: 170px;
     background: var(--color-panel);

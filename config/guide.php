@@ -15,11 +15,63 @@ return [
     'autoOpen' => false,
     'reply' => 'Ecco cosa so fare e come possiamo lavorare insieme. Da dove vuoi cominciare?',
     'suggestions' => ['nuovo progetto', 'pacchetti', 'menu'],
-    // Numeri in evidenza nella Guida in pagina; {packages} = pacchetti nel catalogo.
-    'highlights' => [
-        ['value' => '~2 sec', 'label' => 'per mettere online un gestionale nuovo'],
-        ['value' => '{packages}', 'label' => 'pacchetti pronti da combinare'],
-        ['value' => '0', 'label' => 'righe di codice da scrivere per te'],
+    // La Guida in pagina ("cosa sai fare") come una landing: titoli grandi,
+    // frasi corte, una idea per sezione. {packages} = numero di pacchetti
+    // nel catalogo, '{packages}' come 'chips' = i loro nomi (vedi ShowWizardTool).
+    'landing' => [
+        'hero' => [
+            'eyebrow' => 'Il tuo assistente',
+            'title' => 'Ciao, io sono Uno.',
+            'lines' => ['Costruisco gestionali.', 'Su misura.', 'In pochi secondi.'],
+            'actions' => [
+                ['label' => 'Crea un progetto', 'prompt' => 'nuovo progetto', 'primary' => true],
+                ['label' => 'Guarda i pacchetti', 'prompt' => 'pacchetti'],
+            ],
+        ],
+        'figures' => [
+            ['value' => '2 sec', 'label' => 'per andare online'],
+            ['value' => '{packages}', 'label' => 'mattoni pronti'],
+            ['value' => '0', 'label' => 'righe di codice per te'],
+        ],
+        'features' => [
+            [
+                'eyebrow' => 'Parliamo',
+                'title' => 'Tu descrivi. Io costruisco.',
+                'text' => 'Scrivimi o parlami. Capisco cosa serve all\'azienda.',
+                'visual' => ['chat' => [
+                    ['me', 'Mi serve un gestionale per i reclami dei voli.'],
+                    ['uno', 'Fatto. Contatti, pratiche, documenti e rimborsi. E\' gia\' online.'],
+                ]],
+            ],
+            [
+                'eyebrow' => 'Mattoni',
+                'title' => 'Pezzi pronti. Combinati per te.',
+                'text' => 'Scegli cosa serve. Alle dipendenze penso io.',
+                'visual' => ['chips' => '{packages}'],
+            ],
+            [
+                'eyebrow' => 'Subito',
+                'title' => 'Online in un attimo.',
+                'text' => 'Database, permessi, indirizzo. E i dati demo, se vuoi.',
+                'visual' => ['url' => 'assilevi.localhost'],
+            ],
+        ],
+        'steps' => [
+            'title' => 'Quattro passi. Un minuto.',
+            'items' => [
+                ['Scegli', 'un preset o parti da zero'],
+                ['Combina', 'i pacchetti che servono'],
+                ['Crea', 'ci penso io'],
+                ['Mostra', 'apri il link e presenta'],
+            ],
+        ],
+        'cta' => [
+            'title' => 'Da dove vuoi cominciare?',
+            'actions' => [
+                ['label' => 'Crea un progetto', 'prompt' => 'nuovo progetto', 'primary' => true],
+                ['label' => 'Apri il menu', 'prompt' => 'menu'],
+            ],
+        ],
     ],
     'subtitle' => 'Il tuo assistente per costruire gestionali su misura.',
     'tabs' => [

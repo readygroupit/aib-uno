@@ -181,16 +181,22 @@ final class ShowWizardTool implements PromptToolInterface, PromptConversationalI
         return $this->guide()['suggestions'] ?? ['menu'];
     }
 
-    /** La Guida con i segnaposto dei numeri in evidenza gia' risolti. */
+    /** La Guida con i segnaposto ({packages}) gia' risolti dal catalogo vero. */
     private function guideWithFigures(): array
     {
         $guide = $this->guide();
-        $packages = (string) count(array_filter(
+        $packages = array_values(array_filter(
             $this->catalog->list(),
             static fn (array $package) => $package['name'] !== 'provisioning'
         ));
-        foreach ($guide['highlights'] ?? [] as $i => $highlight) {
-            $guide['highlights'][$i]['value'] = str_replace('{packages}', $packages, (string) $highlight['value']);
+
+        foreach ($guide['landing']['figures'] ?? [] as $i => $figure) {
+            $guide['landing']['figures'][$i]['value'] = str_replace('{packages}', (string) count($packages), (string) $figure['value']);
+        }
+        foreach ($guide['landing']['features'] ?? [] as $i => $feature) {
+            if (($feature['visual']['chips'] ?? null) === '{packages}') {
+                $guide['landing']['features'][$i]['visual']['chips'] = array_column($packages, 'label');
+            }
         }
 
         return $guide;

@@ -255,64 +255,134 @@ export function openGuide({ tab = null, entity = null, functionsData = null } = 
 
 // "Cosa puoi fare" / "aiuto" dal prompt: la Guida diventa contenuto della
 // pagina (il prompt si sposta a sinistra come per ogni altro risultato e
-// risponde in chat), non un modale sopra. Qui l'assistente si presenta:
-// la prima scheda e' una vetrina (fondo scuro, mascotte, numeri), i passi
-// una sequenza numerata a colori, poi le funzioni con la ricerca.
-const TILE_ACCENTS = ['brass', 'teal', 'lilac', 'moss'];
+// risponde in chat), non un modale sopra. Se config/guide.php ha una
+// 'landing', la Guida e' una presentazione da landing page: titoli grandi,
+// frasi corte, una idea per sezione, sezioni alternate. Altrimenti le
+// schede della Guida, una card ciascuna.
+const ACCENTS = ['brass', 'teal', 'lilac', 'moss'];
 
-function heroSection(guide, tab) {
-    const texts = (tab.blocks || []).filter((b) => b.text).map((b) => el('p', { className: 'guide-hero__text' }, [b.text]));
-    const points = (tab.blocks || []).flatMap((b) => b.points || []);
+function actionButtons(actions, extraClass = '') {
+    return el('div', { className: 'landing__actions ' + extraClass }, (actions || []).map((action) =>
+        el('button', {
+            type: 'button',
+            className: 'landing__btn' + (action.primary ? ' landing__btn--primary' : ''),
+            onClick: () => window.unoSubmitPrompt && window.unoSubmitPrompt(action.prompt),
+        }, [action.label])
+    ));
+}
 
-    return el('section', { className: 'guide-hero' }, [
-        el('div', { className: 'guide-hero__head' }, [
-            el('span', { className: 'guide-hero__mascot' }, [el('img', { src: window.UNO_LOGO_SQUARE || window.UNO_LOGO, alt: '' })]),
-            el('div', {}, [
-                el('span', { className: 'guide-hero__eyebrow' }, [tab.label]),
-                el('h2', { className: 'guide-hero__title' }, [guide.welcome || tab.label]),
-                guide.subtitle ? el('p', { className: 'guide-hero__subtitle' }, [guide.subtitle]) : null,
-            ]),
+function heroBand(hero) {
+    return el('section', { className: 'landing__hero' }, [
+        el('div', { className: 'landing__hero-copy' }, [
+            el('span', { className: 'landing__eyebrow landing__eyebrow--light' }, [hero.eyebrow || '']),
+            el('h2', { className: 'landing__hero-title' }, [hero.title || '']),
+            el('div', { className: 'landing__hero-lines' }, (hero.lines || []).map((line, i) =>
+                el('span', { className: 'landing__hero-line landing__hero-line--' + ACCENTS[i % ACCENTS.length] }, [line]))),
+            actionButtons(hero.actions, 'landing__actions--hero'),
         ]),
-        ...texts,
-        (guide.highlights || []).length ? el('div', { className: 'guide-hero__figures' }, guide.highlights.map((h) =>
-            el('div', { className: 'guide-hero__figure' }, [
-                el('span', { className: 'guide-hero__figure-value' }, [h.value]),
-                el('span', { className: 'guide-hero__figure-label' }, [h.label]),
-            ]))) : null,
-        points.length ? el('div', { className: 'guide-hero__tiles' }, points.map(([label, desc], i) =>
-            el('div', { className: 'guide-hero__tile guide-hero__tile--' + TILE_ACCENTS[i % TILE_ACCENTS.length] }, [
-                el('span', { className: 'guide-hero__tile-label' }, [label]),
-                el('span', { className: 'guide-hero__tile-desc' }, [desc]),
-            ]))) : null,
+        el('div', { className: 'landing__hero-art' }, [
+            el('span', { className: 'landing__hero-glow' }),
+            el('img', { className: 'landing__hero-mascot', src: window.UNO_LOGO_SQUARE || window.UNO_LOGO, alt: '' }),
+        ]),
     ]);
 }
 
-function stepsSection(tab) {
-    const intro = (tab.blocks || []).filter((b) => b.text).map((b) => el('p', { className: 'guide-steps__intro' }, [b.text]));
-    const items = (tab.blocks || []).flatMap((b) => b.steps || []);
+function figuresBand(figures) {
+    return el('section', { className: 'landing__figures' }, figures.map((figure, i) =>
+        el('div', { className: 'landing__figure landing__figure--' + ACCENTS[i % ACCENTS.length] }, [
+            el('span', { className: 'landing__figure-value' }, [figure.value]),
+            el('span', { className: 'landing__figure-label' }, [figure.label]),
+        ])));
+}
 
-    return el('section', { className: 'card guide-steps' }, [
-        el('h2', { className: 'guide-page__title' }, [tab.label]),
-        ...intro,
-        el('ol', { className: 'guide-steps__list' }, items.map(([, label, desc], i) =>
-            el('li', { className: 'guide-steps__item guide-steps__item--' + TILE_ACCENTS[i % TILE_ACCENTS.length] }, [
-                el('span', { className: 'guide-steps__num' }, [String(i + 1)]),
-                el('span', { className: 'guide-steps__label' }, [label]),
-                el('span', { className: 'guide-steps__desc' }, [desc]),
+function featureVisual(visual) {
+    if (visual.chat) {
+        return el('div', { className: 'landing__chat' }, visual.chat.map(([who, text]) =>
+            el('div', { className: 'landing__bubble landing__bubble--' + who }, [
+                who === 'uno' ? el('img', { className: 'landing__bubble-avatar', src: window.UNO_LOGO_SQUARE || window.UNO_LOGO, alt: '' }) : null,
+                el('span', {}, [text]),
+            ])));
+    }
+    if (visual.chips) {
+        // Un assaggio, non l'elenco completo: una landing non e' un catalogo.
+        const shown = visual.chips.slice(0, 9);
+        const chips = shown.map((label, i) =>
+            el('span', { className: 'landing__chip landing__chip--' + ACCENTS[i % ACCENTS.length] }, [label]));
+        if (visual.chips.length > shown.length) {
+            chips.push(el('span', { className: 'landing__chip landing__chip--more' }, [`+${visual.chips.length - shown.length} altri`]));
+        }
+        return el('div', { className: 'landing__chips' }, chips);
+    }
+    if (visual.url) {
+        return el('div', { className: 'landing__browser' }, [
+            el('div', { className: 'landing__browser-bar' }, [
+                el('span', { className: 'landing__browser-dots' }, [el('i'), el('i'), el('i')]),
+                el('span', { className: 'landing__browser-url' }, [visual.url]),
+            ]),
+            el('div', { className: 'landing__browser-body' }, [
+                el('span', { className: 'landing__browser-check' }, [icon('circle-check')]),
+                el('span', { className: 'landing__browser-text' }, ['Online']),
+            ]),
+        ]);
+    }
+    return null;
+}
+
+function featureRow(feature, index) {
+    return el('section', { className: 'landing__feature' + (index % 2 ? ' landing__feature--reverse' : '') }, [
+        el('div', { className: 'landing__feature-copy' }, [
+            el('span', { className: 'landing__eyebrow landing__eyebrow--' + ACCENTS[index % ACCENTS.length] }, [feature.eyebrow || '']),
+            el('h3', { className: 'landing__feature-title' }, [feature.title]),
+            el('p', { className: 'landing__feature-text' }, [feature.text]),
+        ]),
+        el('div', { className: 'landing__feature-visual' }, [featureVisual(feature.visual || {})]),
+    ]);
+}
+
+function stepsBand(steps) {
+    return el('section', { className: 'landing__steps' }, [
+        el('h3', { className: 'landing__section-title' }, [steps.title]),
+        el('ol', { className: 'landing__steps-list' }, steps.items.map(([label, desc], i) =>
+            el('li', { className: 'landing__step landing__step--' + ACCENTS[i % ACCENTS.length] }, [
+                el('span', { className: 'landing__step-num' }, [String(i + 1)]),
+                el('span', { className: 'landing__step-label' }, [label]),
+                el('span', { className: 'landing__step-desc' }, [desc]),
             ]))),
+    ]);
+}
+
+function ctaBand(cta) {
+    return el('section', { className: 'landing__cta' }, [
+        el('h3', { className: 'landing__cta-title' }, [cta.title]),
+        actionButtons(cta.actions, 'landing__actions--center'),
+    ]);
+}
+
+function landing(guide, data) {
+    const l = guide.landing;
+    return el('div', { className: 'landing' }, [
+        l.hero ? heroBand(l.hero) : null,
+        (l.figures || []).length ? figuresBand(l.figures) : null,
+        ...(l.features || []).map(featureRow),
+        l.steps ? stepsBand(l.steps) : null,
+        l.cta ? ctaBand(l.cta) : null,
+        el('section', { className: 'card guide-page__card' }, [
+            el('h3', { className: 'landing__section-title landing__section-title--left' }, ['Tutto quello che puoi chiedermi']),
+            buildFunctionsView(data),
+        ]),
     ]);
 }
 
 registerComponent('wizard', (data) => {
     const guide = data.guide || {};
-    const sections = (guide.tabs || []).map((tab, i) => {
-        if (i === 0) return heroSection(guide, tab);
-        if ((tab.blocks || []).some((b) => b.steps)) return stepsSection(tab);
-        return el('section', { className: 'card guide-page__card' }, [
-            el('h2', { className: 'guide-page__title' }, [tab.label]),
-            ...renderBlocks(tab.blocks),
-        ]);
-    });
+    if (guide.landing) {
+        return landing(guide, data);
+    }
+
+    const sections = (guide.tabs || []).map((tab) => el('section', { className: 'card guide-page__card' }, [
+        el('h2', { className: 'guide-page__title' }, [tab.label]),
+        ...renderBlocks(tab.blocks),
+    ]));
     sections.push(el('section', { className: 'card guide-page__card' }, [
         el('h2', { className: 'guide-page__title' }, ['Cosa posso fare']),
         buildFunctionsView(data),

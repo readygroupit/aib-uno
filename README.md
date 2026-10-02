@@ -342,14 +342,16 @@ comportamento; `schedule` e `rule_text` sono solo salvati. Le azioni
 approvate scrivono nel gestionale (comunicazione "inviata", classificazione)
 ma non mandano nulla fuori. "Ricomincia la demo" rigenera il flusso.
 
-**La Guida** (`public/js/onboarding.js`) e' l'unico punto di aiuto: schede
-Panoramica, Percorso pratica, Dove trovare, Cosa posso fare (ex wizard, vedi
-`wizard.js`/`ShowWizardTool`) e Cosa manca ancora (solo finche' c'e' qualcosa
-di obbligatorio). Si apre da sola sulla home (primo accesso, o config
-incompleta - senza "non mostrarmelo piu'" finche' manca qualcosa); altrimenti
-dal riquadro rosso nella toolbar del prompt (visibile solo se manca qualcosa)
-o dalla voce "Guida" del menu profilo. Il prompt "aiuto" la apre sulla scheda
-funzioni.
+**La Guida** (`public/js/onboarding.js`, testi in `config/guide.php` di
+ogni progetto). Due forme:
+- **in pagina**: "cosa puoi fare", "aiuto", "chi sei" o la voce "Guida" del
+  menu profilo mostrano le schede di `config/guide.php` + le funzioni
+  disponibili (`ShowWizardTool`, componente 'wizard'), con risposta e
+  suggerimenti in chat (`reply`/`suggestions` della guida);
+- **modale**: si apre da sola sulla home al primo accesso (salvo
+  `'autoOpen' => false`, come su Uno: la home e' solo il prompt) e finche'
+  c'e' configurazione obbligatoria da completare (scheda "Cosa manca ancora",
+  riquadro rosso nella toolbar).
 
 ## Cosa manca (in ordine di priorita' concordato)
 

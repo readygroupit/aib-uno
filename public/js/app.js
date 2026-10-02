@@ -51,7 +51,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // qualcosa di obbligatorio da configurare - in quel caso non si puo'
     // nemmeno spegnere per sempre (vedi openGuide()).
     // window.UNO_SHOW_ONBOARDING e' gia' false da disconnessi.
-    if (window.location.pathname === '/' && (window.UNO_SHOW_ONBOARDING || setupIsPending(setup))) {
+    // Un progetto puo' non volerla affatto all'avvio ('autoOpen' => false in
+    // config/guide.php, come Uno: la home e' solo il prompt).
+    const autoOpen = (window.UNO_GUIDE || {}).autoOpen !== false;
+    if (window.location.pathname === '/' && ((window.UNO_SHOW_ONBOARDING && autoOpen) || setupIsPending(setup))) {
         openGuide({ tab: window.UNO_SHOW_ONBOARDING ? null : 'missing' });
     }
 });

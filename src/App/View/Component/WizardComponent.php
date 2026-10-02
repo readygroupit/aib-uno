@@ -21,6 +21,8 @@ final class WizardComponent extends AbstractComponent
             // [{label, dotColor, items: [{label, description}]}] - vedi ShowWizardTool
             'groups' => $config['groups'] ?? [],
             'fieldHelp' => $config['fieldHelp'] ?? [],
+            // Schede editoriali di config/guide.php, mostrate in pagina prima delle funzioni.
+            'guide' => $config['guide'] ?? [],
         ];
     }
 }

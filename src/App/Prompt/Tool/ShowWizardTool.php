@@ -6,6 +6,7 @@ namespace App\Prompt\Tool;
 
 use App\Core\Container;
 use App\Package\PackageManifest;
+use App\Prompt\PromptConversationalInterface;
 use App\Prompt\PromptToolInterface;
 use App\Prompt\PromptToolRegistry;
 use App\Service\AuthService;
@@ -31,7 +32,7 @@ use App\View\Component\WizardComponent;
  * 'leads' - 'user'/'permission' sono entita' del framework, non
  * pacchetti, non hanno un manifest).
  */
-final class ShowWizardTool implements PromptToolInterface
+final class ShowWizardTool implements PromptToolInterface, PromptConversationalInterface
 {
     private const ENTITY_PACKAGES = ['lead' => 'leads'];
 
@@ -72,8 +73,8 @@ final class ShowWizardTool implements PromptToolInterface
 
     public function description(): string
     {
-        return "Mostra un modale con le funzioni disponibili e le spiegazioni dei campi meno ovvi. "
-            . "Usalo quando l'utente chiede 'cosa posso fare', 'aiuto' o simili.";
+        return "Mostra nella pagina chi e' l'assistente, come si lavora insieme, le funzioni disponibili e le "
+            . "spiegazioni dei campi meno ovvi. Usalo quando l'utente chiede 'cosa puoi fare', 'aiuto', 'chi sei' o simili.";
     }
 
     public function inputSchema(): array
@@ -111,7 +112,7 @@ final class ShowWizardTool implements PromptToolInterface
 
     public function triggers(): array
     {
-        return ['cosa posso fare', 'aiuto', 'wizard'];
+        return ['cosa posso fare', 'cosa puoi fare', 'dimmi cosa puoi fare', 'cosa sai fare', 'chi sei', 'aiuto', 'guida', 'wizard'];
     }
 
     /**
@@ -163,7 +164,26 @@ final class ShowWizardTool implements PromptToolInterface
         return [$this->wizard->toData([
             'groups' => $groups,
             'fieldHelp' => $this->fieldHelp($entity),
+            'guide' => $this->guide(),
         ])];
+    }
+
+    public function replySummary(array $input): ?string
+    {
+        return $this->guide()['reply'] ?? "Ecco cosa posso fare per te. Da dove vuoi cominciare?";
+    }
+
+    public function followUpSuggestions(): array
+    {
+        return $this->guide()['suggestions'] ?? ['menu'];
+    }
+
+    /** Testi della Guida di questo progetto (config/guide.php). */
+    private function guide(): array
+    {
+        $file = CONFIG_PATH . '/guide.php';
+
+        return is_file($file) ? require $file : [];
     }
 
     /**

@@ -253,10 +253,19 @@ export function openGuide({ tab = null, entity = null, functionsData = null } = 
     selectTab(tabButtons.has(tab) ? tab : TABS[0].key);
 }
 
-// Il prompt risponde con un componente 'wizard' ("aiuto", "cosa posso
-// fare"): invece di un secondo pannello di aiuto, apre la Guida sulla
-// scheda delle funzioni con i dati gia' arrivati.
+// "Cosa puoi fare" / "aiuto" dal prompt: la Guida diventa contenuto della
+// pagina (il prompt si sposta a sinistra come per ogni altro risultato e
+// risponde in chat), non un modale sopra. Prima le schede editoriali di
+// config/guide.php, poi le funzioni disponibili con la ricerca.
 registerComponent('wizard', (data) => {
-    openGuide({ tab: 'functions', functionsData: data });
-    return null;
+    const cards = (data.guide?.tabs || []).map((tab) => el('section', { className: 'card guide-page__card' }, [
+        el('h2', { className: 'guide-page__title' }, [tab.label]),
+        ...renderBlocks(tab.blocks),
+    ]));
+    cards.push(el('section', { className: 'card guide-page__card' }, [
+        el('h2', { className: 'guide-page__title' }, ['Cosa posso fare']),
+        buildFunctionsView(data),
+    ]));
+
+    return el('div', { className: 'guide-page' }, cards);
 });

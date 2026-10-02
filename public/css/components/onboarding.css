@@ -221,3 +221,33 @@
 .onboarding__body .wizard__entry {
     background: var(--color-panel);
 }
+
+/* La Guida come contenuto di pagina ("cosa puoi fare" dal prompt): stesse
+   righe del modale, ma su card bianche serve un bordo per distinguerle. */
+.guide-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.guide-page__title {
+    margin: 0 0 12px;
+    font-size: 18px;
+    letter-spacing: -0.2px;
+}
+
+.guide-page .onboarding__point {
+    border: 1px solid rgba(18, 51, 63, 0.1);
+}
+
+.guide-page .wizard__search {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 14px;
+}
+
+.guide-page .wizard__body {
+    padding: 0;
+    overflow: visible;
+}

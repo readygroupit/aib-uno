@@ -10,6 +10,11 @@ declare(strict_types=1);
  */
 return [
     'welcome' => 'Ciao, io sono Uno',
+    // Uno non apre la Guida da solo: la home e' solo il prompt, la Guida
+    // compare in pagina quando l'utente chiede "cosa puoi fare".
+    'autoOpen' => false,
+    'reply' => 'Ecco cosa so fare e come possiamo lavorare insieme. Da dove vuoi cominciare?',
+    'suggestions' => ['nuovo progetto', 'pacchetti', 'menu'],
     'subtitle' => 'Il tuo assistente per costruire gestionali su misura.',
     'tabs' => [
         [

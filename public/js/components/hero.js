@@ -477,7 +477,7 @@ export function mountPromptShell(root, initialComponents) {
             {
                 type: 'button',
                 className: 'hero__profile-menu-item',
-                onClick: () => openGuide({ entity: activeEntities() }),
+                onClick: () => { closeProfileMenu(); window.unoSubmitPrompt('aiuto'); },
             },
             [icon('help'), 'Guida']
         ),

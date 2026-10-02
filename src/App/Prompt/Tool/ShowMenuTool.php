@@ -68,7 +68,7 @@ final class ShowMenuTool implements PromptToolInterface
 
     public function triggers(): array
     {
-        return ['menu', 'mostra menu', 'cosa puoi fare', 'cosa sai fare'];
+        return ['menu', 'mostra menu'];
     }
 
     public function execute(array $input): array

@@ -1,7 +1,7 @@
 import { el } from './dom.js';
 
 /**
- * Modale "cosa posso fare?": due elenchi, entrambi costruiti dal server
+ * Contenuto "cosa posso fare?" (oggi scheda della Guida): due elenchi, entrambi costruiti dal server
  * in base a cosa e' davvero installato/consentito in questo momento
  * (mai testo statico scritto qui) - le funzioni disponibili (dal
  * PromptToolRegistry, stesso principio di ShowMenuTool ma qui senza
@@ -13,21 +13,6 @@ import { el } from './dom.js';
  * entrambi gli elenchi lato client: sono gia' tutti in memoria, non ha
  * senso un giro server per ogni lettera digitata.
  */
-let overlayEl = null;
-
-function onKeydown(e) {
-    if (e.key === 'Escape') {
-        closeWizard();
-    }
-}
-
-function closeWizard() {
-    if (!overlayEl) return;
-    overlayEl.remove();
-    overlayEl = null;
-    document.removeEventListener('keydown', onKeydown);
-}
-
 function buildEntry(label, description) {
     const node = el('div', { className: 'wizard__entry' }, [
         el('div', { className: 'wizard__entry-label' }, [label]),
@@ -37,9 +22,12 @@ function buildEntry(label, description) {
     return { node, haystack: (label + ' ' + description).toLowerCase() };
 }
 
-function renderWizard(data) {
-    closeWizard();
-
+/**
+ * Contenuto della scheda "Cosa posso fare" della Guida (vedi
+ * onboarding.js): ricerca + elenchi, senza pannello/overlay propri - il
+ * contenitore e' la Guida, unico punto di aiuto dell'app.
+ */
+export function buildFunctionsView(data) {
     const groups = data.groups || [];
     const allEntries = [];
     const body = el('div', { className: 'wizard__body' });
@@ -79,41 +67,15 @@ function renderWizard(data) {
         });
     });
 
-    const panel = el('div', { className: 'wizard__panel' }, [
-        el('div', { className: 'wizard__header' }, [
-            el('img', { src: window.UNO_LOGO_SQUARE || window.UNO_LOGO, alt: '', className: 'wizard__logo' }),
-            el('h2', { className: 'wizard__title' }, [data.title || 'Cosa posso fare?']),
-            el('button', { type: 'button', className: 'wizard__close', title: 'Chiudi', onClick: closeWizard }, ['×']),
-        ]),
-        searchInput,
-        body,
-    ]);
-
-    overlayEl = el(
-        'div',
-        {
-            className: 'wizard-overlay',
-            onClick: (e) => {
-                if (e.target === overlayEl) closeWizard();
-            },
-        },
-        [panel]
-    );
-    document.body.appendChild(overlayEl);
-    document.addEventListener('keydown', onKeydown);
-    searchInput.focus();
+    return el('div', { className: 'guide-functions' }, [searchInput, body]);
 }
 
-export function openWizard(entity) {
+/** @returns {Promise<?object>} i dati del componente 'wizard', o null se la richiesta fallisce. */
+export function fetchFunctions(entity) {
     const query = entity ? '?entity=' + encodeURIComponent(entity) : '';
 
-    fetch('/wizard' + query, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    return fetch('/wizard' + query, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then((res) => res.json())
-        .then((data) => {
-            const wizardData = (data.components || [])[0];
-            if (wizardData) {
-                renderWizard(wizardData);
-            }
-        })
-        .catch(() => {});
+        .then((data) => (data.components || [])[0] || null)
+        .catch(() => null);
 }

@@ -1,29 +1,35 @@
 import { el } from './dom.js';
+import { icon } from './icons.js';
+import { registerComponent } from './components/registry.js';
+import { mountSetup } from './setup.js';
+import { buildFunctionsView, fetchFunctions } from './wizard.js';
 
 /**
- * Tour di benvenuto - si apre da solo finche' non viene chiuso con "Ho
- * capito, non mostrarmelo piu'" (vedi AuthService::dismissOnboarding(),
- * window.UNO_SHOW_ONBOARDING in layout.phtml). Diverso dal wizard "cosa
- * posso fare?" (public/js/wizard.js): quello e' un riferimento
- * consultabile a tema/campo, questo e' un giro guidato a schede, mostrato
- * una volta sola per introdurre il sistema - stesso linguaggio visivo
- * dell'overlay (vedi .wizard-overlay in wizard.css, riusato cosi' com'e'
- * per il fondo) ma un pannello suo con le schede al posto della ricerca.
+ * La Guida: unico punto di aiuto dell'app (prima erano due, il tour di
+ * benvenuto e il wizard "cosa posso fare?", che si sovrapponevano).
+ * Schede: panoramica, percorso di una pratica, dove trovare le cose,
+ * "Cosa posso fare" (le funzioni, costruite dal server in base ai
+ * permessi - vedi wizard.js) e "Cosa manca ancora" (la checklist di
+ * configurazione, finche' ci sono passaggi obbligatori).
  *
- * Contenuto scritto qui, non generato dal server: e' testo editoriale
- * (spiega il sistema, non dati), stesso principio dei testi statici gia'
- * visti altrove nel framework - un giro a /wizard per un contenuto fisso
- * sarebbe solo un giro di rete in piu' senza motivo.
+ * Si apre da sola sulla home al primo accesso (finche' non e' chiusa con
+ * "Ho capito, non mostrarmelo piu'", vedi AuthService::dismissOnboarding())
+ * e finche' resta qualcosa di obbligatorio da configurare; in ogni altro
+ * momento la si apre dal riquadro rosso nella toolbar del prompt (solo se
+ * manca qualcosa) o dalla voce "Guida" del menu profilo.
+ *
+ * Testo editoriale scritto qui (spiega il sistema, non dati): un giro al
+ * server per un contenuto fisso sarebbe solo rete in piu'.
  */
 let overlayEl = null;
 
 function onKeydown(e) {
     if (e.key === 'Escape') {
-        closeOnboarding();
+        closeGuide();
     }
 }
 
-export function closeOnboarding() {
+export function closeGuide() {
     if (!overlayEl) return;
     overlayEl.remove();
     overlayEl = null;
@@ -35,7 +41,7 @@ function dismissForever() {
         method: 'POST',
         headers: { 'X-CSRF-Token': window.UNO_CSRF || '' },
     }).catch(() => {});
-    closeOnboarding();
+    closeGuide();
 }
 
 function paragraph(text) {
@@ -73,6 +79,20 @@ function journeySteps() {
     ));
 }
 
+function missingReadOnly() {
+    return [
+        paragraph('Questo e\' un ambiente dimostrativo: quello che vedi funziona davvero sui dati veri, ma alcuni collegamenti esterni non sono ancora attivi. Chiedi a un amministratore di completarli.'),
+        pointList([
+            { label: 'Jotform', desc: 'i moduli di raccolta lead non sono collegati - i contatti vanno inseriti a mano.' },
+            { label: 'Google Sheets', desc: 'se usato come archivio esistente, non c\'e\' ancora un collegamento automatico.' },
+            { label: 'ConciliaWeb', desc: 'invio e monitoraggio delle pratiche in conciliazione non sono automatizzati - lo stato va aggiornato a mano.' },
+            { label: 'WhatsApp', desc: 'le comunicazioni restano registrate nel sistema, ma non partono davvero.' },
+            { label: 'Modelli di messaggio', desc: 'testi predefiniti per solleciti e comunicazioni ricorrenti.' },
+            { label: 'Classificazione del disservizio', desc: 'va scelta a mano per ogni pratica, non ancora riconosciuta in automatico.' },
+        ]),
+    ];
+}
+
 const TABS = [
     {
         key: 'overview',
@@ -89,7 +109,7 @@ const TABS = [
     },
     {
         key: 'journey',
-        label: 'Il percorso di una pratica',
+        label: 'Percorso pratica',
         render: () => [
             paragraph('Ogni pratica passa (nell\'ordine) per questi 5 stati - sono gli stessi che vedi come etichette colorate in Clienti e Pratiche.'),
             journeySteps(),
@@ -97,7 +117,7 @@ const TABS = [
     },
     {
         key: 'where',
-        label: 'Dove trovare le cose',
+        label: 'Dove trovare',
         render: () => [
             pointList([
                 { label: 'Clienti', desc: 'chi ha documenti mancanti, chi e\' in conciliazione, importi in gioco.' },
@@ -109,65 +129,146 @@ const TABS = [
             ]),
         ],
     },
-    {
-        key: 'missing',
-        label: 'Cosa manca ancora',
-        render: () => [
-            paragraph('Questo e\' un ambiente dimostrativo: quello che vedi funziona davvero sui dati veri, ma alcuni collegamenti esterni non sono ancora attivi.'),
-            pointList([
-                { label: 'Jotform', desc: 'i moduli di raccolta lead non sono collegati - i contatti vanno inseriti a mano.' },
-                { label: 'Google Sheets', desc: 'se usato come archivio esistente, non c\'e\' ancora un collegamento automatico.' },
-                { label: 'ConciliaWeb', desc: 'invio e monitoraggio delle pratiche in conciliazione non sono automatizzati - lo stato va aggiornato a mano.' },
-                { label: 'WhatsApp', desc: 'le comunicazioni restano registrate nel sistema, ma non partono davvero.' },
-                { label: 'Modelli di messaggio', desc: 'non esistono ancora testi predefiniti per solleciti e comunicazioni ricorrenti.' },
-                { label: 'Classificazione del disservizio', desc: 'va scelta a mano per ogni pratica, non ancora riconosciuta in automatico.' },
-            ]),
-        ],
-    },
+    { key: 'functions', label: 'Cosa posso fare' },
+    { key: 'missing', label: 'Cosa manca ancora' },
 ];
 
-export function openOnboarding() {
-    closeOnboarding();
+export function setupIsPending(setup) {
+    return !!setup && setup.progress.done < setup.progress.total;
+}
 
+// Stato della checklist condiviso fra la Guida e il riquadro rosso nella
+// toolbar (hero.js): una sola fonte, un solo fetch per pagina.
+let setupState = null;
+const setupListeners = new Set();
+
+function publishSetup(state) {
+    setupState = state;
+    setupListeners.forEach((callback) => callback(state));
+}
+
+export function getSetupState() {
+    return setupState;
+}
+
+/** Chiama subito (se lo stato e' gia' noto) e a ogni cambiamento. */
+export function onSetupChange(callback) {
+    setupListeners.add(callback);
+    if (setupState !== null) callback(setupState);
+}
+
+// null per chi non puo' configurare (403) o se la richiesta fallisce: la
+// Guida funziona anche senza.
+export async function loadSetupState() {
+    if (!window.UNO_CAN_CONFIGURE) return null;
+    try {
+        const response = await fetch('/configurazione/stato', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const state = response.ok ? await response.json() : null;
+        publishSetup(state);
+        return state;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * @param {{tab?: string, entity?: ?string, functionsData?: ?object}} [options]
+ *   tab: scheda iniziale. entity: entita' in vista, per "Campi da
+ *   conoscere". functionsData: dati gia' pronti per la scheda funzioni
+ *   (dal prompt, vedi il renderer 'wizard' in fondo) invece di un fetch.
+ */
+export function openGuide({ tab = null, entity = null, functionsData = null } = {}) {
+    closeGuide();
+
+    // Chi non ha il permesso di configurare resta con state null: vede la
+    // scheda "Cosa manca ancora" come sola lettura e, se e' il primo
+    // accesso, puo' spegnere il tour.
+    const canConfigure = !!window.UNO_CAN_CONFIGURE;
+    const firstTime = !!window.UNO_SHOW_ONBOARDING;
     const body = el('div', { className: 'onboarding__body' });
-    const tabButtons = [];
+    const tabButtons = new Map();
+    const footer = el('div', { className: 'onboarding__footer' });
+    let currentKey = null;
 
-    function selectTab(key) {
-        const tab = TABS.find((t) => t.key === key) || TABS[0];
-        tabButtons.forEach((b) => b.classList.toggle('is-active', b.dataset.tabKey === tab.key));
-        body.textContent = '';
-        tab.render().forEach((node) => body.appendChild(node));
+    const pending = () => setupIsPending(setupState);
+    // Con lo stato noto e tutto completo la scheda non serve piu'.
+    const showMissing = () => !canConfigure || setupState === null || pending() || currentKey === 'missing';
+    const visibleTabs = () => TABS.filter((t) => t.key !== 'missing' || showMissing());
+
+    function renderMissing() {
+        const holder = el('div', { className: 'setup' });
+        if (setupState) {
+            mountSetup(holder, setupState, { onChange: (next) => { publishSetup(next); renderFooter(); markTabs(); } });
+        } else {
+            missingReadOnly().forEach((node) => holder.appendChild(node));
+        }
+        return [holder];
     }
 
-    const tabBar = el(
-        'div',
-        { className: 'onboarding__tabs' },
-        TABS.map((tab) => {
-            const button = el(
-                'button',
-                { type: 'button', className: 'onboarding__tab', onClick: () => selectTab(tab.key) },
-                [tab.label]
-            );
-            button.dataset.tabKey = tab.key;
-            tabButtons.push(button);
-            return button;
-        })
-    );
+    function renderFunctions() {
+        const holder = el('div');
+        holder.appendChild(el('p', { className: 'onboarding__text' }, ['Caricamento...']));
+        const ready = functionsData ? Promise.resolve(functionsData) : fetchFunctions(entity);
+        ready.then((data) => {
+            holder.textContent = '';
+            holder.appendChild(data ? buildFunctionsView(data) : paragraph('Non riesco a caricare l\'elenco delle funzioni. Riprova tra poco.'));
+        });
+        return [holder];
+    }
+
+    function markTabs() {
+        const alert = tabButtons.get('missing')?.querySelector('.onboarding__tab-alert');
+        if (alert) alert.hidden = !pending();
+    }
+
+    function renderFooter() {
+        footer.textContent = '';
+        // "Non mostrarmelo piu'" solo se ha ancora senso: mai con cose
+        // obbligatorie da fare, e solo finche' non e' stato gia' spento.
+        if (firstTime && !pending()) {
+            footer.appendChild(el('button', { type: 'button', className: 'btn btn--primary', onClick: dismissForever }, ['Ho capito, non mostrarmelo più']));
+        } else {
+            footer.appendChild(el('button', { type: 'button', className: 'btn btn--secondary', onClick: closeGuide }, ['Chiudi']));
+        }
+    }
+
+    function selectTab(key) {
+        const found = TABS.find((t) => t.key === key) || TABS[0];
+        currentKey = found.key;
+        tabButtons.forEach((b, k) => b.classList.toggle('is-active', k === found.key));
+        body.textContent = '';
+        const nodes = found.key === 'missing' ? renderMissing() : found.key === 'functions' ? renderFunctions() : found.render();
+        nodes.forEach((node) => body.appendChild(node));
+    }
+
+    const tabBar = el('div', { className: 'onboarding__tabs' });
+    visibleTabs().forEach((t) => {
+        const children = [t.label];
+        if (t.key === 'missing') {
+            const alert = icon('circle-exclamation', 'onboarding__tab-alert');
+            alert.title = 'Ci sono passaggi da completare';
+            alert.hidden = setupState !== null && !pending();
+            children.push(alert);
+        }
+        const button = el('button', { type: 'button', className: 'onboarding__tab', onClick: () => selectTab(t.key) }, children);
+        tabButtons.set(t.key, button);
+        tabBar.appendChild(button);
+    });
 
     const panel = el('div', { className: 'onboarding__panel' }, [
         el('div', { className: 'onboarding__header' }, [
             el('img', { src: window.UNO_LOGO_SQUARE || window.UNO_LOGO, alt: '', className: 'onboarding__logo' }),
             el('div', { className: 'onboarding__header-text' }, [
-                el('h2', { className: 'onboarding__title' }, ['Benvenuto in Assilevi']),
-                el('p', { className: 'onboarding__subtitle' }, ['Una panoramica di come funziona, prima di iniziare.']),
+                el('h2', { className: 'onboarding__title' }, [firstTime ? 'Benvenuto in Assilevi' : 'Guida']),
+                el('p', { className: 'onboarding__subtitle' }, [pending()
+                    ? 'Ci sono ancora passaggi da completare per essere operativi.'
+                    : 'Come funziona il sistema e cosa puoi fare.']),
             ]),
-            el('button', { type: 'button', className: 'onboarding__close', title: 'Chiudi', onClick: closeOnboarding }, ['×']),
+            el('button', { type: 'button', className: 'onboarding__close', title: 'Chiudi', onClick: closeGuide }, ['×']),
         ]),
         tabBar,
         body,
-        el('div', { className: 'onboarding__footer' }, [
-            el('button', { type: 'button', className: 'btn btn--primary', onClick: dismissForever }, ['Ho capito, non mostrarmelo più']),
-        ]),
+        footer,
     ]);
 
     overlayEl = el(
@@ -175,7 +276,7 @@ export function openOnboarding() {
         {
             className: 'wizard-overlay',
             onClick: (e) => {
-                if (e.target === overlayEl) closeOnboarding();
+                if (e.target === overlayEl) closeGuide();
             },
         },
         [panel]
@@ -183,5 +284,14 @@ export function openOnboarding() {
 
     document.body.appendChild(overlayEl);
     document.addEventListener('keydown', onKeydown);
-    selectTab(TABS[0].key);
+    renderFooter();
+    selectTab(tabButtons.has(tab) ? tab : TABS[0].key);
 }
+
+// Il prompt risponde con un componente 'wizard' ("aiuto", "cosa posso
+// fare"): invece di un secondo pannello di aiuto, apre la Guida sulla
+// scheda delle funzioni con i dati gia' arrivati.
+registerComponent('wizard', (data) => {
+    openGuide({ tab: 'functions', functionsData: data });
+    return null;
+});

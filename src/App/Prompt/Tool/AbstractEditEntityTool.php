@@ -228,7 +228,9 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
                 // Index\Controller\GeoController per l'unico endpoint di
                 // ricerca costruito finora (comuni), lo stesso schema
                 // vale per qualunque altro riferimento futuro.
-                'inputType' => isset($definition['autocomplete']) ? 'autocomplete' : null,
+                'inputType' => isset($definition['autocomplete'])
+                    ? 'autocomplete'
+                    : (($definition['input'] ?? null) === 'textarea' ? 'textarea' : null),
                 'autocompleteSource' => $definition['autocomplete']['source'] ?? null,
                 // 'base' da solo non basta: un campo 'base' + 'nullable'
                 // (es. tasks.entity_id, sempre colonna ma non sempre

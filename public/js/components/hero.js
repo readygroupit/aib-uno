@@ -2,7 +2,7 @@ import { el } from '../dom.js';
 import { icon } from '../icons.js';
 import { mountComponents } from './registry.js';
 import { attachDictation } from '../speech.js';
-import { openWizard } from '../wizard.js';
+import { openGuide, onSetupChange, setupIsPending } from '../onboarding.js';
 
 // Stesso pattern di data-table.js (closeAllActionMenus): un solo listener
 // a livello di documento invece che uno per menu, cosi' aprirne uno chiude
@@ -477,9 +477,9 @@ export function mountPromptShell(root, initialComponents) {
             {
                 type: 'button',
                 className: 'hero__profile-menu-item',
-                onClick: () => openWizard(activeEntities()),
+                onClick: () => openGuide({ entity: activeEntities() }),
             },
-            [icon('help'), 'Cosa posso fare?']
+            [icon('help'), 'Guida']
         ),
         el('a', { className: 'hero__profile-menu-item', href: '/profilo' }, [icon('user'), 'Il mio profilo']),
         el('a', { className: 'hero__profile-menu-item', href: '/logout' }, [
@@ -522,10 +522,27 @@ export function mountPromptShell(root, initialComponents) {
     // Casa/menu/profilo raggruppati a sinistra (identita' e navigazione),
     // allega/microfono a destra (azioni sull'input) - disposizione chiesta
     // dall'utente al posto del vecchio ordine con un solo spacer a caso.
+    // Riquadro rosso: compare solo se c'e' ancora qualcosa di obbligatorio
+    // da configurare (vedi onboarding.js) e riapre la Guida sulla scheda
+    // "Cosa manca ancora".
+    const setupAlertButton = el(
+        'button',
+        {
+            type: 'button',
+            className: 'hero__icon-btn hero__icon-btn--alert',
+            title: 'Configurazione da completare',
+            hidden: '',
+            onClick: () => openGuide({ tab: 'missing' }),
+        },
+        [icon('circle-exclamation')]
+    );
+    onSetupChange((state) => { setupAlertButton.hidden = !setupIsPending(state); });
+
     const toolbar = el('div', { className: 'hero__toolbar' }, [
         homeButton,
         menuButton,
         el('div', { className: 'hero__profile-dropdown' }, [profileButton, profileMenu]),
+        setupAlertButton,
         el('div', { className: 'hero__toolbar-spacer' }),
         executeButton,
         attachButton,

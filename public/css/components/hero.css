@@ -534,6 +534,20 @@
     display: block;
 }
 
+.hero__icon-btn--alert {
+    background: var(--color-danger-bg);
+    border-color: rgba(162, 59, 44, 0.35);
+    color: var(--color-danger);
+}
+
+.hero__icon-btn--alert:hover {
+    background: #f0d5cf;
+}
+
+.hero__icon-btn--alert[hidden] {
+    display: none;
+}
+
 .hero__icon-btn.is-listening {
     background: var(--color-danger);
     border-color: var(--color-danger);

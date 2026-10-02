@@ -180,3 +180,44 @@
     border-top: 1px solid rgba(139, 131, 173, 0.25);
     flex-shrink: 0;
 }
+
+/* Segnale "c'e' ancora da fare" accanto alla scheda Cosa manca ancora */
+.onboarding__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.onboarding__tab-alert {
+    display: inline-flex;
+    width: 14px;
+    height: 14px;
+    color: var(--color-danger);
+}
+
+.onboarding__tab-alert[hidden] {
+    display: none;
+}
+
+.onboarding__tab-alert svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Scheda "Cosa posso fare": la ricerca e l'elenco del vecchio wizard,
+   ora dentro il corpo scorrevole della Guida invece di un pannello loro. */
+.onboarding__body .wizard__search {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 14px;
+}
+
+.onboarding__body .wizard__body {
+    padding: 0;
+    overflow: visible;
+}
+
+.onboarding__body .wizard__entry {
+    background: var(--color-panel);
+}

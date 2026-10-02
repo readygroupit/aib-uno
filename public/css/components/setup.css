@@ -1,0 +1,312 @@
+/*
+ * Checklist di configurazione (vedi public/js/setup.js): usata sia dentro
+ * il tour di benvenuto sia nella pagina /configurazione, quindi nessuno
+ * sfondo proprio - le righe sono "chiare su qualunque fondo".
+ */
+.setup-card__title {
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: -0.3px;
+}
+
+.setup-card__subtitle {
+    margin: 4px 0 18px;
+    font-size: 13.5px;
+    color: rgba(18, 51, 63, 0.62);
+}
+
+.setup__progress {
+    margin-bottom: 20px;
+}
+
+.setup__progress-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.setup__progress-label {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--color-petrol);
+}
+
+.setup__progress-percent {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    color: var(--color-petrol);
+}
+
+.setup__bar {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(18, 51, 63, 0.1);
+    overflow: hidden;
+}
+
+.setup__bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--color-teal);
+    transition: width 0.5s ease;
+}
+
+.setup__bar-fill.is-complete {
+    background: var(--color-moss);
+}
+
+.setup__group + .setup__group {
+    margin-top: 18px;
+}
+
+.setup__group-title {
+    margin: 0 0 8px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.setup__items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.setup__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(18, 51, 63, 0.1);
+    background: var(--color-panel);
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.setup__item:hover,
+.setup__item:focus-visible {
+    border-color: rgba(18, 51, 63, 0.3);
+    box-shadow: 0 6px 16px -10px rgba(18, 51, 63, 0.4);
+    outline: none;
+}
+
+.setup__mark {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+}
+
+.setup__mark svg {
+    width: 100%;
+    height: 100%;
+}
+
+.setup__mark--done { color: var(--color-moss); }
+.setup__mark--todo { color: rgba(18, 51, 63, 0.3); }
+.setup__mark--manual { color: rgba(18, 51, 63, 0.4); }
+
+.setup__item-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.setup__item-label {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--color-petrol);
+}
+
+.setup__item-desc {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: rgba(18, 51, 63, 0.64);
+}
+
+.setup__pill {
+    flex: 0 0 auto;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+}
+
+.setup__pill--done { background: #eaf1ea; color: #3d6b4f; border-color: rgba(79, 123, 92, 0.28); }
+.setup__pill--todo { background: #f6f0df; color: #4a3a11; border-color: rgba(185, 147, 51, 0.3); }
+.setup__pill--manual { background: rgba(18, 51, 63, 0.05); color: rgba(18, 51, 63, 0.66); border-color: rgba(18, 51, 63, 0.12); }
+
+.setup__chevron {
+    flex: 0 0 auto;
+    width: 12px;
+    display: inline-flex;
+    color: rgba(18, 51, 63, 0.4);
+}
+
+.setup__item .setup__chevron svg,
+.setup__back svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* --- Procedura guidata di un connettore --- */
+.setup__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: none;
+    padding: 0;
+    margin-bottom: 14px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.66);
+    cursor: pointer;
+}
+
+.setup__back:hover {
+    color: var(--color-petrol);
+}
+
+.setup__back svg {
+    width: 14px;
+    height: 14px;
+}
+
+.setup__back .icon {
+    display: inline-flex;
+    width: 14px;
+}
+
+.setup__title {
+    margin: 0;
+    font-size: 19px;
+    letter-spacing: -0.3px;
+    color: var(--color-petrol);
+}
+
+.setup__intro {
+    margin: 6px 0 16px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: rgba(18, 51, 63, 0.8);
+}
+
+.setup__connected {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border-radius: var(--radius-md);
+    background: rgba(79, 123, 92, 0.12);
+}
+
+.setup__connected-text {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3d6b4f;
+}
+
+.setup__steps {
+    margin: 0 0 20px;
+    padding-left: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: rgba(18, 51, 63, 0.8);
+}
+
+.setup__steps li::marker {
+    font-weight: 700;
+    color: var(--color-teal-dark);
+}
+
+.setup__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.setup__input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.setup__input--area {
+    height: auto;
+    padding: 10px 13px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px;
+    line-height: 1.45;
+    resize: vertical;
+}
+
+.setup__error[hidden] {
+    display: none;
+}
+
+.setup__error {
+    margin: 0;
+}
+
+.setup__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.setup__note {
+    margin: 16px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(18, 51, 63, 0.1);
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: rgba(18, 51, 63, 0.58);
+}
+
+/* --- Spiegazione in cima alla sezione di destinazione --- */
+.setup-hint {
+    border-left: 4px solid var(--color-teal);
+}
+
+.setup-hint__eyebrow {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.setup-hint__title {
+    margin: 4px 0 6px;
+    font-size: 17px;
+    letter-spacing: -0.2px;
+}
+
+.setup-hint__text {
+    margin: 0 0 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: rgba(18, 51, 63, 0.8);
+}

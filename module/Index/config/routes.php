@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Index\Controller\AgentsController;
 use Index\Controller\AppointmentsController;
 use Index\Controller\BlogController;
 use Index\Controller\CampaignsController;
@@ -17,6 +18,7 @@ use Index\Controller\InterventionsController;
 use Index\Controller\InvoicesController;
 use Index\Controller\LeadDuplicatesController;
 use Index\Controller\LeadsController;
+use Index\Controller\MessageTemplatesController;
 use Index\Controller\PermissionsController;
 use Index\Controller\ProfileController;
 use Index\Controller\PromptController;
@@ -24,6 +26,7 @@ use Index\Controller\RefundsController;
 use Index\Controller\ReportController;
 use Index\Controller\RestrictedAreaController;
 use Index\Controller\ServicesController;
+use Index\Controller\SetupController;
 use Index\Controller\TasksController;
 use Index\Controller\UsersController;
 use Index\Controller\WizardController;
@@ -192,6 +195,37 @@ return [
     ],
     ...entityRoutes('communications', '/comunicazioni', CommunicationsController::class),
     ...entityRoutes('refunds', '/rimborsi', RefundsController::class),
+    ...entityRoutes('message_templates', '/modelli-messaggio', MessageTemplatesController::class),
+
+    'setup' => [
+        'path' => '/configurazione',
+        'controller' => SetupController::class,
+        'action' => 'index',
+    ],
+    'setup-status' => [
+        'path' => '/configurazione/stato',
+        'controller' => SetupController::class,
+        'action' => 'status',
+    ],
+    'setup-connector-connect' => [
+        'path' => '/configurazione/connettori/:code',
+        'controller' => SetupController::class,
+        'action' => 'connect',
+    ],
+    'setup-connector-disconnect' => [
+        'path' => '/configurazione/connettori/:code/scollega',
+        'controller' => SetupController::class,
+        'action' => 'disconnect',
+    ],
+
+    // Percorsi letterali PRIMA di '/agenti/:id' (first-match-wins, vedi Router::match()).
+    'agents' => ['path' => '/agenti', 'controller' => AgentsController::class, 'action' => 'index'],
+    'agents-feed' => ['path' => '/agenti/messaggi', 'controller' => AgentsController::class, 'action' => 'feed'],
+    'agents-restart' => ['path' => '/agenti/riavvia', 'controller' => AgentsController::class, 'action' => 'restart'],
+    'agents-message-approve' => ['path' => '/agenti/messaggi/:id/approva', 'controller' => AgentsController::class, 'action' => 'approve'],
+    'agents-message-dismiss' => ['path' => '/agenti/messaggi/:id/ignora', 'controller' => AgentsController::class, 'action' => 'dismiss'],
+    'agents-run' => ['path' => '/agenti/:id/esegui', 'controller' => AgentsController::class, 'action' => 'run'],
+    'agents-save' => ['path' => '/agenti/:id', 'controller' => AgentsController::class, 'action' => 'save'],
 
     'report' => [
         'path' => '/report',

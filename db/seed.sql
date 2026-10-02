@@ -35,7 +35,9 @@ VALUES
     (14, 1, 'document_requests', 'Documenti richiesti', 'Gestione documenti richiesti per le pratiche', 0, 1, NOW(), 1),
     (15, 1, 'communications', 'Comunicazioni', 'Storico comunicazioni con clienti/contatti/pratiche', 0, 1, NOW(), 1),
     (16, 1, 'reports', 'Report', 'Riepiloghi e statistiche', 0, 1, NOW(), 1),
-    (17, 1, 'refunds', 'Rimborsi', 'Importi, stato pagamento e fattura del rimborso', 0, 1, NOW(), 1);
+    (17, 1, 'refunds', 'Rimborsi', 'Importi, stato pagamento e fattura del rimborso', 0, 1, NOW(), 1),
+    (18, 1, 'message_templates', 'Modelli di messaggio', 'Testi predefiniti per email e WhatsApp', 0, 1, NOW(), 1),
+    (19, 1, 'agents', 'Agenti', 'Agenti AI e messaggi per l''operatore', 0, 1, NOW(), 1);
 
 -- users/leads restano un permesso unico "X.manage" (non ancora
 -- retrofittati su AbstractEntityController, vedi memoria progetto). Da
@@ -99,7 +101,13 @@ VALUES
     (52, 17, 'refunds.view', 'Visualizzare rimborsi', 'Vedere l''elenco e aprire il dettaglio.', 0, 1, NOW(), 1, 'view'),
     (53, 17, 'refunds.create', 'Creare rimborsi', 'Aggiungere nuovi elementi.', 0, 1, NOW(), 1, 'create'),
     (54, 17, 'refunds.edit', 'Modificare rimborsi', 'Modificare elementi esistenti.', 0, 1, NOW(), 1, 'edit'),
-    (55, 17, 'refunds.delete', 'Eliminare rimborsi', 'Eliminare elementi esistenti.', 0, 1, NOW(), 1, 'delete');
+    (55, 17, 'refunds.delete', 'Eliminare rimborsi', 'Eliminare elementi esistenti.', 0, 1, NOW(), 1, 'delete'),
+    (56, 18, 'message_templates.view', 'Visualizzare modelli di messaggio', 'Vedere l''elenco e aprire il dettaglio.', 0, 1, NOW(), 1, 'view'),
+    (57, 18, 'message_templates.create', 'Creare modelli di messaggio', 'Aggiungere nuovi elementi.', 0, 1, NOW(), 1, 'create'),
+    (58, 18, 'message_templates.edit', 'Modificare modelli di messaggio', 'Modificare elementi esistenti.', 0, 1, NOW(), 1, 'edit'),
+    (59, 18, 'message_templates.delete', 'Eliminare modelli di messaggio', 'Eliminare elementi esistenti.', 0, 1, NOW(), 1, 'delete'),
+    (60, 19, 'agents.view', 'Vedere gli agenti', 'Vedere gli agenti e i loro messaggi.', 0, 1, NOW(), 1, 'view'),
+    (61, 19, 'agents.edit', 'Programmare gli agenti', 'Programmare gli agenti, eseguirli e approvare le loro proposte.', 0, 1, NOW(), 1, 'edit');
 
 INSERT INTO profile_permissions (profile_id, permission_id, status, created_at, created_by)
 VALUES
@@ -157,7 +165,13 @@ VALUES
     (1, 52, 1, NOW(), 1),
     (1, 53, 1, NOW(), 1),
     (1, 54, 1, NOW(), 1),
-    (1, 55, 1, NOW(), 1);
+    (1, 55, 1, NOW(), 1),
+    (1, 56, 1, NOW(), 1),
+    (1, 57, 1, NOW(), 1),
+    (1, 58, 1, NOW(), 1),
+    (1, 59, 1, NOW(), 1),
+    (1, 60, 1, NOW(), 1),
+    (1, 61, 1, NOW(), 1);
 
 INSERT INTO config_groups (id, parent_id, code, name, description, sort_order, status, created_at, created_by)
 VALUES

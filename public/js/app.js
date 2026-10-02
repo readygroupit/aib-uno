@@ -1,5 +1,5 @@
 import { mountPromptShell } from './components/hero.js';
-import { openOnboarding } from './onboarding.js';
+import { openGuide, loadSetupState, setupIsPending } from './onboarding.js';
 import './auth.js';
 import './components/data-table.js';
 import './components/stat-box.js';
@@ -14,6 +14,9 @@ import './components/permission-summary.js';
 import './components/activity-feed.js';
 import './components/profile-layout.js';
 import './components/claim-table.js';
+import './components/setup-checklist.js';
+import './components/agent-feed.js';
+import './components/agents-board.js';
 
 function boot() {
     const root = document.getElementById('page-root');
@@ -33,13 +36,21 @@ function boot() {
     mountPromptShell(root, payload.components);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     boot();
+    if (!document.getElementById('page-root')) {
+        return;
+    }
 
-    // Tour di benvenuto: window.UNO_SHOW_ONBOARDING e' gia' false sulle
-    // pagine non autenticate (vedi layout.phtml), niente da controllare
-    // qui oltre al flag stesso.
-    if (window.UNO_SHOW_ONBOARDING) {
-        openOnboarding();
+    // Su ogni pagina: alimenta il riquadro rosso nella toolbar (hero.js).
+    const setup = await loadSetupState();
+
+    // La Guida si apre da sola solo sulla home. Al primo accesso (finche'
+    // non e' chiusa con "Ho capito") e, dopo, ogni volta che c'e' ancora
+    // qualcosa di obbligatorio da configurare - in quel caso non si puo'
+    // nemmeno spegnere per sempre (vedi openGuide()).
+    // window.UNO_SHOW_ONBOARDING e' gia' false da disconnessi.
+    if (window.location.pathname === '/' && (window.UNO_SHOW_ONBOARDING || setupIsPending(setup))) {
+        openGuide({ tab: window.UNO_SHOW_ONBOARDING ? null : 'missing' });
     }
 });

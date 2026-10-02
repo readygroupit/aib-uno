@@ -277,6 +277,51 @@ DNS gia' puntato).
 DB + vhost) partendo da zero - oggi si testa tutto o dentro `uno` stesso o
 con script `php -r` usa-e-getta contro database di prova.
 
+## Configurazione: cosa manca per essere operativi
+
+`/configurazione` (prompt: "configurazione") e la scheda "Cosa manca ancora"
+del tour di benvenuto mostrano la stessa checklist con barra di avanzamento
+(`App\Service\SetupService::payload()`, renderer unico `public/js/setup.js`).
+Solo i passaggi **obbligatori** contano nella percentuale (oggi: Jotform,
+Google Sheets, almeno un modello di messaggio); WhatsApp, ConciliaWeb e
+classificazione del disservizio sono facoltativi. `done: null` = attivita'
+manuale non verificabile, ne' fatta ne' mancante.
+
+- **Connettori** (`src/App/Connector/`): `JotformConnector` (chiave API),
+  `GoogleSheetsConnector` (account di servizio, JWT firmato con openssl),
+  `WhatsAppConnector` (Cloud API Meta). Ognuno espone `setupSpec()` (passi +
+  campi della procedura guidata) e `connect()`, che verifica contro il
+  servizio vero e salva in `connector_credentials` SOLO se funziona.
+  **"Collegato" oggi significa credenziali verificate**: la sincronizzazione
+  dei contatti/fogli e l'invio WhatsApp non esistono ancora.
+- **Passaggi-sezione**: portano a una pagina con `?setup=<chiave>`, che mostra
+  in cima la spiegazione (`SetupService::HINTS`, componente `setup-hint`,
+  iniettato da `AbstractController::renderPage()`).
+- Pacchetto `message_templates` (`/modelli-messaggio`): testi predefiniti
+  per email/WhatsApp; il campo `body` usa `'input' => 'textarea'` nel
+  manifest (opt-in del form generico).
+- Chiavi salvate in chiaro in `extra_config`/`api_key` (come gia' previsto da
+  `connectors`): cifratura a riposo ancora da fare.
+
+**Agenti (demo)**: `/agenti` + flusso "I tuoi colleghi digitali" in cima alla
+home (`App\Service\AgentService`, pacchetto `agents`, volti SVG in
+`public/js/avatars.js`). 8 agenti con nome e volto leggono dati veri e
+scrivono messaggi con testi preparati - **nessuna chiamata a Claude**: i
+metodi `gen*` sono il punto in cui metterla. `is_enabled` e `autonomy`
+(suggerisce / chiede approvazione / agisce da solo) governano davvero il
+comportamento; `schedule` e `rule_text` sono solo salvati. Le azioni
+approvate scrivono nel gestionale (comunicazione "inviata", classificazione)
+ma non mandano nulla fuori. "Ricomincia la demo" rigenera il flusso.
+
+**La Guida** (`public/js/onboarding.js`) e' l'unico punto di aiuto: schede
+Panoramica, Percorso pratica, Dove trovare, Cosa posso fare (ex wizard, vedi
+`wizard.js`/`ShowWizardTool`) e Cosa manca ancora (solo finche' c'e' qualcosa
+di obbligatorio). Si apre da sola sulla home (primo accesso, o config
+incompleta - senza "non mostrarmelo piu'" finche' manca qualcosa); altrimenti
+dal riquadro rosso nella toolbar del prompt (visibile solo se manca qualcosa)
+o dalla voce "Guida" del menu profilo. Il prompt "aiuto" la apre sulla scheda
+funzioni.
+
 ## Cosa manca (in ordine di priorita' concordato)
 
 1. **Provisioning vero (Fase 4)** - il pezzo che sblocca tutto il resto.

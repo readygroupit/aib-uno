@@ -146,6 +146,18 @@ final class LeadRepository extends AbstractRepository
         );
     }
 
+    /** Contatti aperti senza classificazione del disservizio - li' dove l'agente di qualificazione ha qualcosa da proporre. */
+    public function findUnclassified(int $limit = 5): array
+    {
+        $sql = 'SELECT * FROM leads
+                WHERE status != 0 AND converted_customer_id IS NULL AND lost_reason IS NULL
+                  AND disservice_type IS NULL
+                ORDER BY id DESC
+                LIMIT ' . max(1, $limit);
+
+        return array_map(static fn (array $row) => Lead::fromArray($row), $this->db->fetchAll($sql));
+    }
+
     public function countStale(string $before): int
     {
         // ':before1'/':before2' distinti, non lo stesso nome due volte:

@@ -17,6 +17,8 @@ use App\Repository\ConnectorCredentialRepository;
  */
 abstract class AbstractApiKeyConnector implements ConnectorInterface
 {
+    use StoresCredentials;
+
     protected readonly ConnectorCredentialRepository $credentials;
 
     public function __construct(Container $container)

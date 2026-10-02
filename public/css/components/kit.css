@@ -208,6 +208,13 @@
     outline: none;
 }
 
+.field__input--area {
+    height: auto;
+    padding: 11px 13px;
+    line-height: 1.5;
+    resize: vertical;
+}
+
 .field__input:focus {
     border-color: var(--color-petrol);
 }

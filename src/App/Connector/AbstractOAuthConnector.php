@@ -20,6 +20,8 @@ use App\Repository\ConnectorCredentialRepository;
  */
 abstract class AbstractOAuthConnector implements ConnectorInterface
 {
+    use StoresCredentials;
+
     protected readonly ConnectorCredentialRepository $credentials;
 
     public function __construct(Container $container)

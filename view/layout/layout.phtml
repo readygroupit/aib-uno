@@ -49,6 +49,8 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <link rel="stylesheet" href="<?= $this->asset('/css/components/activity-feed.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/profile-layout.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/claim-table.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/setup.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/agents.css') ?>">
     <!--
       Logo del prompt, disponibile a livello globale: il prompt e' ormai
       costruito interamente lato client su ogni pagina (vedi hero.js), non
@@ -78,6 +80,7 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <script>window.UNO_CSRF = <?= json_encode(\App\Core\Csrf::token()) ?>;</script>
     <!-- Blocco identita' in cima al menu profilo (vedi hero.js) - null sulle pagine non autenticate, calcolato qui sopra. -->
     <script>window.UNO_USER = <?= json_encode($unoUser) ?>;</script>
+    <script>window.UNO_CAN_CONFIGURE = <?= json_encode(in_array('users.manage', $_SESSION['user']['permissions'] ?? [], true)) ?>;</script>
     <script>window.UNO_SHOW_ONBOARDING = <?= json_encode($unoShowOnboarding) ?>;</script>
     <script type="module" src="<?= $this->asset('/js/app.js') ?>"></script>
 </head>

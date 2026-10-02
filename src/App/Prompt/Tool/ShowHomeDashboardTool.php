@@ -13,8 +13,7 @@ use App\Repository\RefundRepository;
 use App\Repository\TaskRepository;
 use App\Repository\UserRepository;
 use App\Service\AuthService;
-use App\View\Component\AgentPanelComponent;
-use App\View\Component\ApprovalQueueComponent;
+use App\View\Component\AgentFeedComponent;
 use App\View\Component\DashboardHeaderComponent;
 use App\View\Component\FunnelComponent;
 use App\View\Component\StatBoxComponent;
@@ -22,12 +21,10 @@ use App\View\Component\StatBoxComponent;
 /**
  * Cruscotto della home: intestazione (chi sei, che giorno e', su quale
  * intervallo stai guardando), contatori cliccabili, il ciclo di vita
- * completo lead -> rimborso come imbuto, la coda "da approvare" (human in
- * the loop) e lo stato degli agenti - traduzione diretta della struttura
- * del brief Assilevi (6 Agenti AI, 7 Flusso operativo, 10 Livelli di
- * automazione) in sezioni di schermata, non solo contatori isolati (vedi
- * la nota di App\View\Component\AgentPanelComponent sul perche' non tutto
- * qui e' "autonomo" per davvero).
+ * completo lead -> rimborso come imbuto e, in cima, i messaggi degli
+ * agenti all'operatore (vedi AgentService - ambiente dimostrativo) -
+ * traduzione della struttura del brief Assilevi (6 Agenti AI, 7 Flusso
+ * operativo, 10 Livelli di automazione) in sezioni di schermata.
  */
 final class ShowHomeDashboardTool implements PromptToolInterface
 {
@@ -41,8 +38,7 @@ final class ShowHomeDashboardTool implements PromptToolInterface
     private StatBoxComponent $statBox;
     private DashboardHeaderComponent $header;
     private FunnelComponent $funnel;
-    private ApprovalQueueComponent $approvalQueue;
-    private AgentPanelComponent $agentPanel;
+    private AgentFeedComponent $agentFeed;
 
     private const RANGES = [
         'today' => ['label' => 'Oggi', 'days' => 1],
@@ -65,8 +61,7 @@ final class ShowHomeDashboardTool implements PromptToolInterface
         $this->statBox = $container->get(StatBoxComponent::class);
         $this->header = $container->get(DashboardHeaderComponent::class);
         $this->funnel = $container->get(FunnelComponent::class);
-        $this->approvalQueue = $container->get(ApprovalQueueComponent::class);
-        $this->agentPanel = $container->get(AgentPanelComponent::class);
+        $this->agentFeed = $container->get(AgentFeedComponent::class);
     }
 
     public function name(): string
@@ -124,10 +119,9 @@ final class ShowHomeDashboardTool implements PromptToolInterface
 
         $components = [
             $this->buildHeader($rangeKey),
+            ...$this->buildAgentFeed(),
             ...$this->buildStatCards($range['days']),
             $this->buildFunnel(),
-            $this->buildApprovalQueue(),
-            $this->buildAgentPanel(),
         ];
 
         // Permette a extractUrl() (hero.js) di aggiornare la barra degli
@@ -239,93 +233,15 @@ final class ShowHomeDashboardTool implements PromptToolInterface
     }
 
     /**
-     * Solo 3 tipi di card (contatti fermi, duplicati, documenti mancanti):
-     * quelli su cui esiste davvero una rilevazione + un'azione concreta
-     * dietro (vedi LeadRepository::findStale()/findDuplicateCandidates(),
-     * LeadsController::markContactedAction(), DocumentRequestsController::
-     * remindAction()). Niente card per bozze legali o verifiche di
-     * fatturazione: non esiste ancora nulla di reale dietro, meglio
-     * un'assenza onesta che una card che non fa nulla.
+     * I messaggi degli agenti (vedi AgentService) in cima alla home, solo
+     * per chi puo' vederli. Sostituisce la vecchia coda "Da approvare" e il
+     * pannello agenti: stessa idea (l'operatore approva, gli agenti
+     * lavorano), ma detta dagli agenti stessi invece che da una tabella.
+     *
+     * @return list<array<string, mixed>>
      */
-    private function buildApprovalQueue(): array
+    private function buildAgentFeed(): array
     {
-        $items = [];
-
-        foreach ($this->leads->findStale(date('Y-m-d H:i:s', strtotime('-48 hours')), 2) as $lead) {
-            $hours = (int) floor((time() - strtotime((string) $lead->createdAt)) / 3600);
-            $items[] = [
-                'avatarInitials' => mb_strtoupper(mb_substr((string) $lead->firstName, 0, 1) . mb_substr((string) $lead->lastName, 0, 1)),
-                'avatarColor' => '#8e3a29',
-                'tag' => 'Richiamo',
-                'tagColor' => 'danger',
-                'title' => trim("{$lead->firstName} {$lead->lastName}"),
-                'description' => "Fermo da {$hours} ore" . ($lead->flightRoute !== null ? " · volo {$lead->flightRoute}" : ''),
-                'agentLabel' => 'Follow-up commerciale',
-                'reviewHref' => '/contatti/' . $lead->id,
-                'approveUrl' => '/contatti/' . $lead->id . '/contattato',
-            ];
-        }
-
-        foreach ($this->leads->findDuplicateCandidates(2) as $dup) {
-            $items[] = [
-                'avatarInitials' => mb_strtoupper(mb_substr($dup['bLabel'], 0, 2)),
-                'avatarColor' => '#8a6a1f',
-                'tag' => 'Duplicato',
-                'tagColor' => 'brass',
-                'title' => $dup['bLabel'],
-                'description' => ucfirst($dup['reason']) . " con {$dup['aLabel']}",
-                'agentLabel' => 'Lead Intake e Data Quality',
-                'reviewHref' => '/contatti/duplicati/' . $dup['bId'],
-                'approveUrl' => null,
-            ];
-        }
-
-        foreach ($this->documentRequests->findMissingWithCase(2) as $doc) {
-            $items[] = [
-                'avatarInitials' => mb_strtoupper(mb_substr($doc['caseTitle'], 0, 2)),
-                'avatarColor' => '#5b5480',
-                'tag' => 'Documenti',
-                'tagColor' => 'lilac',
-                'title' => $doc['caseTitle'],
-                'description' => "Manca: {$doc['documentType']}",
-                'agentLabel' => 'Document Manager',
-                'reviewHref' => '/documenti-richiesti/' . $doc['id'],
-                'approveUrl' => '/documenti-richiesti/' . $doc['id'] . '/sollecita',
-            ];
-        }
-
-        return $this->approvalQueue->toData([
-            'title' => 'Human in the loop',
-            'subtitle' => 'Da approvare',
-            'items' => $items,
-            'emptyMessage' => 'Niente da approvare al momento.',
-        ]);
-    }
-
-    private function buildAgentPanel(): array
-    {
-        $totalLeads = $this->leads->count();
-        $qualifiedLeads = $totalLeads - ($this->leads->countGroupedBy('stage')['nuovo'] ?? 0);
-        $duplicates = count($this->leads->findDuplicateCandidates(200));
-        $missingDocs = $this->documentRequests->count(['completeness_status' => 'mancante']);
-        $staleLeads = $this->leads->countStale(date('Y-m-d H:i:s', strtotime('-48 hours')));
-        $refundedAmount = $this->refunds->sumAcceptedAmount();
-
-        return $this->agentPanel->toData([
-            'title' => 'AI Orchestrator',
-            'subtitle' => 'Agenti al lavoro',
-            'note' => 'Solo Lead Intake, Follow-up commerciale, Document Manager e Amministrazione hanno oggi una rilevazione reale dietro (vedi la coda "Da approvare"): gli altri sono ancora manuali, il livello indica il traguardo, non lo stato attuale.',
-            'agents' => [
-                ['name' => 'Lead Intake e Data Quality', 'summary' => "{$duplicates} possibili duplicati rilevati", 'level' => 'assistito'],
-                ['name' => 'Agente di qualificazione', 'summary' => "{$qualifiedLeads} di {$totalLeads} contatti qualificati", 'level' => 'manuale'],
-                ['name' => 'Follow-up commerciale', 'summary' => "{$staleLeads} contatti da richiamare", 'level' => 'assistito'],
-                ['name' => 'Document Manager', 'summary' => "{$missingDocs} documenti mancanti", 'level' => 'assistito'],
-                ['name' => 'Assistente legale operativo', 'summary' => 'Nessuna bozza automatica ancora', 'level' => 'manuale'],
-                ['name' => 'ConciliaWeb Assistant', 'summary' => 'Integrazione col portale non ancora collegata', 'level' => 'manuale'],
-                ['name' => 'Amministrazione e rimborsi', 'summary' => number_format($refundedAmount, 0, ',', '.') . ' € rimborsati', 'level' => 'assistito'],
-                ['name' => 'Marketing e Conversion Intelligence', 'summary' => 'Tracciamento campagne non ancora collegato', 'level' => 'manuale'],
-                ['name' => 'Management Reporter', 'summary' => 'Report e cruscotto calcolati in tempo reale', 'level' => 'autonomo'],
-            ],
-        ]);
+        return $this->auth->hasPermission('agents.view') ? [$this->agentFeed->toData(['limit' => 5])] : [];
     }
 }

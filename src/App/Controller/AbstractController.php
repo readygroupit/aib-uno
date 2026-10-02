@@ -85,6 +85,17 @@ abstract class AbstractController
      */
     protected function renderPage(array $componentsData, array $vars = []): ?string
     {
+        // ?setup=<chiave>: si arriva qui dalla checklist di configurazione
+        // (vedi SetupService), la spiegazione del passaggio compare in
+        // cima alla pagina di destinazione.
+        $setupKey = (string) $this->request->get('setup', '');
+        if ($setupKey !== '' && !$this->request->isAjax()) {
+            $hint = $this->container->get(\App\Service\SetupService::class)->hint($setupKey);
+            if ($hint !== null) {
+                array_unshift($componentsData, $hint);
+            }
+        }
+
         if ($this->request->isAjax()) {
             $this->json(['components' => $componentsData]);
 

@@ -25,6 +25,22 @@ function buildPlainControl(field) {
     });
 }
 
+// Testo su piu' righe, opt-in per campo ('input' => 'textarea' nel
+// manifest del pacchetto): non tutti i TEXT lo meritano, un corpo di
+// messaggio si'.
+function buildTextareaControl(field) {
+    const control = el('textarea', {
+        className: 'field__input field__input--area',
+        id: 'field-' + field.key,
+        name: field.key,
+        rows: '8',
+        required: field.required ? 'required' : null,
+        readonly: field.readonly ? 'readonly' : null,
+    });
+    control.value = field.value ?? '';
+    return control;
+}
+
 // Campo "digita e scegli da un elenco" (come la Dynamic Select di Core):
 // un input di testo visibile per cercare/mostrare l'etichetta, un input
 // nascosto con l'id vero che finisce nel FormData all'invio - il server
@@ -122,7 +138,9 @@ function buildAutocompleteControl(field) {
 }
 
 function buildField(field) {
-    const control = field.inputType === 'autocomplete' ? buildAutocompleteControl(field) : buildPlainControl(field);
+    const control = field.inputType === 'autocomplete'
+        ? buildAutocompleteControl(field)
+        : field.inputType === 'textarea' ? buildTextareaControl(field) : buildPlainControl(field);
 
     const children = [
         el('label', { className: 'field__label', for: 'field-' + field.key }, [field.label]),

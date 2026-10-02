@@ -227,7 +227,7 @@ export function openGuide({ tab = null, entity = null, functionsData = null } = 
                 el('h2', { className: 'onboarding__title' }, [firstTime ? (GUIDE.welcome || `Benvenuto in ${window.UNO_APP_NAME || 'Uno'}`) : 'Guida']),
                 el('p', { className: 'onboarding__subtitle' }, [pending()
                     ? 'Ci sono ancora passaggi da completare per essere operativi.'
-                    : 'Come funziona il sistema e cosa puoi fare.']),
+                    : (GUIDE.subtitle || 'Come funziona il sistema e cosa puoi fare.')]),
             ]),
             el('button', { type: 'button', className: 'onboarding__close', title: 'Chiudi', onClick: closeGuide }, ['×']),
         ]),

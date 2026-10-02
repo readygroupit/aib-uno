@@ -3,35 +3,38 @@
 declare(strict_types=1);
 
 /**
- * Testi della Guida di Uno (vedi public/js/onboarding.js). Un progetto
- * generato riceve i suoi (preset o guida di partenza, vedi
- * packages/provisioning) al posto di questo file.
+ * Testi della Guida di Uno (vedi public/js/onboarding.js). Parla Uno, in
+ * prima persona e al "tu": e' un assistente che lavora con chi sta al PC,
+ * non un manuale. Un progetto generato riceve i suoi testi (preset o guida
+ * di partenza, vedi packages/provisioning) al posto di questo file.
  */
 return [
-    // Titolo del primo accesso: Uno si presenta in prima persona.
     'welcome' => 'Ciao, io sono Uno',
+    'subtitle' => 'Il tuo assistente per costruire gestionali su misura.',
     'tabs' => [
         [
             'key' => 'overview',
-            'label' => 'Panoramica',
+            'label' => 'Chi sono',
             'blocks' => [
-                ['text' => 'Uno costruisce gestionali su misura. Descrivi cosa serve, scegli i pacchetti e in pochi secondi il nuovo progetto e\' online, con il suo database e il suo indirizzo.'],
+                ['text' => 'Costruisco gestionali su misura insieme a te. Tu mi dici di cosa ha bisogno un\'azienda, io preparo il programma: database, schermate, permessi, perfino dei dati di esempio per mostrarlo subito.'],
+                ['text' => 'Puoi parlarmi dalla casella in alto, scrivendo o a voce: chiedimi "progetti", "menu" o "aiuto" e ti porto dove serve.'],
                 ['points' => [
-                    ['Progetti', 'i gestionali gia\' generati e il modulo per crearne uno nuovo.'],
-                    ['Pacchetti', 'i mattoni disponibili: contatti, clienti, pratiche, documenti, rimborsi, agenti...'],
-                    ['Preset', 'punti di partenza pronti per un settore, con dati di esempio.'],
+                    ['Progetti', 'qui trovi i gestionali che abbiamo gia\' creato e da qui ne facciamo di nuovi.'],
+                    ['Pacchetti', 'sono i mattoni che uso: contatti, clienti, pratiche, documenti, rimborsi, agenti...'],
+                    ['Preset', 'punti di partenza che conosco gia\' per un settore, con i dati di esempio pronti.'],
                 ]],
             ],
         ],
         [
             'key' => 'journey',
-            'label' => 'Come nasce un progetto',
+            'label' => 'Come lavoriamo',
             'blocks' => [
+                ['text' => 'Creare un progetto con me richiede un minuto:'],
                 ['steps' => [
-                    ['accent', 'Scegli il punto di partenza', 'Un preset di settore (es. assistenza reclami voli) oppure da zero.'],
-                    ['strong', 'Scegli i pacchetti', 'Le dipendenze si aggiungono da sole: chi sceglie Clienti si porta dietro i dati geografici.'],
-                    ['info', 'Crea', 'Uno prepara cartella, database, utente amministratore e permessi.'],
-                    ['warning', 'Apri e mostra', 'Il progetto risponde subito su nome.localhost, con i dati demo se richiesti.'],
+                    ['accent', 'Mi dici da dove partire', 'Scegli un preset del settore (per esempio assistenza reclami voli) oppure partiamo da zero.'],
+                    ['strong', 'Scegli i pacchetti', 'Alle dipendenze penso io: se scegli Clienti, aggiungo da solo i dati geografici che servono.'],
+                    ['info', 'Io lo costruisco', 'Preparo cartella, database, utente amministratore e permessi. Se qualcosa va storto, rimetto tutto com\'era.'],
+                    ['warning', 'Lo apri e lo mostri', 'Ti do il link: il progetto e\' gia\' online, con i dati di esempio se li hai chiesti.'],
                 ]],
             ],
         ],

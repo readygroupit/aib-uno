@@ -33,6 +33,8 @@ final class ProjectsBoardComponent extends AbstractComponent
 
         return [
             'type' => 'projects-board',
+            // Aperta dal prompt, la barra degli indirizzi passa a /progetti (vedi extractUrl() in hero.js).
+            'url' => '/progetti',
             'projects' => $projects,
             'presets' => array_values(array_map(static fn (array $preset) => [
                 'key' => $preset['key'],

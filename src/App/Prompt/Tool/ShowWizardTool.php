@@ -112,7 +112,7 @@ final class ShowWizardTool implements PromptToolInterface, PromptConversationalI
 
     public function triggers(): array
     {
-        return ['cosa posso fare', 'cosa puoi fare', 'dimmi cosa puoi fare', 'cosa sai fare', 'chi sei', 'aiuto', 'guida', 'wizard'];
+        return ['cosa posso fare', 'cosa puoi fare', 'dimmi cosa puoi fare', 'cosa sai fare', 'dimmi cosa sai fare', 'chi sei', 'aiuto', 'guida', 'wizard'];
     }
 
     /**

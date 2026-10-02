@@ -9,7 +9,7 @@ declare(strict_types=1);
  */
 return [
     // Titolo del primo accesso: Uno si presenta in prima persona.
-    'welcome' => 'Benvenuti, io sono Uno',
+    'welcome' => 'Ciao, io sono Uno',
     'tabs' => [
         [
             'key' => 'overview',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Prompt\Tool;
 
 use App\Core\Container;
+use App\Package\PackageCatalogService;
 use App\Package\PackageManifest;
 use App\Prompt\PromptConversationalInterface;
 use App\Prompt\PromptToolInterface;
@@ -57,12 +58,14 @@ final class ShowWizardTool implements PromptToolInterface, PromptConversationalI
 
     private PromptToolRegistry $registry;
     private WizardComponent $wizard;
+    private PackageCatalogService $catalog;
     private AuthService $auth;
 
     public function __construct(Container $container)
     {
         $this->registry = $container->get(PromptToolRegistry::class);
         $this->wizard = $container->get(WizardComponent::class);
+        $this->catalog = $container->get(PackageCatalogService::class);
         $this->auth = $container->get(AuthService::class);
     }
 
@@ -164,7 +167,7 @@ final class ShowWizardTool implements PromptToolInterface, PromptConversationalI
         return [$this->wizard->toData([
             'groups' => $groups,
             'fieldHelp' => $this->fieldHelp($entity),
-            'guide' => $this->guide(),
+            'guide' => $this->guideWithFigures(),
         ])];
     }
 
@@ -176,6 +179,21 @@ final class ShowWizardTool implements PromptToolInterface, PromptConversationalI
     public function followUpSuggestions(): array
     {
         return $this->guide()['suggestions'] ?? ['menu'];
+    }
+
+    /** La Guida con i segnaposto dei numeri in evidenza gia' risolti. */
+    private function guideWithFigures(): array
+    {
+        $guide = $this->guide();
+        $packages = (string) count(array_filter(
+            $this->catalog->list(),
+            static fn (array $package) => $package['name'] !== 'provisioning'
+        ));
+        foreach ($guide['highlights'] ?? [] as $i => $highlight) {
+            $guide['highlights'][$i]['value'] = str_replace('{packages}', $packages, (string) $highlight['value']);
+        }
+
+        return $guide;
     }
 
     /** Testi della Guida di questo progetto (config/guide.php). */

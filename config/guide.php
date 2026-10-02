@@ -15,6 +15,12 @@ return [
     'autoOpen' => false,
     'reply' => 'Ecco cosa so fare e come possiamo lavorare insieme. Da dove vuoi cominciare?',
     'suggestions' => ['nuovo progetto', 'pacchetti', 'menu'],
+    // Numeri in evidenza nella Guida in pagina; {packages} = pacchetti nel catalogo.
+    'highlights' => [
+        ['value' => '~2 sec', 'label' => 'per mettere online un gestionale nuovo'],
+        ['value' => '{packages}', 'label' => 'pacchetti pronti da combinare'],
+        ['value' => '0', 'label' => 'righe di codice da scrivere per te'],
+    ],
     'subtitle' => 'Il tuo assistente per costruire gestionali su misura.',
     'tabs' => [
         [

@@ -255,17 +255,68 @@ export function openGuide({ tab = null, entity = null, functionsData = null } = 
 
 // "Cosa puoi fare" / "aiuto" dal prompt: la Guida diventa contenuto della
 // pagina (il prompt si sposta a sinistra come per ogni altro risultato e
-// risponde in chat), non un modale sopra. Prima le schede editoriali di
-// config/guide.php, poi le funzioni disponibili con la ricerca.
-registerComponent('wizard', (data) => {
-    const cards = (data.guide?.tabs || []).map((tab) => el('section', { className: 'card guide-page__card' }, [
+// risponde in chat), non un modale sopra. Qui l'assistente si presenta:
+// la prima scheda e' una vetrina (fondo scuro, mascotte, numeri), i passi
+// una sequenza numerata a colori, poi le funzioni con la ricerca.
+const TILE_ACCENTS = ['brass', 'teal', 'lilac', 'moss'];
+
+function heroSection(guide, tab) {
+    const texts = (tab.blocks || []).filter((b) => b.text).map((b) => el('p', { className: 'guide-hero__text' }, [b.text]));
+    const points = (tab.blocks || []).flatMap((b) => b.points || []);
+
+    return el('section', { className: 'guide-hero' }, [
+        el('div', { className: 'guide-hero__head' }, [
+            el('span', { className: 'guide-hero__mascot' }, [el('img', { src: window.UNO_LOGO_SQUARE || window.UNO_LOGO, alt: '' })]),
+            el('div', {}, [
+                el('span', { className: 'guide-hero__eyebrow' }, [tab.label]),
+                el('h2', { className: 'guide-hero__title' }, [guide.welcome || tab.label]),
+                guide.subtitle ? el('p', { className: 'guide-hero__subtitle' }, [guide.subtitle]) : null,
+            ]),
+        ]),
+        ...texts,
+        (guide.highlights || []).length ? el('div', { className: 'guide-hero__figures' }, guide.highlights.map((h) =>
+            el('div', { className: 'guide-hero__figure' }, [
+                el('span', { className: 'guide-hero__figure-value' }, [h.value]),
+                el('span', { className: 'guide-hero__figure-label' }, [h.label]),
+            ]))) : null,
+        points.length ? el('div', { className: 'guide-hero__tiles' }, points.map(([label, desc], i) =>
+            el('div', { className: 'guide-hero__tile guide-hero__tile--' + TILE_ACCENTS[i % TILE_ACCENTS.length] }, [
+                el('span', { className: 'guide-hero__tile-label' }, [label]),
+                el('span', { className: 'guide-hero__tile-desc' }, [desc]),
+            ]))) : null,
+    ]);
+}
+
+function stepsSection(tab) {
+    const intro = (tab.blocks || []).filter((b) => b.text).map((b) => el('p', { className: 'guide-steps__intro' }, [b.text]));
+    const items = (tab.blocks || []).flatMap((b) => b.steps || []);
+
+    return el('section', { className: 'card guide-steps' }, [
         el('h2', { className: 'guide-page__title' }, [tab.label]),
-        ...renderBlocks(tab.blocks),
-    ]));
-    cards.push(el('section', { className: 'card guide-page__card' }, [
+        ...intro,
+        el('ol', { className: 'guide-steps__list' }, items.map(([, label, desc], i) =>
+            el('li', { className: 'guide-steps__item guide-steps__item--' + TILE_ACCENTS[i % TILE_ACCENTS.length] }, [
+                el('span', { className: 'guide-steps__num' }, [String(i + 1)]),
+                el('span', { className: 'guide-steps__label' }, [label]),
+                el('span', { className: 'guide-steps__desc' }, [desc]),
+            ]))),
+    ]);
+}
+
+registerComponent('wizard', (data) => {
+    const guide = data.guide || {};
+    const sections = (guide.tabs || []).map((tab, i) => {
+        if (i === 0) return heroSection(guide, tab);
+        if ((tab.blocks || []).some((b) => b.steps)) return stepsSection(tab);
+        return el('section', { className: 'card guide-page__card' }, [
+            el('h2', { className: 'guide-page__title' }, [tab.label]),
+            ...renderBlocks(tab.blocks),
+        ]);
+    });
+    sections.push(el('section', { className: 'card guide-page__card' }, [
         el('h2', { className: 'guide-page__title' }, ['Cosa posso fare']),
         buildFunctionsView(data),
     ]));
 
-    return el('div', { className: 'guide-page' }, cards);
+    return el('div', { className: 'guide-page' }, sections);
 });

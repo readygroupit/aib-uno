@@ -1,1 +1,0 @@
-ALTER TABLE `appointments` ADD COLUMN `lead_id` INT UNSIGNED NULL;

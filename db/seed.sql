@@ -37,7 +37,8 @@ VALUES
     (16, 1, 'reports', 'Report', 'Riepiloghi e statistiche', 0, 1, NOW(), 1),
     (17, 1, 'refunds', 'Rimborsi', 'Importi, stato pagamento e fattura del rimborso', 0, 1, NOW(), 1),
     (18, 1, 'message_templates', 'Modelli di messaggio', 'Testi predefiniti per email e WhatsApp', 0, 1, NOW(), 1),
-    (19, 1, 'agents', 'Agenti', 'Agenti AI e messaggi per l''operatore', 0, 1, NOW(), 1);
+    (19, 1, 'agents', 'Agenti', 'Agenti AI e messaggi per l''operatore', 0, 1, NOW(), 1),
+    (20, 1, 'provisioning', 'Progetti', 'Generazione di progetti nuovi', 0, 1, NOW(), 1);
 
 -- users/leads restano un permesso unico "X.manage" (non ancora
 -- retrofittati su AbstractEntityController, vedi memoria progetto). Da
@@ -107,7 +108,9 @@ VALUES
     (58, 18, 'message_templates.edit', 'Modificare modelli di messaggio', 'Modificare elementi esistenti.', 0, 1, NOW(), 1, 'edit'),
     (59, 18, 'message_templates.delete', 'Eliminare modelli di messaggio', 'Eliminare elementi esistenti.', 0, 1, NOW(), 1, 'delete'),
     (60, 19, 'agents.view', 'Vedere gli agenti', 'Vedere gli agenti e i loro messaggi.', 0, 1, NOW(), 1, 'view'),
-    (61, 19, 'agents.edit', 'Programmare gli agenti', 'Programmare gli agenti, eseguirli e approvare le loro proposte.', 0, 1, NOW(), 1, 'edit');
+    (61, 19, 'agents.edit', 'Programmare gli agenti', 'Programmare gli agenti, eseguirli e approvare le loro proposte.', 0, 1, NOW(), 1, 'edit'),
+    (62, 20, 'provisioning.view', 'Vedere i progetti', 'Vedere i progetti generati.', 0, 1, NOW(), 1, 'view'),
+    (63, 20, 'provisioning.create', 'Creare progetti', 'Generare progetti nuovi (cartella, database, pacchetti).', 0, 1, NOW(), 1, 'create');
 
 INSERT INTO profile_permissions (profile_id, permission_id, status, created_at, created_by)
 VALUES
@@ -171,7 +174,9 @@ VALUES
     (1, 58, 1, NOW(), 1),
     (1, 59, 1, NOW(), 1),
     (1, 60, 1, NOW(), 1),
-    (1, 61, 1, NOW(), 1);
+    (1, 61, 1, NOW(), 1),
+    (1, 62, 1, NOW(), 1),
+    (1, 63, 1, NOW(), 1);
 
 INSERT INTO config_groups (id, parent_id, code, name, description, sort_order, status, created_at, created_by)
 VALUES

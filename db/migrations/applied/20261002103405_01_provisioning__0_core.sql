@@ -1,0 +1,17 @@
+CREATE TABLE `projects` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `status` TINYINT NOT NULL DEFAULT 1,
+  `name` VARCHAR(120) NOT NULL,
+  `slug` VARCHAR(60) NOT NULL,
+  `db_name` VARCHAR(64) NOT NULL,
+  `path` VARCHAR(255) NOT NULL,
+  `url` VARCHAR(255) NOT NULL,
+  `preset` VARCHAR(60) NULL,
+  `packages` TEXT NOT NULL,
+  `with_demo_data` TINYINT UNSIGNED NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  `created_by` INT UNSIGNED NULL,
+  `updated_at` DATETIME NULL,
+  `updated_by` INT UNSIGNED NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

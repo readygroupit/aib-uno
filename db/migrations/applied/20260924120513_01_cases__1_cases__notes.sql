@@ -1,1 +1,0 @@
-ALTER TABLE `cases` ADD COLUMN `notes` TEXT NULL;

@@ -1,1 +1,0 @@
-ALTER TABLE `cases` ADD COLUMN `lead_id` INT UNSIGNED NULL;

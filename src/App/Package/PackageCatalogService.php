@@ -89,13 +89,24 @@ final class PackageCatalogService
 
     public function isInstalled(string $name): bool
     {
-        foreach (glob(ROOT_PATH . '/db/migrations/applied/*__0_core.sql') ?: [] as $file) {
-            if ($this->packageNameFromCoreFile($file) === $name) {
-                return true;
-            }
-        }
+        return in_array($name, self::installedNames(), true);
+    }
 
-        return false;
+    /**
+     * Pacchetti installati in QUESTO progetto (letti da db/migrations/applied).
+     * Statico e in memoria per la durata della richiesta: lo usano anche il
+     * registro delle capacita' e il layout, dove un container non c'e'.
+     *
+     * @return string[]
+     */
+    public static function installedNames(): array
+    {
+        static $names = null;
+
+        return $names ??= array_values(array_unique(array_map(
+            [self::class, 'packageNameFromCoreFile'],
+            glob(ROOT_PATH . '/db/migrations/applied/*__0_core.sql') ?: []
+        )));
     }
 
     /**
@@ -105,7 +116,7 @@ final class PackageCatalogService
      * precisione. Un confronto "finisce con" (via glob a jolly) darebbe un
      * falso positivo, es. 'tasks' installato per colpa di 'ai_agent_tasks'.
      */
-    private function packageNameFromCoreFile(string $path): string
+    private static function packageNameFromCoreFile(string $path): string
     {
         return preg_replace('/^\d{14}_\d{2}_/', '', basename($path, '__0_core.sql'));
     }

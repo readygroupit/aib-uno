@@ -126,7 +126,10 @@ final class PackageInstallerRunner
                 $chosen = $selection[$entityKey] ?? [];
                 foreach ($entity['fields'] as $fieldKey => $field) {
                     $isSelected = ($field['base'] ?? false) || array_key_exists($fieldKey, $chosen);
-                    if ($isSelected && isset($field['references']['package'])) {
+                    // Un riferimento a una tabella dello STESSO pacchetto (es.
+                    // agent_messages -> agents) non e' una dipendenza: l'ordine
+                    // delle entity nel manifest basta.
+                    if ($isSelected && isset($field['references']['package']) && $field['references']['package'] !== $packageName) {
                         $dependencies[] = $field['references']['package'];
                     }
                 }

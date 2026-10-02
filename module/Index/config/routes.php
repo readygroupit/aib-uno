@@ -21,6 +21,7 @@ use Index\Controller\LeadsController;
 use Index\Controller\MessageTemplatesController;
 use Index\Controller\PermissionsController;
 use Index\Controller\ProfileController;
+use Index\Controller\ProjectsController;
 use Index\Controller\PromptController;
 use Index\Controller\RefundsController;
 use Index\Controller\ReportController;
@@ -226,6 +227,13 @@ return [
     'agents-message-dismiss' => ['path' => '/agenti/messaggi/:id/ignora', 'controller' => AgentsController::class, 'action' => 'dismiss'],
     'agents-run' => ['path' => '/agenti/:id/esegui', 'controller' => AgentsController::class, 'action' => 'run'],
     'agents-save' => ['path' => '/agenti/:id', 'controller' => AgentsController::class, 'action' => 'save'],
+
+    // Solo dove c'e' il generatore di progetti (Uno): un progetto generato
+    // non ne riceve il codice (vedi ProjectProvisioner::CONFIGURATOR_FILES).
+    ...(is_file(ROOT_PATH . '/packages/provisioning/package.php') ? [
+        'projects' => ['path' => '/progetti', 'controller' => ProjectsController::class, 'action' => 'index'],
+        'projects-create' => ['path' => '/progetti/crea', 'controller' => ProjectsController::class, 'action' => 'create'],
+    ] : []),
 
     'report' => [
         'path' => '/report',

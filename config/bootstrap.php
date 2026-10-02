@@ -14,6 +14,12 @@ $localConfig = is_file($localFile) ? require $localFile : [];
 
 $config = array_replace_recursive($globalConfig, $localConfig);
 
+// Nome dell'applicazione per i template (titolo, Guida): 'Uno' qui, il nome
+// del cliente in un progetto generato (vedi ProjectProvisioner).
+if (!defined('APP_NAME')) {
+    define('APP_NAME', (string) ($config['app']['name'] ?? 'Uno'));
+}
+
 $container = new Container();
 $container->set(Config::class, static fn () => new Config($config));
 

@@ -1,1 +1,0 @@
-ALTER TABLE `customers` ADD COLUMN `iban` VARCHAR(34) NULL;

@@ -31,58 +31,24 @@ $container = require CONFIG_PATH . '/bootstrap.php';
 /** @var \App\Service\DbService $db */
 $db = $container->get(\App\Service\DbService::class);
 
-$pendingDir = ROOT_PATH . '/db/migrations/pending';
-$appliedDir = ROOT_PATH . '/db/migrations/applied';
-
-foreach ([$pendingDir, $appliedDir] as $dir) {
-    if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-        fwrite(STDERR, "Impossibile creare la directory: {$dir}\n");
-        exit(1);
-    }
+try {
+    $applied = (new \App\Package\MigrationRunner())->apply(
+        $db->pdo(),
+        ROOT_PATH . '/db/migrations/pending',
+        ROOT_PATH . '/db/migrations/applied'
+    );
+} catch (\RuntimeException $e) {
+    fwrite(STDERR, $e->getMessage() . "\n");
+    fwrite(STDERR, "Le migrazioni applicate finora restano applicate; questa e quelle dopo restano in sospeso.\n");
+    exit(1);
 }
 
-$files = glob($pendingDir . '/*.sql') ?: [];
-sort($files);
-
-if ($files === []) {
+if ($applied === []) {
     fwrite(STDOUT, "Nessuna migrazione in sospeso.\n");
     exit(0);
 }
 
-$applied = 0;
-
-foreach ($files as $file) {
-    $name = basename($file);
-    $sql = file_get_contents($file);
-
-    if ($sql === false) {
-        fwrite(STDERR, "Impossibile leggere {$name}, interrotto.\n");
-        exit(1);
-    }
-
-    // Ogni file e' generato da PackageInstaller (mai testo arbitrario):
-    // puo' contenere piu' istruzioni DDL concatenate (un package con piu'
-    // entity produce piu' CREATE TABLE nello stesso file 'core'), separate
-    // qui a mano invece di affidarsi al multi-statement di PDO, che
-    // dipende dal driver/dalla configurazione.
-    $statements = array_filter(array_map('trim', explode(";\n", $sql)));
-
-    try {
-        foreach ($statements as $statement) {
-            if ($statement === '') {
-                continue;
-            }
-            $db->pdo()->exec($statement);
-        }
-    } catch (\Throwable $e) {
-        fwrite(STDERR, "FALLITA {$name}: {$e->getMessage()}\n");
-        fwrite(STDERR, "Le migrazioni applicate finora restano applicate; questa e quelle dopo restano in sospeso.\n");
-        exit(1);
-    }
-
-    rename($file, $appliedDir . '/' . $name);
+foreach ($applied as $name) {
     fwrite(STDOUT, "Applicata: {$name}\n");
-    $applied++;
 }
-
-fwrite(STDOUT, "Fatto: {$applied} migrazione/i applicata/e.\n");
+fwrite(STDOUT, 'Fatto: ' . count($applied) . " migrazione/i applicata/e.\n");

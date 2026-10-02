@@ -36,11 +36,13 @@ final class MigrationWriter
      *     classe).
      * @param array<string, array> $selections packageName => selezione
      *     (vedi PackageManifest::defaultSelection() / PackageInstaller::build())
+     * @param string|null $projectRoot radice del progetto in cui scrivere
+     *     (default: questo) - ProjectProvisioner la usa per un progetto nuovo
      * @return string[] percorsi dei file scritti, nell'ordine di applicazione
      */
-    public function writeBatch(array $order, array $selections): array
+    public function writeBatch(array $order, array $selections, ?string $projectRoot = null): array
     {
-        $dir = ROOT_PATH . '/db/migrations/pending';
+        $dir = rtrim($projectRoot ?? ROOT_PATH, '/') . '/db/migrations/pending';
         if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
             throw new \RuntimeException("Impossibile creare la directory: {$dir}");
         }

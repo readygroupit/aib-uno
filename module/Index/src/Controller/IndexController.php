@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Index\Controller;
 
 use App\Controller\AuthController;
-use App\Prompt\Tool\ShowHomeDashboardTool;
+use App\Prompt\PromptToolRegistry;
 
 final class IndexController extends AuthController
 {
@@ -20,10 +20,17 @@ final class IndexController extends AuthController
      */
     public function indexAction(): ?string
     {
-        $range = (string) $this->param('range', 'today');
-        $components = $this->container->get(ShowHomeDashboardTool::class)->execute(['range' => $range]);
+        // La home e' quella del progetto: il cruscotto di un gestionale
+        // (se ne ha i pacchetti), i Progetti su Uno, il menu altrimenti.
+        $registry = $this->container->get(PromptToolRegistry::class);
+        $home = match (true) {
+            $registry->has('show_home_dashboard') => 'show_home_dashboard',
+            $registry->has('show_projects') => 'show_projects',
+            default => 'show_menu',
+        };
+        $components = $registry->get($home)->execute(['range' => (string) $this->param('range', 'today')]);
 
-        return $this->renderPage($components, ['title' => 'Uno']);
+        return $this->renderPage($components, ['title' => APP_NAME]);
     }
 
     public function helloAction(): string

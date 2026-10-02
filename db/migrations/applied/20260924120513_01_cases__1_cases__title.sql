@@ -1,1 +1,0 @@
-ALTER TABLE `cases` ADD COLUMN `title` VARCHAR(200) NULL;

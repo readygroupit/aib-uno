@@ -1,1 +1,0 @@
-ALTER TABLE `cases` ADD COLUMN `category` VARCHAR(50) NULL;

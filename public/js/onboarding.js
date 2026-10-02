@@ -57,18 +57,10 @@ function pointList(items) {
     ));
 }
 
-// Stessi 5 stati/colori di ListCustomersTool::STAGE_META - non un elenco
-// scritto a parte che puo' disallinearsi da quello vero.
-function journeySteps() {
-    const steps = [
-        ['accent', 'Raccolta documenti', 'Si chiedono al cliente i documenti che servono: carta d\'imbarco, documento d\'identita\', mandato.'],
-        ['strong', 'Reclamo inviato', 'La richiesta e\' partita verso il vettore aereo. Si attende una risposta.'],
-        ['info', 'In conciliazione', 'Se il vettore non risponde o rifiuta, la pratica passa a ConciliaWeb per una decisione terza.'],
-        ['warning', 'Rimborsato', 'Il cliente ha ricevuto quanto dovuto. La pratica e\' chiusa con esito positivo.'],
-        ['danger', 'Respinta', 'La richiesta non ha avuto esito positivo, in nessuna delle fasi precedenti.'],
-    ];
-
-    return el('div', { className: 'onboarding__journey' }, steps.map(([variant, label, desc]) =>
+// Etapes colorate (dot): riusano le classi .claim-table__stage-dot--* cosi'
+// i colori sono gli stessi delle etichette vere nelle liste.
+function steps(items) {
+    return el('div', { className: 'onboarding__journey' }, items.map(([variant, label, desc]) =>
         el('div', { className: 'onboarding__journey-step' }, [
             el('span', { className: 'onboarding__journey-dot claim-table__stage-dot--' + variant }),
             el('div', {}, [
@@ -79,56 +71,26 @@ function journeySteps() {
     ));
 }
 
-function missingReadOnly() {
-    return [
-        paragraph('Questo e\' un ambiente dimostrativo: quello che vedi funziona davvero sui dati veri, ma alcuni collegamenti esterni non sono ancora attivi. Chiedi a un amministratore di completarli.'),
-        pointList([
-            { label: 'Jotform', desc: 'i moduli di raccolta lead non sono collegati - i contatti vanno inseriti a mano.' },
-            { label: 'Google Sheets', desc: 'se usato come archivio esistente, non c\'e\' ancora un collegamento automatico.' },
-            { label: 'ConciliaWeb', desc: 'invio e monitoraggio delle pratiche in conciliazione non sono automatizzati - lo stato va aggiornato a mano.' },
-            { label: 'WhatsApp', desc: 'le comunicazioni restano registrate nel sistema, ma non partono davvero.' },
-            { label: 'Modelli di messaggio', desc: 'testi predefiniti per solleciti e comunicazioni ricorrenti.' },
-            { label: 'Classificazione del disservizio', desc: 'va scelta a mano per ogni pratica, non ancora riconosciuta in automatico.' },
-        ]),
-    ];
+// Un blocco della Guida (config/guide.php): {text}, {points: [[etichetta, descrizione]]}
+// o {steps: [[colore, etichetta, descrizione]]}.
+function renderBlocks(blocks) {
+    return (blocks || []).map((block) => {
+        if (block.points) return pointList(block.points.map(([label, desc]) => ({ label, desc })));
+        if (block.steps) return steps(block.steps);
+        return paragraph(block.text || '');
+    });
 }
 
+const GUIDE = window.UNO_GUIDE || {};
+
+function missingReadOnly() {
+    return renderBlocks(GUIDE.missingReadOnly || [{ text: 'Chiedi a un amministratore lo stato della configurazione.' }]);
+}
+
+// Le schede di contenuto vengono dalla Guida del progetto; "Cosa posso
+// fare" e "Cosa manca ancora" sono le stesse ovunque.
 const TABS = [
-    {
-        key: 'overview',
-        label: 'Panoramica',
-        render: () => [
-            paragraph('Assilevi segue i reclami dei passeggeri aerei - ritardi, cancellazioni, negato imbarco, bagagli - dal primo contatto fino al rimborso.'),
-            paragraph('Il prompt in cima alla pagina e\' un assistente vero: scrivi cosa vuoi fare (es. "elenco clienti") ed esegue l\'operazione al posto tuo, senza dover cercare la voce di menu giusta.'),
-            pointList([
-                { label: 'Contatti', desc: 'un lead grezzo, prima ancora di diventare cliente.' },
-                { label: 'Clienti', desc: 'la situazione della pratica di ognuno, in un colpo d\'occhio.' },
-                { label: 'Pratiche', desc: 'il fascicolo completo: documenti, comunicazioni, rimborso.' },
-            ]),
-        ],
-    },
-    {
-        key: 'journey',
-        label: 'Percorso pratica',
-        render: () => [
-            paragraph('Ogni pratica passa (nell\'ordine) per questi 5 stati - sono gli stessi che vedi come etichette colorate in Clienti e Pratiche.'),
-            journeySteps(),
-        ],
-    },
-    {
-        key: 'where',
-        label: 'Dove trovare',
-        render: () => [
-            pointList([
-                { label: 'Clienti', desc: 'chi ha documenti mancanti, chi e\' in conciliazione, importi in gioco.' },
-                { label: 'Pratiche / Contatti', desc: 'gestione dettagliata di lead e pratiche legali.' },
-                { label: 'Documenti richiesti', desc: 'cosa manca ancora per completare un fascicolo.' },
-                { label: 'Comunicazioni', desc: 'il registro di cosa e\' stato scritto/inviato a un cliente.' },
-                { label: 'Rimborsi', desc: 'importi richiesti, accettati, pagati.' },
-                { label: 'Menu (icona a griglia in basso)', desc: 'tutte le funzioni disponibili, raggruppate per area.' },
-            ]),
-        ],
-    },
+    ...(GUIDE.tabs || []).map((tab) => ({ key: tab.key, label: tab.label, render: () => renderBlocks(tab.blocks) })),
     { key: 'functions', label: 'Cosa posso fare' },
     { key: 'missing', label: 'Cosa manca ancora' },
 ];
@@ -192,7 +154,10 @@ export function openGuide({ tab = null, entity = null, functionsData = null } = 
 
     const pending = () => setupIsPending(setupState);
     // Con lo stato noto e tutto completo la scheda non serve piu'.
-    const showMissing = () => !canConfigure || setupState === null || pending() || currentKey === 'missing';
+    // Esiste solo dove c'e' qualcosa da configurare (pacchetto connettori) o
+    // la Guida ne descrive lo stato a parole.
+    const hasSetup = canConfigure || !!GUIDE.missingReadOnly;
+    const showMissing = () => hasSetup && (!canConfigure || setupState === null || pending() || currentKey === 'missing');
     const visibleTabs = () => TABS.filter((t) => t.key !== 'missing' || showMissing());
 
     function renderMissing() {
@@ -259,7 +224,7 @@ export function openGuide({ tab = null, entity = null, functionsData = null } = 
         el('div', { className: 'onboarding__header' }, [
             el('img', { src: window.UNO_LOGO_SQUARE || window.UNO_LOGO, alt: '', className: 'onboarding__logo' }),
             el('div', { className: 'onboarding__header-text' }, [
-                el('h2', { className: 'onboarding__title' }, [firstTime ? 'Benvenuto in Assilevi' : 'Guida']),
+                el('h2', { className: 'onboarding__title' }, [firstTime ? `Benvenuto in ${window.UNO_APP_NAME || 'Uno'}` : 'Guida']),
                 el('p', { className: 'onboarding__subtitle' }, [pending()
                     ? 'Ci sono ancora passaggi da completare per essere operativi.'
                     : 'Come funziona il sistema e cosa puoi fare.']),

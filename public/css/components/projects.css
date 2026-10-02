@@ -1,0 +1,214 @@
+/* Progetti generati da Uno (vedi public/js/components/projects-board.js). */
+.projects-board {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.projects-board__title {
+    margin: 0;
+    font-size: 20px;
+}
+
+.projects-board__sub {
+    margin: 4px 0 16px;
+    font-size: 13.5px;
+    color: rgba(18, 51, 63, 0.64);
+}
+
+.project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.project-list__empty {
+    margin: 0;
+    font-size: 13.5px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.project-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border: 1px solid rgba(18, 51, 63, 0.1);
+    border-radius: var(--radius-md);
+    background: var(--color-panel);
+}
+
+.project-row__text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.project-row__name {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.project-row__meta {
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.6);
+}
+
+.project-row__url {
+    font-size: 13px;
+    color: var(--color-teal-dark);
+}
+
+.project-success {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: rgba(79, 123, 92, 0.14);
+    color: #3d6b4f;
+    font-weight: 600;
+    font-size: 13.5px;
+}
+
+.project-success[hidden],
+.project-form__log[hidden],
+.project-form .form__message[hidden],
+.project-form__check[hidden] {
+    display: none;
+}
+
+.project-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.project-form__row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.project-form__step {
+    margin: 10px 0 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.project-presets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+}
+
+.project-preset {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    text-align: left;
+    border: 1px solid rgba(18, 51, 63, 0.14);
+    border-radius: var(--radius-md);
+    background: var(--color-panel);
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.project-preset.is-active {
+    border-color: var(--color-petrol);
+    box-shadow: 0 0 0 1px var(--color-petrol);
+}
+
+.project-preset__label {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--color-petrol);
+}
+
+.project-preset__desc {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: rgba(18, 51, 63, 0.64);
+}
+
+.project-pkgs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px 20px;
+}
+
+.project-pkgs__group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.project-pkgs__title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-teal-dark);
+}
+
+.project-pkg {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    cursor: pointer;
+}
+
+.project-pkg input,
+.project-form__check input {
+    margin-top: 3px;
+    accent-color: var(--color-petrol);
+}
+
+.project-pkg__text {
+    display: flex;
+    flex-direction: column;
+}
+
+.project-pkg__label {
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.project-pkg__desc {
+    font-size: 12px;
+    color: rgba(18, 51, 63, 0.6);
+}
+
+.project-form__included {
+    margin: 0;
+}
+
+.project-form__check {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 13.5px;
+}
+
+.project-form__actions {
+    display: flex;
+}
+
+.project-form__log {
+    margin: 0;
+    padding: 12px 12px 12px 32px;
+    border-radius: var(--radius-md);
+    background: rgba(18, 51, 63, 0.05);
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: rgba(18, 51, 63, 0.75);
+}

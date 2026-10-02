@@ -24,7 +24,7 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= $this->e($title ?? 'uno') ?></title>
+    <title><?= $this->e(isset($title) && $title !== APP_NAME ? $title . ' · ' . APP_NAME : APP_NAME) ?></title>
     <link rel="icon" type="image/png" sizes="32x32" href="<?= $this->asset('/favicon-32.png') ?>">
     <link rel="icon" type="image/png" sizes="16x16" href="<?= $this->asset('/favicon-16.png') ?>">
     <link rel="apple-touch-icon" href="<?= $this->asset('/apple-touch-icon.png') ?>">
@@ -51,6 +51,7 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <link rel="stylesheet" href="<?= $this->asset('/css/components/claim-table.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/setup.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/agents.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/projects.css') ?>">
     <!--
       Logo del prompt, disponibile a livello globale: il prompt e' ormai
       costruito interamente lato client su ogni pagina (vedi hero.js), non
@@ -80,7 +81,10 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <script>window.UNO_CSRF = <?= json_encode(\App\Core\Csrf::token()) ?>;</script>
     <!-- Blocco identita' in cima al menu profilo (vedi hero.js) - null sulle pagine non autenticate, calcolato qui sopra. -->
     <script>window.UNO_USER = <?= json_encode($unoUser) ?>;</script>
-    <script>window.UNO_CAN_CONFIGURE = <?= json_encode(in_array('users.manage', $_SESSION['user']['permissions'] ?? [], true)) ?>;</script>
+    <script>window.UNO_CAN_CONFIGURE = <?= json_encode(in_array('users.manage', $_SESSION['user']['permissions'] ?? [], true) && in_array('connectors', \App\Package\PackageCatalogService::installedNames(), true)) ?>;</script>
+    <!-- Testi della Guida di QUESTO progetto (vedi config/guide.php, onboarding.js). -->
+    <script>window.UNO_GUIDE = <?= json_encode(is_file(CONFIG_PATH . '/guide.php') ? require CONFIG_PATH . '/guide.php' : [], JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) ?>;</script>
+    <script>window.UNO_APP_NAME = <?= json_encode(APP_NAME) ?>;</script>
     <script>window.UNO_SHOW_ONBOARDING = <?= json_encode($unoShowOnboarding) ?>;</script>
     <script type="module" src="<?= $this->asset('/js/app.js') ?>"></script>
 </head>

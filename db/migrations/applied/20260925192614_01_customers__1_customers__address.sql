@@ -1,1 +1,0 @@
-ALTER TABLE `customers` ADD COLUMN `address` VARCHAR(190) NULL;

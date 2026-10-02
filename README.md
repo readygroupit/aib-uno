@@ -16,6 +16,16 @@ supereroe): "Uno" e' l'IA del fumetto. Il logo (sfera petrol/teal con un
 personaggio astratto) e' stato scelto dall'utente e ritagliato con
 trasparenza in `public/img/`.
 
+**Stato al 2026-10-02**: Uno e' il configuratore - la sua home sono i
+Progetti, nel suo database ci sono solo utenti/permessi e `projects`. Il
+gestionale Assilevi e' stato generato da qui (preset `assilevi`) in
+`/var/www/aib/dev_assilevi` (repo `readygroupit/aib-assilevi`, database
+`dev_aib_assilevi`, http://assilevi.localhost): da li' in poi vive per conto
+suo. Il codice dei pacchetti resta in Uno perche' serve a generare.
+Le capacita' del prompt si registrano solo se i loro pacchetti sono installati
+(`PromptToolRegistry::register($classe, ...$pacchetti)`), quindi Uno non
+mostra Pratiche e un progetto non mostra Progetti.
+
 **Stato reale (2026-09-20)**: il framework, l'autenticazione, il sistema a
 componenti, il sistema a pacchetti, lo scheduler/eventi e un'interfaccia a
 prompt collegata a Claude funzionano e sono stati verificati end-to-end.
@@ -273,9 +283,28 @@ Vhost Apache locale funzionante: `uno.localhost` -> `/var/www/uno/public`
 `/etc/hosts` necessaria). In produzione: `<progetto>.ibrains.it` (wildcard
 DNS gia' puntato).
 
-**Non esiste ancora** un modo per generare un *nuovo* progetto (cartella +
-DB + vhost) partendo da zero - oggi si testa tutto o dentro `uno` stesso o
-con script `php -r` usa-e-getta contro database di prova.
+**Provisioning (pacchetto `provisioning`)**: da `/progetti` in Uno si crea un
+progetto nuovo - nome, identificativo, preset, pacchetti, dati demo -
+con `App\Provisioning\ProjectProvisioner`:
+
+- cartella `/var/www/projects/<slug>`: codice del framework + SOLO i pacchetti
+  scelti e le loro dipendenze (niente `.git`, `design`, README, local.php);
+- database `prj_<slug>`: `db/schema.sql` (tabelle di base), poi i pacchetti
+  con lo stesso percorso di un'installazione normale (MigrationWriter ->
+  MigrationRunner, i file finiscono in `db/migrations/applied` del progetto),
+  i seed dei pacchetti (geo), `db/seed.sql` e la rimozione dei permessi dei
+  pacchetti non installati (menu e Guida filtrano per permesso);
+- dati demo del preset (`packages/provisioning/presets/<chiave>/demo.sql`),
+  con le date spostate in avanti di quanto passato da `demoReferenceDate`;
+- `config/autoload/local.php` con db e `app.name` (il nome mostrato, vedi
+  `APP_NAME` in `config/bootstrap.php`).
+
+Se un passaggio fallisce, cartella e database appena creati vengono rimossi.
+Raggiungibile subito su `http://<slug>.localhost` grazie al vhost jolly
+`/etc/apache2/sites-available/zz-uno-projects.conf` (`*.localhost` ->
+`/var/www/projects/%1/public`, `mod_vhost_alias`, caricato per ultimo: i vhost
+con ServerName esplicito vincono). Accesso: admin / admin123. Preset oggi:
+`assilevi` (assistenza reclami voli).
 
 ## Configurazione: cosa manca per essere operativi
 

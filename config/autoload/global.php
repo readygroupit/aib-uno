@@ -17,6 +17,19 @@ return [
         'port' => 11211,
         'prefix' => 'uno_',
     ],
+    // Nome mostrato nell'interfaccia (titolo, Guida): un progetto generato
+    // lo riceve nel suo local.php (vedi ProjectProvisioner).
+    'app' => [
+        'name' => 'Uno',
+    ],
+    // Dove e come nascono i progetti generati: una cartella per progetto,
+    // raggiunta dal vhost jolly zz-uno-projects.conf (*.localhost ->
+    // /var/www/projects/<nome>/public), senza toccare Apache ogni volta.
+    'provisioning' => [
+        'projectsDir' => '/var/www/projects',
+        'urlPattern' => 'http://%s.localhost',
+        'dbPrefix' => 'prj_',
+    ],
     'claude' => [
         'apiKey' => null,
         'model' => 'claude-opus-4-8',

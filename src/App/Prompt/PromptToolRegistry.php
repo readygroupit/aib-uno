@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Prompt;
 
 use App\Core\Container;
+use App\Package\PackageCatalogService;
 
 /**
  * Registro nome-capacita' -> tool, stesso principio di JobHandlerRegistry
@@ -19,8 +20,18 @@ final class PromptToolRegistry
     {
     }
 
-    public function register(string $toolClass): void
+    /**
+     * Una capacita' che lavora sulle tabelle di qualche pacchetto si
+     * registra solo se quei pacchetti sono installati in questo progetto:
+     * Uno (configuratore) non mostra "Pratiche", un progetto generato non
+     * mostra "Progetti" - stesso codice, menu diverso.
+     */
+    public function register(string $toolClass, string ...$requiredPackages): void
     {
+        if (array_diff($requiredPackages, PackageCatalogService::installedNames()) !== []) {
+            return;
+        }
+
         /** @var PromptToolInterface $tool */
         $tool = $this->container->get($toolClass);
         $this->tools[$tool->name()] = $tool;

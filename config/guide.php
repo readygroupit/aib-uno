@@ -23,6 +23,7 @@ return [
             'eyebrow' => 'Il tuo assistente',
             'title' => 'Ciao, io sono Uno.',
             'lines' => ['Costruisco gestionali.', 'Su misura.', 'In pochi secondi.'],
+            'text' => 'Mi dici di cosa ha bisogno un\'azienda e preparo il programma completo: database, schermate, permessi e dati di esempio per mostrarlo subito.',
             'actions' => [
                 ['label' => 'Crea un progetto', 'prompt' => 'nuovo progetto', 'primary' => true],
                 ['label' => 'Guarda i pacchetti', 'prompt' => 'pacchetti'],
@@ -37,7 +38,7 @@ return [
             [
                 'eyebrow' => 'Parliamo',
                 'title' => 'Tu descrivi. Io costruisco.',
-                'text' => 'Scrivimi o parlami. Capisco cosa serve all\'azienda.',
+                'text' => 'Scrivimi o parlami dalla casella a sinistra, come faresti con un collega. Ti chiedo io i dettagli che mancano e ti porto dove serve.',
                 'visual' => ['chat' => [
                     ['me', 'Mi serve un gestionale per i reclami dei voli.'],
                     ['uno', 'Fatto. Contatti, pratiche, documenti e rimborsi. E\' gia\' online.'],
@@ -46,23 +47,23 @@ return [
             [
                 'eyebrow' => 'Mattoni',
                 'title' => 'Pezzi pronti. Combinati per te.',
-                'text' => 'Scegli cosa serve. Alle dipendenze penso io.',
+                'text' => 'Contatti, clienti, pratiche, documenti, rimborsi, agenti: scegli solo quello che serve. Alle dipendenze penso io, senza che tu debba ricordarle.',
                 'visual' => ['chips' => '{packages}'],
             ],
             [
                 'eyebrow' => 'Subito',
                 'title' => 'Online in un attimo.',
-                'text' => 'Database, permessi, indirizzo. E i dati demo, se vuoi.',
+                'text' => 'Preparo database, utente amministratore, permessi e indirizzo. Se vuoi carico anche dei dati demo, cosi\' il progetto e\' pronto da presentare. Se qualcosa va storto, rimetto tutto com\'era.',
                 'visual' => ['url' => 'assilevi.localhost'],
             ],
         ],
         'steps' => [
             'title' => 'Quattro passi. Un minuto.',
             'items' => [
-                ['Scegli', 'un preset o parti da zero'],
-                ['Combina', 'i pacchetti che servono'],
-                ['Crea', 'ci penso io'],
-                ['Mostra', 'apri il link e presenta'],
+                ['Scegli', 'un preset di settore, come l\'assistenza reclami voli, o parti da zero.'],
+                ['Combina', 'i pacchetti che servono: le dipendenze le aggiungo io.'],
+                ['Crea', 'preparo cartella, database e permessi in un paio di secondi.'],
+                ['Mostra', 'apri il link: il gestionale e\' gia\' online, con i dati demo.'],
             ],
         ],
         'cta' => [

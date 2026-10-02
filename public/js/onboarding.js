@@ -278,6 +278,7 @@ function heroBand(hero) {
             el('h2', { className: 'landing__hero-title' }, [hero.title || '']),
             el('div', { className: 'landing__hero-lines' }, (hero.lines || []).map((line, i) =>
                 el('span', { className: 'landing__hero-line landing__hero-line--' + ACCENTS[i % ACCENTS.length] }, [line]))),
+            hero.text ? el('p', { className: 'landing__hero-text' }, [hero.text]) : null,
             actionButtons(hero.actions, 'landing__actions--hero'),
         ]),
         el('div', { className: 'landing__hero-art' }, [

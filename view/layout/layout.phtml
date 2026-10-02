@@ -84,6 +84,7 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <script>window.UNO_CAN_CONFIGURE = <?= json_encode(in_array('users.manage', $_SESSION['user']['permissions'] ?? [], true) && in_array('connectors', \App\Package\PackageCatalogService::installedNames(), true)) ?>;</script>
     <!-- Testi della Guida di QUESTO progetto (vedi config/guide.php, onboarding.js). -->
     <script>window.UNO_GUIDE = <?= json_encode(is_file(CONFIG_PATH . '/guide.php') ? require CONFIG_PATH . '/guide.php' : [], JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) ?>;</script>
+    <script>window.UNO_DASHBOARD_HOME = <?= json_encode(APP_HAS_DASHBOARD) ?>;</script>
     <script>window.UNO_APP_NAME = <?= json_encode(APP_NAME) ?>;</script>
     <script>window.UNO_SHOW_ONBOARDING = <?= json_encode($unoShowOnboarding) ?>;</script>
     <script type="module" src="<?= $this->asset('/js/app.js') ?>"></script>

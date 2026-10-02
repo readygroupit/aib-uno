@@ -439,7 +439,7 @@ export function mountPromptShell(root, initialComponents) {
     // ricaricherebbe tutto perdendo lo storico dei risultati.
     const homeButton = el(
         'button',
-        { type: 'button', className: 'hero__icon-btn', title: 'Vai alla home', onClick: () => window.unoSubmitPrompt('home') },
+        { type: 'button', className: 'hero__icon-btn', title: 'Vai alla home', onClick: () => (window.UNO_DASHBOARD_HOME ? window.unoSubmitPrompt('home') : window.location.assign('/')) },
         [icon('home')]
     );
     const menuButton = el(

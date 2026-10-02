@@ -55,8 +55,7 @@ final class ShowProjectsTool implements PromptToolInterface
 
     public function triggers(): array
     {
-        // 'home': su Uno la home sono i Progetti (vedi IndexController).
-        return ['progetti', 'nuovo progetto', 'crea progetto', 'genera progetto', 'home', 'torna alla home', 'vai alla home'];
+        return ['progetti', 'nuovo progetto', 'crea progetto', 'genera progetto'];
     }
 
     public function execute(array $input): array

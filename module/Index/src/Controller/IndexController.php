@@ -20,15 +20,13 @@ final class IndexController extends AuthController
      */
     public function indexAction(): ?string
     {
-        // La home e' quella del progetto: il cruscotto di un gestionale
-        // (se ne ha i pacchetti), i Progetti su Uno, il menu altrimenti.
+        // Il cruscotto se il progetto ne ha i pacchetti; altrimenti (Uno)
+        // la home e' vuota: solo il prompt al centro, e' l'assistente a
+        // parlare per primo (vedi la Guida).
         $registry = $this->container->get(PromptToolRegistry::class);
-        $home = match (true) {
-            $registry->has('show_home_dashboard') => 'show_home_dashboard',
-            $registry->has('show_projects') => 'show_projects',
-            default => 'show_menu',
-        };
-        $components = $registry->get($home)->execute(['range' => (string) $this->param('range', 'today')]);
+        $components = $registry->has('show_home_dashboard')
+            ? $registry->get('show_home_dashboard')->execute(['range' => (string) $this->param('range', 'today')])
+            : [];
 
         return $this->renderPage($components, ['title' => APP_NAME]);
     }

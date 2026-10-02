@@ -40,6 +40,13 @@ if (is_file($promptToolsFile)) {
     (require $promptToolsFile)($container->get(PromptToolRegistry::class));
 }
 
+// La home ha un cruscotto (gestionale) o e' vuota (Uno)? Serve al pulsante
+// "casa" del prompt (layout.phtml/hero.js): con il cruscotto ci torna via
+// prompt, senza ricaricare; senza, ricarica la home vuota.
+if (!defined('APP_HAS_DASHBOARD')) {
+    define('APP_HAS_DASHBOARD', $container->get(PromptToolRegistry::class)->has('show_home_dashboard'));
+}
+
 // Stesso principio di events.php, per i connettori verso sistemi esterni.
 $connectorsFile = CONFIG_PATH . '/connectors.php';
 if (is_file($connectorsFile)) {

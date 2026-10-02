@@ -224,7 +224,7 @@ export function openGuide({ tab = null, entity = null, functionsData = null } = 
         el('div', { className: 'onboarding__header' }, [
             el('img', { src: window.UNO_LOGO_SQUARE || window.UNO_LOGO, alt: '', className: 'onboarding__logo' }),
             el('div', { className: 'onboarding__header-text' }, [
-                el('h2', { className: 'onboarding__title' }, [firstTime ? `Benvenuto in ${window.UNO_APP_NAME || 'Uno'}` : 'Guida']),
+                el('h2', { className: 'onboarding__title' }, [firstTime ? (GUIDE.welcome || `Benvenuto in ${window.UNO_APP_NAME || 'Uno'}`) : 'Guida']),
                 el('p', { className: 'onboarding__subtitle' }, [pending()
                     ? 'Ci sono ancora passaggi da completare per essere operativi.'
                     : 'Come funziona il sistema e cosa puoi fare.']),

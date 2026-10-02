@@ -8,6 +8,8 @@ declare(strict_types=1);
  * packages/provisioning) al posto di questo file.
  */
 return [
+    // Titolo del primo accesso: Uno si presenta in prima persona.
+    'welcome' => 'Benvenuti, io sono Uno',
     'tabs' => [
         [
             'key' => 'overview',

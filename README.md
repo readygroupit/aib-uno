@@ -287,7 +287,7 @@ generati hanno in piu' `config/autoload/project.php` (versionato: nome,
 slug, database per ambiente). Ordine: global -> project -> local.
 Dal terminale del PC: `APPLICATION_ENV=localhost php8.4 bin/...`.
 
-Database: Uno `uno` (sviluppo) / `prod_uno` (produzione); progetti
+Database: Uno `dev_aib_uno` (sviluppo) / `prod_aib_uno` (produzione); progetti
 `dev_aib_<slug>` / `prod_aib_<slug>`. Cartelle: `/var/www/aib/dev_<slug>` /
 `/var/www/aib/prod_<slug>` (anche Uno: `prod_uno`). Indirizzi:
 `http://<slug>.localhost` / `https://<slug>.aibrains.it`, calcolati ogni
@@ -426,7 +426,7 @@ ogni progetto). Due forme:
 - PHP 8.4 (`php8.4 -S 0.0.0.0:8935 -t public public/index.php`, configurato
   in `.claude/launch.json` del progetto `workspace-ecommerce` come
   `uno-static`), oppure la vhost Apache `uno.localhost`.
-- MySQL: database `uno`, utente/password di sviluppo in
+- MySQL: database `dev_aib_uno`, utente/password di sviluppo in
   `config/autoload/global.php` (ramo `APPLICATION_ENV=localhost`).
 - Test: nessun framework di test automatico - verifica manuale via browser
   reale o script `php -r` contro un database di prova (creato e distrutto

@@ -15,11 +15,11 @@ $isDev = getenv('APPLICATION_ENV') === 'localhost';
 return [
     'env' => $isDev ? 'localhost' : 'production',
     'db' => $isDev ? [
-        'dsn' => 'mysql:host=127.0.0.1;dbname=uno;charset=utf8mb4',
+        'dsn' => 'mysql:host=127.0.0.1;dbname=dev_aib_uno;charset=utf8mb4',
         'username' => 'root',
         'password' => 'root',
     ] : [
-        'dsn' => 'mysql:host=127.0.0.1;dbname=prod_uno;charset=utf8mb4',
+        'dsn' => 'mysql:host=127.0.0.1;dbname=prod_aib_uno;charset=utf8mb4',
         'username' => 'admin',
         'password' => 'rG55$lu!ga',
     ],

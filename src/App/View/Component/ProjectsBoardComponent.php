@@ -17,10 +17,15 @@ final class ProjectsBoardComponent extends AbstractComponent
         $provisioner = $this->container->get(ProjectProvisioner::class);
         $presets = $provisioner->presets();
 
-        $projects = array_map(static fn ($project) => [
+        $projects = array_map(fn ($project) => [
             'name' => $project->name,
             'slug' => $project->slug,
-            'url' => $project->url,
+            'url' => $provisioner->projectUrl((string) $project->slug),
+            // Link di primo accesso (slug cifrato): utile finche' il progetto
+            // non e' configurato, poi il progetto lo ignora.
+            'firstAccessUrl' => $provisioner->firstAccessUrl((string) $project->slug),
+            'provisioningStatus' => $project->provisioningStatus ?? 'ready',
+            'provisioningLog' => $project->provisioningLog,
             'preset' => $presets[$project->preset]['label'] ?? null,
             'packages' => json_decode((string) $project->packages, true) ?: [],
             'withDemoData' => (bool) $project->withDemoData,
@@ -45,6 +50,8 @@ final class ProjectsBoardComponent extends AbstractComponent
                 'hasDemo' => $preset['hasDemo'],
             ], $presets)),
             'packages' => $packages,
+            // Per l'anteprima dell'indirizzo nel modulo ("Sara' raggiungibile su ...").
+            'hostPattern' => preg_replace('#^https?://#', '', $provisioner->projectUrl('%s')),
             'canCreate' => $this->container->get(AuthService::class)->hasPermission('provisioning.create'),
         ];
     }

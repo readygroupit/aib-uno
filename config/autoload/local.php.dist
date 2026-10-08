@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 /**
- * Copia questo file in local.php (escluso da git) e personalizza i valori
- * per l'ambiente locale (credenziali db, host memcached, ecc).
+ * Facoltativo, solo sul PC (escluso da git): sovrascrive global.php, che ha
+ * gia' i valori di sviluppo (APPLICATION_ENV=localhost) e di produzione.
+ * In produzione questo file non esiste. Esempio: la chiave API di Claude.
  */
 return [
-    'db' => [
-        'username' => 'dev',
-        'password' => 'dev',
+    'claude' => [
+        'apiKey' => 'sk-ant-...',
     ],
 ];

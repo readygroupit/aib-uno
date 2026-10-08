@@ -8,6 +8,7 @@ use App\Core\Container;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\View;
+use App\Service\FirstAccessService;
 
 abstract class AbstractController
 {
@@ -54,6 +55,18 @@ abstract class AbstractController
      */
     public function init(): void
     {
+        // Progetto generato da Uno non ancora configurato: tutto porta al
+        // primo accesso (vedi FirstAccessService), salvo i controller che
+        // servono proprio a quello.
+        if ($this->container->get(FirstAccessService::class)->isPending() && !$this->allowedDuringSetup()) {
+            $this->redirect('/primo-accesso');
+        }
+    }
+
+    /** true per le pagine raggiungibili mentre il primo accesso e' in corso. */
+    protected function allowedDuringSetup(): bool
+    {
+        return false;
     }
 
     protected function param(string $name, mixed $default = null): mixed

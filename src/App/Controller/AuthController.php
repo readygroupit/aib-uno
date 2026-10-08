@@ -20,6 +20,9 @@ abstract class AuthController extends AbstractController
     public function init(): void
     {
         parent::init();
+        if ($this->response->isFinished()) {
+            return;
+        }
 
         $auth = $this->container->get(AuthService::class);
 

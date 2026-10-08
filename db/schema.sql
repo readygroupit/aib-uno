@@ -263,4 +263,24 @@ CREATE TABLE attachments (
     KEY idx_attachments_entity (entity, entity_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ============================================================
+-- settings (chiave/valore del progetto: stato del primo accesso
+-- 'setup.*' e dati inseriti nel wizard 'project.*', vedi
+-- FirstAccessService). Senza questa tabella (Uno, progetti nati
+-- prima) il progetto vale come gia' configurato.
+-- ============================================================
+DROP TABLE IF EXISTS settings;
+CREATE TABLE settings (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    setting_key VARCHAR(100) NOT NULL,
+    value TEXT NULL,
+    status TINYINT NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL,
+    created_by INT UNSIGNED NULL,
+    updated_at DATETIME NULL,
+    updated_by INT UNSIGNED NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_settings_key (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

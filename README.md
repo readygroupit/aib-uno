@@ -120,7 +120,7 @@ Tabelle sempre presenti in ogni progetto (non sono pacchetti):
 diretti utente - revoke diretti utente, calcolato **al login**, cache in
 sessione (non si aggiorna finche' non si rifa' login).
 
-Credenziali dev: `admin` / `admin123`.
+Credenziali: utenti demo con la password scelta dall'utente (non scriverla qui).
 
 ## Fase 2 - componenti, JSON non HTML
 
@@ -276,35 +276,79 @@ statiche del nostro bundle, non dati esterni.
 prompt), li fa comparire in ordine con dissolvenza scaglionata
 (`index * 90ms`), non tutti insieme.
 
-## Provisioning locale (quello che esiste oggi)
+## Config per ambiente
 
-Vhost Apache locale funzionante: `uno.localhost` -> `/var/www/uno/public`
-(creato dall'utente, `*.localhost` risolve da solo, nessuna voce in
-`/etc/hosts` necessaria). In produzione: `<progetto>.ibrains.it` (wildcard
-DNS gia' puntato).
+Come nei progetti di Core: `config/autoload/global.php` (versionato) ha i
+valori di sviluppo e di produzione e sceglie con `APPLICATION_ENV`:
+`localhost` (SetEnv dei vhost del PC) = sviluppo, qualunque altro valore o
+nessuno (vhost `prod`, cron di root) = produzione. In produzione non c'e'
+`local.php`; sul PC e' facoltativo (solo la chiave Claude). I progetti
+generati hanno in piu' `config/autoload/project.php` (versionato: nome,
+slug, database per ambiente). Ordine: global -> project -> local.
+Dal terminale del PC: `APPLICATION_ENV=localhost php8.4 bin/...`.
 
-**Provisioning (pacchetto `provisioning`)**: da `/progetti` in Uno si crea un
-progetto nuovo - nome, identificativo, preset, pacchetti, dati demo -
-con `App\Provisioning\ProjectProvisioner`:
+Database: Uno `uno` (sviluppo) / `prod_uno` (produzione); progetti
+`dev_aib_<slug>` / `prod_aib_<slug>`. Cartelle: `/var/www/aib/dev_<slug>` /
+`/var/www/aib/prod_<slug>` (anche Uno: `prod_uno`). Indirizzi:
+`http://<slug>.localhost` / `https://<slug>.aibrains.it`, calcolati ogni
+volta dallo slug (`ProjectProvisioner::projectUrl()`): le colonne
+`projects.url` e `projects.path` sono solo storiche, cosi' lo stesso
+database vale nei due ambienti.
 
-- cartella `/var/www/projects/<slug>`: codice del framework + SOLO i pacchetti
-  scelti e le loro dipendenze (niente `.git`, `design`, README, local.php);
-- database `prj_<slug>`: `db/schema.sql` (tabelle di base), poi i pacchetti
+## Provisioning
+
+**Creazione (pacchetto `provisioning`)**: da `/progetti` in Uno - nome,
+identificativo, preset, pacchetti, dati demo - con
+`App\Provisioning\ProjectProvisioner`:
+
+- cartella (`dirPattern`): codice del framework + SOLO i pacchetti scelti e
+  le loro dipendenze (niente `.git`, `design`, README, local.php);
+- database (`dbPattern`): `db/schema.sql` (tabelle di base), poi i pacchetti
   con lo stesso percorso di un'installazione normale (MigrationWriter ->
   MigrationRunner, i file finiscono in `db/migrations/applied` del progetto),
   i seed dei pacchetti (geo), `db/seed.sql` e la rimozione dei permessi dei
   pacchetti non installati (menu e Guida filtrano per permesso);
 - dati demo del preset (`packages/provisioning/presets/<chiave>/demo.sql`),
   con le date spostate in avanti di quanto passato da `demoReferenceDate`;
-- `config/autoload/local.php` con db e `app.name` (il nome mostrato, vedi
-  `APP_NAME` in `config/bootstrap.php`).
+- `config/autoload/project.php` e `setup.status = pending` (primo accesso).
 
 Se un passaggio fallisce, cartella e database appena creati vengono rimossi.
-Raggiungibile subito su `http://<slug>.localhost` grazie al vhost jolly
-`/etc/apache2/sites-available/zz-uno-projects.conf` (`*.localhost` ->
-`/var/www/projects/%1/public`, `mod_vhost_alias`, caricato per ultimo: i vhost
-con ServerName esplicito vincono). Accesso: admin / admin123. Preset oggi:
-`assilevi` (assistenza reclami voli).
+
+- **Sviluppo** (`runInRequest`): il progetto nasce dentro la richiesta e
+  risponde subito grazie al vhost jolly
+  `/etc/apache2/sites-available/zz-uno-projects.conf` (`*.localhost` ->
+  `/var/www/projects/%1/public`, collegamento creato dal provisioner verso
+  `/var/www/aib/dev_<slug>`; caricato per ultimo: i vhost con ServerName
+  esplicito vincono).
+- **Produzione**: Uno mette il progetto in coda (`projects.provisioning_status`
+  `queued` -> `running` -> `ready` | `failed`, log in `provisioning_log`) e lo
+  crea il cron di root `bin/provision-queue.php`, che poi passa la cartella a
+  www-data e, per Uno e per ogni progetto pronto, crea vhost e certificato
+  se mancano (`App\Provisioning\SiteInstaller`, come gli script
+  `new_readyservices_site.sh` di Core): prototipo
+  `packages/provisioning/vhost/aibrains.conf` (`__HOST__`, `__DIR__`, niente
+  PHP fuori da index.php) -> `/etc/apache2/sites-available/prod_aib_<slug>.conf`,
+  `a2ensite`, `apachectl configtest` (se fallisce lo toglie), reload,
+  `certbot --apache --redirect`. Fatto quando esiste il `-le-ssl.conf`; se
+  certbot fallisce riprova una volta l'ora. Crontab di root:
+
+  ```
+  * * * * * /usr/bin/php8.4 /var/www/aib/prod_uno/bin/provision-queue.php >> /var/log/uno-provisioning.log 2>&1
+  ```
+
+**Primo accesso** (`App\Service\FirstAccessService`,
+`Auth\Controller\FirstAccessController`, `/primo-accesso`): un progetto
+nuovo non si usa finche' non e' configurato (tabella `settings`:
+`setup.status`, `setup.account`, `project.*`). Si entra solo dal link
+`<url>/primo-accesso?t=<slug cifrato>` (`App\Support\FirstAccessToken`,
+AES-256 con `provisioning.tokenKey`, uguale su Uno e progetti), che Uno
+mostra con "Copia link primo accesso". Passo 1: l'amministratore sceglie
+nome, email (= nome utente) e password, e resta collegato. Passo 2: nome,
+ragione sociale, email, logo (obbligatori), P.IVA, telefono, indirizzo; il
+logo va in `public/uploads/` (fuori da git). Ogni pagina riporta al passo
+mancante, con i dati gia' inseriti; chiuso il wizard il link non conta piu'.
+Senza tabella `settings` o senza `setup.status` (Uno, Assilevi) il progetto
+vale come configurato. Preset oggi: `assilevi` (assistenza reclami voli).
 
 ## Configurazione: cosa manca per essere operativi
 
@@ -382,8 +426,8 @@ ogni progetto). Due forme:
 - PHP 8.4 (`php8.4 -S 0.0.0.0:8935 -t public public/index.php`, configurato
   in `.claude/launch.json` del progetto `workspace-ecommerce` come
   `uno-static`), oppure la vhost Apache `uno.localhost`.
-- MySQL: database `uno`, utente/password `root`/`root` in
-  `config/autoload/local.php` (gitignored).
+- MySQL: database `uno`, utente/password di sviluppo in
+  `config/autoload/global.php` (ramo `APPLICATION_ENV=localhost`).
 - Test: nessun framework di test automatico - verifica manuale via browser
   reale o script `php -r` contro un database di prova (creato e distrutto
   per l'occasione, mai contro `uno` stesso).

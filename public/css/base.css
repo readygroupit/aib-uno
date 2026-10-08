@@ -490,3 +490,15 @@ a {
     opacity: 0;
     transform: translateY(6px);
 }
+
+/* Primo accesso a un progetto generato (module/Auth/view/first-access): stessa card del login, senza il pannello a destra. */
+.first-access .auth-main { flex: 1 1 auto; }
+.first-access__step { margin: 0 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-primary, #2f6f68); }
+.first-access__text { margin: 0 0 16px; color: var(--color-text-muted, #5d6b6a); }
+.first-access__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.first-access__row .auth-field { min-width: 0; }
+.first-access__row .auth-field__input { width: 100%; }
+.first-access__file { padding-top: 10px; }
+.first-access__actions { display: flex; gap: 10px; align-items: center; }
+.first-access__actions .auth-submit { flex: 1 1 auto; }
+@media (max-width: 520px) { .first-access__row { grid-template-columns: 1fr; } }

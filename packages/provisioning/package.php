@@ -32,6 +32,9 @@ return [
                 'preset' => ['sql' => 'VARCHAR(60)', 'label' => 'Preset', 'base' => true, 'nullable' => true],
                 'packages' => ['sql' => 'TEXT', 'label' => 'Pacchetti (JSON)', 'base' => true],
                 'with_demo_data' => ['sql' => 'TINYINT UNSIGNED', 'label' => 'Dati demo', 'base' => true, 'format' => 'integer'],
+                // queued (in coda, produzione) | running | ready | failed
+                'provisioning_status' => ['sql' => "VARCHAR(20) DEFAULT 'ready'", 'label' => 'Stato creazione', 'base' => true],
+                'provisioning_log' => ['sql' => 'TEXT', 'label' => 'Log creazione', 'base' => true, 'nullable' => true],
             ],
         ],
     ],

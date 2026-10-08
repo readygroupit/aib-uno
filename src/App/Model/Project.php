@@ -14,4 +14,7 @@ final class Project extends AbstractModel
     public ?string $preset = null;
     public ?string $packages = null;
     public ?int $withDemoData = null;
+    /** queued (in coda, produzione) | running | ready | failed - vedi ProjectProvisioner */
+    public ?string $provisioningStatus = null;
+    public ?string $provisioningLog = null;
 }

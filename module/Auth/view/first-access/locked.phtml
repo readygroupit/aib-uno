@@ -1,0 +1,19 @@
+<div class="auth-shell first-access">
+  <main class="auth-main">
+    <div class="auth-main__inner">
+      <section class="auth-login-card">
+        <div class="auth-login-card__header">
+            <img class="auth-login-card__logo" src="<?= $this->asset('/img/aibrains.png') ?>" alt="aiBrains">
+            <div>
+                <h1 class="auth-login-card__title"><?= $this->e(APP_NAME) ?> non e' ancora attivo</h1>
+                <p class="auth-login-card__tagline">Per attivarlo apri il link di primo accesso che ti abbiamo mandato.</p>
+            </div>
+        </div>
+        <?php if ($accountDone): ?>
+            <p class="first-access__text">Hai gia' scelto il tuo accesso? Entra e completa la configurazione da dove l'avevi lasciata.</p>
+            <a class="btn btn--primary auth-submit" href="/login">Accedi</a>
+        <?php endif; ?>
+      </section>
+    </div>
+  </main>
+</div>

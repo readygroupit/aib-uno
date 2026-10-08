@@ -1,0 +1,45 @@
+<div class="auth-shell first-access">
+  <main class="auth-main">
+    <div class="auth-main__inner">
+      <form method="post" action="/primo-accesso?step=account" class="auth-login-card">
+        <?= $this->csrfField() ?>
+        <div class="auth-login-card__header">
+            <img class="auth-login-card__logo" src="<?= $this->asset('/img/aibrains.png') ?>" alt="aiBrains">
+            <div>
+                <p class="first-access__step">Passo 1 di 2</p>
+                <h1 class="auth-login-card__title">Benvenuto in <?= $this->e(APP_NAME) ?></h1>
+                <p class="auth-login-card__tagline">Scegli il tuo accesso: sarai l'amministratore del progetto.</p>
+            </div>
+        </div>
+
+        <div class="auth-login-card__fields">
+            <div class="first-access__row">
+                <label class="auth-field">
+                    <span class="auth-field__label">Nome</span>
+                    <span class="auth-field__box"><input class="auth-field__input" type="text" name="first_name" value="<?= $this->e($values['firstName']) ?>" autocomplete="given-name" required></span>
+                </label>
+                <label class="auth-field">
+                    <span class="auth-field__label">Cognome</span>
+                    <span class="auth-field__box"><input class="auth-field__input" type="text" name="last_name" value="<?= $this->e($values['lastName']) ?>" autocomplete="family-name" required></span>
+                </label>
+            </div>
+            <label class="auth-field">
+                <span class="auth-field__label">Email (e' anche il nome utente)</span>
+                <span class="auth-field__box"><input class="auth-field__input" type="email" name="email" value="<?= $this->e($values['email']) ?>" autocomplete="email" placeholder="nome@azienda.it" required></span>
+            </label>
+            <label class="auth-field">
+                <span class="auth-field__label">Password<?= $accountDone ? ' (lascia vuoto per non cambiarla)' : '' ?></span>
+                <span class="auth-field__box"><input class="auth-field__input" type="password" name="password" minlength="8" autocomplete="new-password" placeholder="Almeno 8 caratteri" <?= $accountDone ? '' : 'required' ?>></span>
+            </label>
+            <label class="auth-field">
+                <span class="auth-field__label">Ripeti la password</span>
+                <span class="auth-field__box"><input class="auth-field__input" type="password" name="password_confirm" minlength="8" autocomplete="new-password" <?= $accountDone ? '' : 'required' ?>></span>
+            </label>
+            <?php if ($error): ?><p class="auth-error"><?= $this->e($error) ?></p><?php endif; ?>
+        </div>
+
+        <button class="btn btn--primary auth-submit" type="submit">Continua</button>
+      </form>
+    </div>
+  </main>
+</div>

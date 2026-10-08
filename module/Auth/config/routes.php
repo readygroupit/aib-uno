@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Auth\Controller\FirstAccessController;
 use Auth\Controller\LoginController;
 
 return [
@@ -19,6 +20,11 @@ return [
         'path' => '/password/dimenticata',
         'controller' => LoginController::class,
         'action' => 'forgot',
+    ],
+    'first-access' => [
+        'path' => '/primo-accesso',
+        'controller' => FirstAccessController::class,
+        'action' => 'index',
     ],
     'password-reset' => [
         'path' => '/password/reset/:token',

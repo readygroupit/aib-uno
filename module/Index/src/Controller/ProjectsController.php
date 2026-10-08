@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Index\Controller;
 
 use App\Controller\AuthController;
+use App\Core\Config;
 use App\Prompt\Tool\ShowProjectsTool;
 use App\Provisioning\ProjectProvisioner;
 use App\Provisioning\ProvisioningException;
@@ -35,20 +36,38 @@ final class ProjectsController extends AuthController
         $packages = array_values(array_filter((array) ($body['packages'] ?? []), 'is_string'));
         $preset = is_string($body['preset'] ?? null) && $body['preset'] !== '' ? $body['preset'] : null;
 
+        $provisioner = $this->container->get(ProjectProvisioner::class);
+        $args = [
+            (string) ($body['name'] ?? ''),
+            (string) ($body['slug'] ?? ''),
+            $packages,
+            $preset,
+            (bool) ($body['withDemo'] ?? false),
+        ];
+
         try {
-            $result = $this->container->get(ProjectProvisioner::class)->provision(
-                (string) ($body['name'] ?? ''),
-                (string) ($body['slug'] ?? ''),
-                $packages,
-                $preset,
-                (bool) ($body['withDemo'] ?? false)
-            );
+            // Sul PC nasce subito; in produzione va in coda e lo crea il
+            // cron di root (bin/provision-queue.php) con vhost e certificato.
+            if ($this->container->get(Config::class)->get('provisioning')['runInRequest'] ?? false) {
+                $result = $provisioner->provision(...$args);
+                $project = $result['project'];
+                $log = $result['log'];
+            } else {
+                $project = $provisioner->queue(...$args);
+                $log = ["Progetto in coda: entro un paio di minuti saranno pronti codice, database, indirizzo e certificato."];
+            }
         } catch (ProvisioningException $e) {
             $this->json(['ok' => false, 'error' => $e->getMessage(), 'log' => $e->log], 422);
 
             return;
         }
 
-        $this->json(['ok' => true, 'url' => $result['project']->url, 'log' => $result['log']]);
+        $this->json([
+            'ok' => true,
+            'queued' => $project->provisioningStatus === 'queued',
+            'url' => $provisioner->projectUrl((string) $project->slug),
+            'firstAccessUrl' => $provisioner->firstAccessUrl((string) $project->slug),
+            'log' => $log,
+        ]);
     }
 }

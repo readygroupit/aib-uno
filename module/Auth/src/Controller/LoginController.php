@@ -6,9 +6,20 @@ namespace Auth\Controller;
 
 use App\Controller\AbstractController;
 use App\Service\AuthService;
+use App\Service\FirstAccessService;
 
 final class LoginController extends AbstractController
 {
+    /**
+     * Durante il primo accesso il login serve solo all'amministratore che
+     * ha gia' scelto la sua password (passo 'account' fatto) e ha chiuso
+     * il browser prima di finire: poi torna al wizard.
+     */
+    protected function allowedDuringSetup(): bool
+    {
+        return $this->action === 'logout' || $this->container->get(FirstAccessService::class)->accountDone();
+    }
+
     public function loginAction(): string
     {
         $auth = $this->container->get(AuthService::class);

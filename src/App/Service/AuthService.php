@@ -55,29 +55,40 @@ final class AuthService
                 continue;
             }
 
-            /** @var ProfileRepository $profileRepository */
-            $profileRepository = $this->container->get(ProfileRepository::class);
-            $profile = $candidate->profileId !== null ? $profileRepository->find($candidate->profileId) : null;
-
-            session_regenerate_id(true);
-
-            $_SESSION['user'] = [
-                'id' => $candidate->id,
-                'profileId' => $candidate->profileId,
-                'username' => $candidate->username,
-                'firstName' => $candidate->firstName,
-                'lastName' => $candidate->lastName,
-                'profileName' => $profile->name ?? '',
-                'onboardingSeen' => $candidate->onboardingDismissedAt !== null,
-                'permissions' => $this->computeEffectivePermissionCodes((int) $candidate->id, (int) $candidate->profileId),
-            ];
-
-            $userRepository->update((int) $candidate->id, ['last_login_at' => date('Y-m-d H:i:s')]);
+            $this->startSession($candidate);
 
             return $candidate;
         }
 
         return null;
+    }
+
+    /** Accesso senza password (es. subito dopo averla scelta nel primo accesso). */
+    public function loginUser(User $user): void
+    {
+        $this->startSession($user);
+    }
+
+    private function startSession(User $candidate): void
+    {
+        /** @var ProfileRepository $profileRepository */
+        $profileRepository = $this->container->get(ProfileRepository::class);
+        $profile = $candidate->profileId !== null ? $profileRepository->find($candidate->profileId) : null;
+
+        session_regenerate_id(true);
+
+        $_SESSION['user'] = [
+            'id' => $candidate->id,
+            'profileId' => $candidate->profileId,
+            'username' => $candidate->username,
+            'firstName' => $candidate->firstName,
+            'lastName' => $candidate->lastName,
+            'profileName' => $profile->name ?? '',
+            'onboardingSeen' => $candidate->onboardingDismissedAt !== null,
+            'permissions' => $this->computeEffectivePermissionCodes((int) $candidate->id, (int) $candidate->profileId),
+        ];
+
+        $this->container->get(UserRepository::class)->update((int) $candidate->id, ['last_login_at' => date('Y-m-d H:i:s')]);
     }
 
     public function logout(): void

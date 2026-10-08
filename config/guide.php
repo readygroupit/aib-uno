@@ -54,7 +54,7 @@ return [
                 'eyebrow' => 'Subito',
                 'title' => 'Online in un attimo.',
                 'text' => 'Preparo database, utente amministratore, permessi e indirizzo. Se vuoi carico anche dei dati demo, cosi\' il progetto e\' pronto da presentare. Se qualcosa va storto, rimetto tutto com\'era.',
-                'visual' => ['url' => 'assilevi.localhost'],
+                'visual' => ['url' => 'assilevi.aibrains.it'],
             ],
         ],
         'steps' => [

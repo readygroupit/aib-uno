@@ -34,6 +34,14 @@ giusto". Prima di riportarlo come concluso:
   prova usa-e-getta (mai contro il database `uno` reale) prima di dire che
   funziona.
 
+## Config e produzione
+
+`config/autoload/global.php` e' per ambiente (`APPLICATION_ENV=localhost` =
+sviluppo, altrimenti produzione), come in Core: in produzione non esiste
+`local.php`. Script da terminale sul PC: `APPLICATION_ENV=localhost php8.4
+bin/...` (senza, puntano al database di produzione). Coda dei progetti,
+vhost/certbot e primo accesso: README -> "Provisioning".
+
 ## Dove sono le cose
 
 Vedi `README.md` -> sezione "Architettura" per la mappa completa. In breve:
@@ -45,7 +53,7 @@ installabili (schema DB) in `packages/`, JS in `public/js/`, CSS in
 
 Non provare a "riparare" o completare questi punti senza che l'utente lo
 chieda esplicitamente - sono deferiti con intenzione, non dimenticati:
-il motore di provisioning vero, la pagina di modifica utente
+la pagina di modifica utente
 (`/utenti/:id`), il comportamento reale degli agenti AI (oggi solo un
 record, nessuna chiamata a un LLM), i connettori verso sistemi esterni, il
 prompt presente su ogni pagina. Lista completa e aggiornata in `README.md`

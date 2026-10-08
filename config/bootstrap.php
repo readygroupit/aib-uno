@@ -8,11 +8,15 @@ use App\Core\Container;
 use App\Event\EventDispatcher;
 use App\Prompt\PromptToolRegistry;
 
-$globalConfig = require CONFIG_PATH . '/autoload/global.php';
-$localFile = CONFIG_PATH . '/autoload/local.php';
-$localConfig = is_file($localFile) ? require $localFile : [];
-
-$config = array_replace_recursive($globalConfig, $localConfig);
+// global.php (per ambiente, vedi APPLICATION_ENV) -> project.php (solo nei
+// progetti generati da Uno: nome, slug, database) -> local.php (facoltativo,
+// solo sul PC: in produzione non esiste).
+$config = require CONFIG_PATH . '/autoload/global.php';
+foreach (['project.php', 'local.php'] as $file) {
+    if (is_file(CONFIG_PATH . '/autoload/' . $file)) {
+        $config = array_replace_recursive($config, require CONFIG_PATH . '/autoload/' . $file);
+    }
+}
 
 // Nome dell'applicazione per i template (titolo, Guida): 'Uno' qui, il nome
 // del cliente in un progetto generato (vedi ProjectProvisioner).

@@ -6,18 +6,48 @@ function slugify(text) {
         .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
 }
 
+const STATUS_LABELS = {
+    queued: 'In coda',
+    running: 'In creazione',
+    failed: 'Non riuscito',
+};
+
+// Copia il link di primo accesso (slug cifrato) da mandare a chi
+// amministrera' il progetto: apre il wizard finche' non e' configurato.
+function copyButton(url) {
+    const button = el('button', { className: 'btn btn--secondary btn--small', type: 'button' }, ['Copia link primo accesso']);
+    button.addEventListener('click', () => {
+        navigator.clipboard.writeText(url).then(() => {
+            button.textContent = 'Link copiato';
+            setTimeout(() => { button.textContent = 'Copia link primo accesso'; }, 2000);
+        }).catch(() => window.prompt('Link di primo accesso', url));
+    });
+    return button;
+}
+
 function projectRow(project) {
     const meta = [project.preset || 'Da zero', `${project.packages.length} pacchetti`];
     if (project.withDemoData) meta.push('con dati demo');
+    const status = project.provisioningStatus || 'ready';
+    const ready = status === 'ready';
+
+    const text = [
+        el('span', { className: 'project-row__name' }, [
+            project.name,
+            ready ? null : el('span', { className: `project-row__status project-row__status--${status}` }, [STATUS_LABELS[status] || status]),
+        ].filter(Boolean)),
+        el('span', { className: 'project-row__meta' }, [meta.join(' · ')]),
+    ];
+    if (status === 'failed' && project.provisioningLog) {
+        text.push(el('span', { className: 'project-row__log' }, [project.provisioningLog]));
+    }
 
     return el('div', { className: 'project-row' }, [
-        el('div', { className: 'project-row__text' }, [
-            el('span', { className: 'project-row__name' }, [project.name]),
-            el('span', { className: 'project-row__meta' }, [meta.join(' · ')]),
-        ]),
+        el('div', { className: 'project-row__text' }, text),
         el('a', { className: 'project-row__url', href: project.url, target: '_blank', rel: 'noopener' }, [project.url.replace(/^https?:\/\//, '')]),
-        el('a', { className: 'btn btn--secondary btn--small', href: project.url, target: '_blank', rel: 'noopener' }, ['Apri']),
-    ]);
+        ready ? copyButton(project.firstAccessUrl) : null,
+        ready ? el('a', { className: 'btn btn--secondary btn--small', href: project.url, target: '_blank', rel: 'noopener' }, ['Apri']) : null,
+    ].filter(Boolean));
 }
 
 function newProjectForm(data, onCreated) {
@@ -29,7 +59,7 @@ function newProjectForm(data, onCreated) {
     const nameInput = el('input', { className: 'field__input', type: 'text', id: 'project-name', placeholder: 'Es. Assilevi', autocomplete: 'off' });
     const slugInput = el('input', { className: 'field__input', type: 'text', id: 'project-slug', placeholder: 'es. assilevi', autocomplete: 'off', spellcheck: 'false' });
     const slugHint = el('span', { className: 'field__help' });
-    const updateHint = () => { slugHint.textContent = slugInput.value ? `Sara' raggiungibile su ${slugInput.value}.localhost` : 'Diventa l\'indirizzo del progetto.'; };
+    const updateHint = () => { slugHint.textContent = slugInput.value ? `Sara' raggiungibile su ${(data.hostPattern || '%s').replace('%s', slugInput.value)}` : 'Diventa l\'indirizzo del progetto.'; };
     nameInput.addEventListener('input', () => { if (!slugTouched) slugInput.value = slugify(nameInput.value); updateHint(); });
     slugInput.addEventListener('input', () => { slugTouched = true; updateHint(); });
     updateHint();
@@ -175,8 +205,13 @@ function renderProjectsBoard(data) {
             el('h2', { className: 'projects-board__title' }, ['Nuovo progetto']),
             newProjectForm(data, (result) => {
                 success.textContent = '';
-                success.append('Progetto pronto. Accedi con admin / admin123 e cambia la password. ');
-                success.appendChild(el('a', { className: 'btn btn--primary btn--small', href: result.url, target: '_blank', rel: 'noopener' }, ['Apri ' + result.url.replace(/^https?:\/\//, '')]));
+                if (result.queued) {
+                    success.append('Progetto in coda: entro un paio di minuti saranno pronti database, indirizzo e certificato. Poi manda il link di primo accesso a chi lo amministrera\'. ');
+                } else {
+                    success.append('Progetto pronto. Manda il link di primo accesso a chi lo amministrera\': sceglie lui la password e completa i dati. ');
+                    success.appendChild(el('a', { className: 'btn btn--primary btn--small', href: result.firstAccessUrl, target: '_blank', rel: 'noopener' }, ['Apri il primo accesso']));
+                }
+                success.appendChild(copyButton(result.firstAccessUrl));
                 success.hidden = false;
                 fetch('/progetti', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                     .then((r) => r.json())

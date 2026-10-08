@@ -42,6 +42,12 @@ final class ProjectDatabaseRepository
         return (int) $statement->fetchColumn() === 0;
     }
 
+    /** Il progetto nasce da configurare: vedi FirstAccessService. */
+    public function markSetupPending(): void
+    {
+        $this->pdo->exec("INSERT INTO settings (setting_key, value, status, created_at) VALUES ('setup.status', 'pending', 1, NOW())");
+    }
+
     public function setForeignKeyChecks(bool $enabled): void
     {
         $this->pdo->exec('SET FOREIGN_KEY_CHECKS=' . ($enabled ? '1' : '0'));

@@ -45,6 +45,14 @@ final class Request
         return $this->post[$name] ?? $this->query[$name] ?? $default;
     }
 
+    /** File caricato da un form multipart (null se assente o con errore). */
+    public function file(string $name): ?array
+    {
+        $file = $_FILES[$name] ?? null;
+
+        return is_array($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK ? $file : null;
+    }
+
     public function isAjax(): bool
     {
         return ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest';

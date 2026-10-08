@@ -14,13 +14,22 @@ use App\Package\PackageInstallerRunner;
 use App\Package\PackageManifest;
 use App\Repository\ProjectDatabaseRepository;
 use App\Repository\ProjectRepository;
+use App\Support\FirstAccessToken;
 
 /**
  * Genera un progetto nuovo a partire da Uno: cartella con il codice del
  * framework e SOLO i pacchetti scelti (piu' le loro dipendenze), un
  * database con la loro struttura, l'utente admin e - se il preset li ha -
- * i dati demo. Il progetto risponde subito su <slug>.localhost grazie al
- * vhost jolly (vedi config 'provisioning').
+ * i dati demo. Cartella, database e indirizzo vengono dai pattern di
+ * config 'provisioning' (diversi per sviluppo e produzione).
+ *
+ * In sviluppo (runInRequest) il progetto nasce dentro la richiesta e
+ * risponde subito su <slug>.localhost (vhost jolly). In produzione queue()
+ * lo mette in coda e lo crea il cron di root (bin/provision-queue.php ->
+ * runQueued()), che poi fa anche vhost e certificato (SiteInstaller).
+ *
+ * Il progetto nasce "da configurare": il primo accesso passa dal link con
+ * lo slug cifrato (firstAccessUrl(), vedi FirstAccessController).
  *
  * Le tabelle dei pacchetti passano dallo stesso percorso di un'installazione
  * normale (MigrationWriter -> MigrationRunner), non da un dump di Uno: cosi'
@@ -37,7 +46,8 @@ final class ProjectProvisioner
     // Copiati a parte (solo quelli scelti) o rigenerati per il progetto.
     private const COPY_EXCLUDES = [
         '.git', 'nbproject', 'design', 'data/logs', 'data/cache', 'db/migrations',
-        'packages', 'config/autoload/local.php', 'config/guide.php', 'README.md', 'AGENTS.md',
+        'packages', 'config/autoload/local.php', 'config/autoload/project.php', 'config/guide.php',
+        'README.md', 'AGENTS.md', 'public/uploads',
     ];
 
     // Il generatore di progetti e l'installatore di pacchetti restano su Uno:
@@ -109,29 +119,97 @@ final class ProjectProvisioner
     }
 
     /**
+     * Produzione: controlla i dati e mette il progetto in coda
+     * (provisioning_status 'queued'); lo crea il cron con runQueued().
+     *
+     * @param string[] $packages
+     * @throws ProvisioningException
+     */
+    public function queue(string $name, string $slug, array $packages, ?string $presetKey, bool $withDemo): Project
+    {
+        $name = trim($name);
+        $slug = strtolower(trim($slug));
+        $preset = $presetKey !== null ? ($this->presets()[$presetKey] ?? null) : null;
+        $this->validate($name, $slug, $packages, $presetKey, $preset);
+
+        [$dir, , $dbName, $url] = $this->targets($slug, null, null);
+        if (is_dir($dir)) {
+            throw new ProvisioningException("La cartella {$dir} esiste gia': scegli un altro identificativo.");
+        }
+        if (ProjectDatabaseRepository::databaseExists($this->serverPdo(), $dbName)) {
+            throw new ProvisioningException("Il database {$dbName} esiste gia': scegli un altro identificativo.");
+        }
+
+        $id = $this->projects->insert([
+            'name' => $name,
+            'slug' => $slug,
+            'db_name' => $dbName,
+            'path' => $dir,
+            'url' => $url,
+            'preset' => $presetKey,
+            'packages' => json_encode(array_values(array_unique($packages))),
+            'with_demo_data' => $withDemo ? 1 : 0,
+            'provisioning_status' => 'queued',
+            'provisioning_log' => null,
+        ]);
+
+        return $this->projects->find($id);
+    }
+
+    /**
+     * Cron: crea un progetto messo in coda da queue(). Lo stato passa a
+     * 'running', poi 'ready' o 'failed' (con il log dei passaggi).
+     *
+     * @return string[] log
+     */
+    public function runQueued(Project $project): array
+    {
+        $this->projects->update((int) $project->id, ['provisioning_status' => 'running']);
+
+        try {
+            $result = $this->provision(
+                (string) $project->name,
+                (string) $project->slug,
+                json_decode((string) $project->packages, true) ?: [],
+                $project->preset,
+                (bool) $project->withDemoData,
+                null,
+                null,
+                (int) $project->id
+            );
+            $log = $result['log'];
+        } catch (ProvisioningException $e) {
+            $log = [...$e->log, $e->getMessage()];
+            $this->projects->update((int) $project->id, ['provisioning_status' => 'failed', 'provisioning_log' => implode("\n", $log)]);
+
+            return $log;
+        }
+
+        return $log;
+    }
+
+    /**
      * @param string[] $packages pacchetti scelti (le dipendenze si aggiungono da sole)
      * @param string|null $targetDir cartella diversa da projectsDir/<slug> (es. un
      *     clone git gia' pronto): puo' esistere se contiene solo .git, e
      *     projectsDir/<slug> diventa un collegamento verso di lei
-     * @param string|null $dbName database diverso da <prefisso><slug>: puo'
+     * @param string|null $dbName database diverso da dbPattern: puo'
      *     esistere se e' vuoto
+     * @param int|null $projectId riga gia' in coda (queue()): si aggiorna
+     *     invece di inserirne una nuova
      * @return array{project: Project, log: string[]}
      * @throws ProvisioningException con il log dei passaggi fatti
      */
-    public function provision(string $name, string $slug, array $packages, ?string $presetKey, bool $withDemo, ?string $targetDir = null, ?string $dbName = null): array
+    public function provision(string $name, string $slug, array $packages, ?string $presetKey, bool $withDemo, ?string $targetDir = null, ?string $dbName = null, ?int $projectId = null): array
     {
         $name = trim($name);
         $slug = strtolower(trim($slug));
         $preset = $presetKey !== null ? ($this->presets()[$presetKey] ?? null) : null;
         $log = [];
 
-        $this->validate($name, $slug, $packages, $presetKey, $preset);
+        $this->validate($name, $slug, $packages, $presetKey, $preset, $projectId);
 
-        $settings = $this->config->get('provisioning');
-        $link = rtrim($settings['projectsDir'], '/') . '/' . $slug;
-        $dir = $targetDir !== null ? rtrim($targetDir, '/') : $link;
-        $dbName ??= $settings['dbPrefix'] . str_replace('-', '_', $slug);
-        $url = sprintf($settings['urlPattern'], $slug);
+        [$dir, $link, $dbName, $url] = $this->targets($slug, $targetDir, $dbName);
         $resolved = $this->resolve($packages);
 
         if (preg_match('/^[A-Za-z0-9_]{1,64}$/', $dbName) !== 1) {
@@ -201,7 +279,9 @@ final class ProjectProvisioner
 
             $database->setForeignKeyChecks(true);
             $appName = $preset['appName'] ?? $name;
-            $this->writeLocalConfig($dir, $dbName, $appName);
+            $database->markSetupPending();
+            $log[] = 'Progetto da configurare al primo accesso (link con lo slug cifrato).';
+            $this->writeProjectConfig($dir, $slug, $dbName, $appName);
             $guide = $presetKey !== null && is_file(ROOT_PATH . "/packages/provisioning/presets/{$presetKey}/guide.php")
                 ? ROOT_PATH . "/packages/provisioning/presets/{$presetKey}/guide.php"
                 : ROOT_PATH . '/packages/provisioning/guide.default.php';
@@ -216,7 +296,8 @@ final class ProjectProvisioner
             throw new ProvisioningException('La creazione del progetto non e\' andata a buon fine: ' . $e->getMessage(), $log, $e);
         }
 
-        $id = $this->projects->insert([
+        $log[] = "Pronto su {$url}";
+        $row = [
             'name' => $name,
             'slug' => $slug,
             'db_name' => $dbName,
@@ -225,22 +306,73 @@ final class ProjectProvisioner
             'preset' => $presetKey,
             'packages' => json_encode($resolved['order']),
             'with_demo_data' => $withDemo ? 1 : 0,
-        ]);
-        $log[] = "Pronto su {$url}";
+            'provisioning_status' => 'ready',
+            'provisioning_log' => implode("\n", $log),
+        ];
+        if ($projectId !== null) {
+            $this->projects->update($projectId, $row);
+            $id = $projectId;
+        } else {
+            $id = $this->projects->insert($row);
+        }
 
         return ['project' => $this->projects->find($id), 'log' => $log];
     }
 
-    private function validate(string $name, string $slug, array $packages, ?string $presetKey, ?array $preset): void
+    /**
+     * Indirizzo del progetto calcolato dalla config (provisioning.urlPattern)
+     * e non letto dalla colonna projects.url: lo stesso database funziona sul
+     * PC di sviluppo (*.localhost) e in produzione (*.aibrains.it).
+     */
+    public function projectUrl(string $slug): string
+    {
+        return sprintf($this->config->get('provisioning')['urlPattern'], $slug);
+    }
+
+    /**
+     * Link del primo accesso: lo slug cifrato abilita il wizard finche' il
+     * progetto non e' configurato, poi non serve piu'.
+     */
+    public function firstAccessUrl(string $slug): string
+    {
+        return $this->projectUrl($slug) . '/primo-accesso?t=' . FirstAccessToken::forSlug($slug, (string) $this->config->get('provisioning')['tokenKey']);
+    }
+
+    /** Cartella del progetto in questo ambiente (la colonna projects.path e' storica). */
+    public function projectDir(string $slug): string
+    {
+        return $this->targets($slug, null, null)[0];
+    }
+
+    /**
+     * Cartella, collegamento (vhost jolly in sviluppo), database e
+     * indirizzo del progetto, dai pattern di config 'provisioning'.
+     *
+     * @return array{0: string, 1: string, 2: string, 3: string}
+     */
+    private function targets(string $slug, ?string $targetDir, ?string $dbName): array
+    {
+        $settings = $this->config->get('provisioning');
+        $dir = $targetDir !== null ? rtrim($targetDir, '/') : sprintf($settings['dirPattern'], $slug);
+        $link = !empty($settings['linkDir']) ? rtrim($settings['linkDir'], '/') . '/' . $slug : $dir;
+
+        return [$dir, $link, $dbName ?? sprintf($settings['dbPattern'], str_replace('-', '_', $slug)), $this->projectUrl($slug)];
+    }
+
+    private function validate(string $name, string $slug, array $packages, ?string $presetKey, ?array $preset, ?int $projectId = null): void
     {
         if ($name === '') {
             throw new ProvisioningException('Dai un nome al progetto.');
         }
         if (preg_match('/^[a-z][a-z0-9-]{1,39}$/', $slug) !== 1 || str_ends_with($slug, '-')) {
-            throw new ProvisioningException('L\'identificativo puo\' contenere solo lettere minuscole, cifre e trattini, e deve iniziare con una lettera (diventa l\'indirizzo: nome.localhost).');
+            throw new ProvisioningException('L\'identificativo puo\' contenere solo lettere minuscole, cifre e trattini, e deve iniziare con una lettera (diventa l\'indirizzo del progetto).');
         }
         if (in_array($slug, self::RESERVED_SLUGS, true)) {
             throw new ProvisioningException("L'identificativo \u{ab}{$slug}\u{bb} e' riservato.");
+        }
+        $same = array_filter($this->projects->findAll(['slug' => $slug]), static fn ($p) => (int) $p->id !== $projectId);
+        if ($same !== []) {
+            throw new ProvisioningException("Esiste gia' un progetto \u{ab}{$slug}\u{bb}.");
         }
         if ($presetKey !== null && $preset === null) {
             throw new ProvisioningException('Preset sconosciuto.');
@@ -323,7 +455,7 @@ final class ProjectProvisioner
             $this->exec('rsync -a ' . escapeshellarg(ROOT_PATH . "/packages/{$package}") . ' ' . escapeshellarg("{$dir}/packages/"));
         }
 
-        foreach (['data/logs', 'data/cache', 'db/migrations/pending', 'db/migrations/applied'] as $sub) {
+        foreach (['data/logs', 'data/cache', 'db/migrations/pending', 'db/migrations/applied', 'public/uploads'] as $sub) {
             if (!is_dir("{$dir}/{$sub}")) {
                 mkdir("{$dir}/{$sub}", 0775, true);
             }
@@ -331,26 +463,39 @@ final class ProjectProvisioner
         }
     }
 
-    private function writeLocalConfig(string $dir, string $dbName, string $appName): void
+    /**
+     * config/autoload/project.php del progetto, versionato con il suo
+     * codice: nome, slug e database per ambiente. Le credenziali restano
+     * quelle di global.php (copiato da Uno), come nei progetti di Core.
+     */
+    private function writeProjectConfig(string $dir, string $slug, string $dbName, string $appName): void
     {
-        $db = $this->config->get('db');
-        preg_match('/host=([^;]+)/', (string) $db['dsn'], $host);
-        $local = [
-            'db' => [
-                'dsn' => 'mysql:host=' . ($host[1] ?? '127.0.0.1') . ";dbname={$dbName};charset=utf8mb4",
-                'username' => $db['username'],
-                'password' => $db['password'],
-            ],
-            'app' => ['name' => $appName],
-        ];
-        if ($this->config->get('claude.apiKey')) {
-            $local['claude'] = ['apiKey' => $this->config->get('claude.apiKey')];
-        }
+        $patterns = ['localhost' => 'dev_aib_%s', 'production' => 'prod_aib_%s'];
+        $key = str_replace('-', '_', $slug);
+        $devDb = $this->config->get('env') === 'localhost' ? $dbName : sprintf($patterns['localhost'], $key);
+        $prodDb = $this->config->get('env') === 'localhost' ? sprintf($patterns['production'], $key) : $dbName;
+        $export = static fn ($value) => var_export($value, true);
 
-        file_put_contents(
-            "{$dir}/config/autoload/local.php",
-            "<?php\n\ndeclare(strict_types=1);\n\n// Generato da Uno (ProjectProvisioner). Escluso da git.\nreturn " . var_export($local, true) . ";\n"
-        );
+        file_put_contents("{$dir}/config/autoload/project.php", <<<PHP
+<?php
+
+declare(strict_types=1);
+
+// Generato da Uno (ProjectProvisioner): nome, slug e database di questo
+// progetto. Credenziali e resto della config in global.php.
+\$isDev = getenv('APPLICATION_ENV') === 'localhost';
+
+return [
+    'app' => [
+        'name' => {$export($appName)},
+        'slug' => {$export($slug)},
+    ],
+    'db' => [
+        'dsn' => 'mysql:host=127.0.0.1;dbname=' . (\$isDev ? {$export($devDb)} : {$export($prodDb)}) . ';charset=utf8mb4',
+    ],
+];
+
+PHP);
     }
 
     private function rollback(string $dir, string $link, bool $createdDir, bool $adoptDir, string $dbName, bool $createdDb, \PDO $server): void
@@ -386,9 +531,11 @@ final class ProjectProvisioner
 
 Gestionale generato da Uno il {$date} {$origin}.
 
-- Indirizzo locale: {$url}
-- Database: `{$dbName}` (credenziali in `config/autoload/local.php`, escluso da git)
-- Accesso iniziale: `admin` / `admin123` - da cambiare subito
+- Indirizzo: {$url}
+- Database: `{$dbName}` (nome per ambiente in `config/autoload/project.php`,
+  credenziali in `config/autoload/global.php`)
+- Primo accesso: dal link con lo slug cifrato che mostra Uno (`/primo-accesso?t=...`):
+  si sceglie l'accesso dell'amministratore e si completano i dati del progetto
 
 ## Pacchetti installati
 

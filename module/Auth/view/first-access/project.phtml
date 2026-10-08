@@ -1,0 +1,36 @@
+<div class="auth-shell first-access">
+  <main class="auth-main">
+    <div class="auth-main__inner">
+      <form method="post" action="/primo-accesso?step=project" enctype="multipart/form-data" class="auth-login-card">
+        <?= $this->csrfField() ?>
+        <div class="auth-login-card__header">
+            <img class="auth-login-card__logo" src="<?= $this->e($values['logo'] !== '' ? $values['logo'] : $this->asset('/img/aibrains.png')) ?>" alt="">
+            <div>
+                <p class="first-access__step">Passo 2 di 2</p>
+                <h1 class="auth-login-card__title">Il tuo progetto</h1>
+                <p class="auth-login-card__tagline">Questi dati servono per far funzionare <?= $this->e(APP_NAME) ?>. Puoi interrompere quando vuoi: ritroverai quello che hai gia' scritto.</p>
+            </div>
+        </div>
+
+        <div class="auth-login-card__fields">
+            <?php foreach ($fields as $key => $field): ?>
+                <label class="auth-field">
+                    <span class="auth-field__label"><?= $this->e($field['label']) ?><?= $field['required'] ? '' : ' (facoltativo)' ?></span>
+                    <span class="auth-field__box"><input class="auth-field__input" type="<?= $this->e($field['type'] ?? 'text') ?>" name="<?= $this->e($key) ?>" value="<?= $this->e($values[$key]) ?>" <?= $field['required'] ? 'required' : '' ?>></span>
+                </label>
+            <?php endforeach; ?>
+            <label class="auth-field">
+                <span class="auth-field__label">Logo (PNG, JPG o WebP, max 2 MB)<?= $values['logo'] !== '' ? ' - gia\' caricato, scegline un altro per sostituirlo' : '' ?></span>
+                <span class="auth-field__box"><input class="auth-field__input first-access__file" type="file" name="logo" accept="image/png,image/jpeg,image/webp" <?= $values['logo'] === '' ? 'required' : '' ?>></span>
+            </label>
+            <?php if ($error): ?><p class="auth-error"><?= $this->e($error) ?></p><?php endif; ?>
+        </div>
+
+        <div class="first-access__actions">
+            <a class="btn btn--secondary" href="/primo-accesso?step=account">Indietro</a>
+            <button class="btn btn--primary auth-submit" type="submit">Completa e entra</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>

@@ -20,6 +20,14 @@
     box-shadow: 0 1px 1px rgba(255, 255, 255, 0.6) inset, var(--shadow-card);
 }
 
+/* Con la cronologia il pannello ha altezza fissa e scorre (vedi
+   .has-history piu' sotto): senza questo il flex in colonna schiaccia i
+   figli invece di farli scorrere - il chevron indietro diventava alto
+   pochi pixel sotto un titolo con sottotitolo. */
+.results-panel > * {
+    flex-shrink: 0;
+}
+
 /* Creato sempre (vedi hero.js getOrCreatePanel), ma sulla home vuota resta
    senza contenuto - un box in vetro vuoto non deve comunque comparire. */
 .results-panel:empty {

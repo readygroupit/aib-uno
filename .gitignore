@@ -1,6 +1,9 @@
 # Credenziali locali (DB, chiave API Claude) - vedi local.php.dist per il template da copiare
 config/autoload/local.php
 
+# Chiavi API (vedi secrets.php.dist): mai su GitHub
+config/autoload/secrets.php
+
 # Log/cache generati a runtime, non fanno parte del codice
 data/logs/*
 !data/logs/.gitkeep

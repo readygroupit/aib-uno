@@ -8,11 +8,12 @@ use App\Core\Container;
 use App\Event\EventDispatcher;
 use App\Prompt\PromptToolRegistry;
 
-// global.php (per ambiente, vedi APPLICATION_ENV) -> project.php (solo nei
+// global.php (per ambiente, vedi APPLICATION_ENV) -> secrets.php (chiavi
+// API, fuori da git: creato a mano su ogni server) -> project.php (solo nei
 // progetti generati da Uno: nome, slug, database) -> local.php (facoltativo,
 // solo sul PC: in produzione non esiste).
 $config = require CONFIG_PATH . '/autoload/global.php';
-foreach (['project.php', 'local.php'] as $file) {
+foreach (['secrets.php', 'project.php', 'local.php'] as $file) {
     if (is_file(CONFIG_PATH . '/autoload/' . $file)) {
         $config = array_replace_recursive($config, require CONFIG_PATH . '/autoload/' . $file);
     }

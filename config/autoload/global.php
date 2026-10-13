@@ -69,8 +69,9 @@ return [
         'tokenKey' => 'b4a97a976da9a30f8870c93023cea5db16f47927addf7e5bce0faa2ca245136d',
     ],
     // Intelligenza artificiale del prompt e degli agenti (App\Service\AiService):
-    // 'provider' sceglie quale dei due usare. Chiave valida su sviluppo e
-    // produzione (sul PC local.php puo' sovrascriverla).
+    // 'provider' sceglie quale dei due usare. Le chiavi NON stanno qui (GitHub
+    // blocca i push con segreti): vanno in config/autoload/secrets.php, fuori
+    // da git, vedi secrets.php.dist.
     'ai' => [
         'provider' => 'openai',
         'openai' => [

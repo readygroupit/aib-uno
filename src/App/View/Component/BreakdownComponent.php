@@ -21,7 +21,7 @@ final class BreakdownComponent extends AbstractComponent
     ];
 
     /**
-     * @param array{title?: string, subtitle?: string, groups: list<array{title: string, href?: string, counts: array<string,int>}>} $config
+     * @param array{title?: string, subtitle?: string, groups: list<array{title: string, href?: string, counts: array<string,int>, highlight?: ?array{text: string, tone: string}}>} $config
      */
     public function toData(array $config): array
     {
@@ -42,6 +42,9 @@ final class BreakdownComponent extends AbstractComponent
             $groups[] = [
                 'title' => $group['title'] ?? '',
                 'href' => $group['href'] ?? null,
+                // Il dato chiave del riquadro (es. "78% completi"), scelto da chi
+                // chiama: e' la prima cosa da leggere dopo il totale.
+                'highlight' => $group['highlight'] ?? null,
                 'total' => $total,
                 'items' => $items,
             ];
@@ -51,6 +54,7 @@ final class BreakdownComponent extends AbstractComponent
             'type' => 'breakdown',
             'title' => $config['title'] ?? null,
             'subtitle' => $config['subtitle'] ?? null,
+            'legend' => $config['legend'] ?? [['tone' => 'success', 'label' => 'Fatto'], ['tone' => 'warning', 'label' => 'In corso'], ['tone' => 'danger', 'label' => 'Da sbloccare']],
             'groups' => $groups,
         ];
     }

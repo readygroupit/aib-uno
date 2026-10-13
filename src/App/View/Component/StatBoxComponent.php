@@ -44,6 +44,12 @@ final class StatBoxComponent extends AbstractComponent
             // AbstractListEntityTool::execute(), l'unico chiamante che lo
             // accende di default oggi.
             'hero' => (bool) ($config['hero'] ?? false),
+            // Card protagonista (scura, nel petrolio dello stile): l'unico
+            // dato da leggere per primo in una schermata di riepilogo (es.
+            // il valore dei rimborsi nel report). Una sola per schermata.
+            'feature' => (bool) ($config['feature'] ?? false),
+            // Etichetta breve al posto del pallino (es. "+18% vs sett. prec.").
+            'badge' => $config['badge'] ?? null,
         ];
     }
 }

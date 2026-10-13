@@ -42,6 +42,23 @@ sviluppo, altrimenti produzione), come in Core: in produzione non esiste
 bin/...` (senza, puntano al database di produzione). Coda dei progetti,
 vhost/certbot e primo accesso: README -> "Provisioning".
 
+## File statici sempre versionati
+
+Ogni JS/CSS deve arrivare al browser con `?v=filemtime`: CSS e `app.js`
+con `View::asset()`, tutti gli altri moduli JS (anche quelli importati da
+altri moduli) tramite l'import map di `View::importMap()` nel layout. Un
+file nuovo e' coperto da solo se sta in `public/js` (JS) o e' linkato con
+`asset()` (CSS). Mai far svuotare la cache al browser.
+
+## Schermate di riepilogo: gerarchia e stile
+
+Nei risultati che non sono liste (report, cruscotto) il dato piu' importante
+va in evidenza: `StatBoxComponent` con `'feature' => true` (card scura in
+petrolio, una sola per schermata), poi i contatori, poi le ripartizioni
+(`BreakdownComponent`: anello, dato chiave in chip, legenda). Stile: niente
+bordini colorati sui box, sfumature agli angoli solo nei colori del tema
+(petrolio, giallino accent).
+
 ## Dove sono le cose
 
 Vedi `README.md` -> sezione "Architettura" per la mappa completa. In breve:

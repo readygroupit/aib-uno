@@ -51,13 +51,24 @@ const DOT_COLOR_HEX = { petrol: '#12333f', moss: '#4f7b5c', lilac: '#8b83ad', br
 // dell'app usa ancora la linea di buildSparkline() sopra): l'ultima barra
 // nel colore della card (dotColor), le altre in grigio neutro - stesso
 // linguaggio delle card viste nel riferimento "Exploration Board".
-function buildBarSparkline(values, dotColor) {
+function buildBarSparkline(values, dotColor, feature = false) {
     if (!values || values.length === 0) {
         return null;
     }
 
     const max = Math.max(...values, 1);
     const highlight = DOT_COLOR_HEX[dotColor] || DOT_COLOR_HEX.petrol;
+    // Card protagonista (scura): oggi in giallo, i giorni prima in bianco velato.
+    // Scala dal minimo al massimo: con un valore che cresce (es. un totale
+    // accumulato) si vede la crescita, non sette barre quasi uguali.
+    if (feature) {
+        const min = Math.min(...values);
+        const span = max - min;
+        return el('div', { className: 'stat-box__bars' }, values.map((value, i) => el('span', {
+            className: 'stat-box__bar',
+            style: `height:${span > 0 ? Math.round(25 + ((value - min) / span) * 75) : 60}%;background:${i === values.length - 1 ? 'var(--color-accent)' : 'rgba(255,255,255,0.22)'}`,
+        })));
+    }
 
     const bars = values.map((value, i) => {
         const pct = Math.max(8, Math.round((value / max) * 100));
@@ -77,7 +88,9 @@ function buildBarSparkline(values, dotColor) {
 function renderStatBox(data) {
     const header = el('div', { className: 'stat-box__header' }, [
         el('span', { className: 'stat-box__label' }, [data.label || '']),
-        el('span', { className: 'stat-box__dot stat-box__dot--' + (data.dotColor || 'petrol') }),
+        data.badge
+            ? el('span', { className: 'stat-box__badge' }, [data.badge])
+            : el('span', { className: 'stat-box__dot stat-box__dot--' + (data.dotColor || 'petrol') }),
     ]);
 
     const valueChildren = [el('span', { className: 'stat-box__value' }, [String(data.value ?? '')])];
@@ -89,14 +102,15 @@ function renderStatBox(data) {
 
     const className = 'card stat-box'
         + (data.href ? ' stat-box--clickable' : '')
-        + (data.hero ? ' stat-box--hero stat-box--hero-' + (data.dotColor || 'petrol') : '');
+        + (data.hero ? ' stat-box--hero stat-box--hero-' + (data.dotColor || 'petrol') : '')
+        + (data.feature ? ' stat-box--feature' : '');
     const section = el(data.href ? 'a' : 'section', { className, href: data.href || null }, [
         header,
         el('div', { className: 'stat-box__value-row' }, valueChildren),
     ]);
 
     const spark = data.sparklineStyle === 'bars'
-        ? buildBarSparkline(data.sparkline, data.dotColor)
+        ? buildBarSparkline(data.sparkline, data.dotColor, data.feature)
         : buildSparkline(data.sparkline);
     if (spark) {
         section.appendChild(el('div', { className: 'stat-box__spark' }, [spark]));

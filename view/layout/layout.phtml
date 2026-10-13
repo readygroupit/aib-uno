@@ -89,6 +89,8 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <script>window.UNO_DASHBOARD_HOME = <?= json_encode(APP_HAS_DASHBOARD) ?>;</script>
     <script>window.UNO_APP_NAME = <?= json_encode(APP_NAME) ?>;</script>
     <script>window.UNO_SHOW_ONBOARDING = <?= json_encode($unoShowOnboarding) ?>;</script>
+    <!-- Versione (?v=filemtime) di ogni file JS, anche di quelli importati da altri moduli: nessun file vecchio dalla cache del browser (vedi View::importMap()). -->
+    <script type="importmap"><?= $this->importMap() ?></script>
     <script type="module" src="<?= $this->asset('/js/app.js') ?>"></script>
 </head>
 <body>

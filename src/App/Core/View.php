@@ -43,6 +43,30 @@ final class View
         return $path . '?v=' . $version;
     }
 
+    /**
+     * Import map con TUTTI i file JS di public/js, ognuno con la sua versione
+     * (?v=filemtime, come asset()): i moduli importati da altri moduli
+     * (import './x.js') non passano da un tag <script>, e senza questa mappa
+     * il browser terrebbe in cache la copia vecchia. Va stampata prima del
+     * primo <script type="module"> (vedi layout.phtml).
+     */
+    public function importMap(): string
+    {
+        $base = ROOT_PATH . '/public';
+        $imports = [];
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($base . '/js', \FilesystemIterator::SKIP_DOTS));
+        foreach ($files as $file) {
+            if ($file->getExtension() !== 'js') {
+                continue;
+            }
+            $path = substr(str_replace('\\', '/', $file->getPathname()), strlen($base));
+            $imports[$path] = $path . '?v=' . $file->getMTime();
+        }
+        ksort($imports);
+
+        return (string) json_encode(['imports' => $imports], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG);
+    }
+
     /** Campo nascosto pronto da inserire in ogni <form> nativo (vedi Csrf). */
     public function csrfField(): string
     {

@@ -57,9 +57,15 @@ final class AiService
         }
 
         $system = "Sei l'assistente conversazionale di " . APP_NAME . '. Rispondi in italiano. '
-            . 'Se la richiesta e\' chiara, usa uno strumento tra quelli disponibili. '
-            . 'Se manca un\'informazione necessaria o la richiesta e\' ambigua, non usare '
-            . 'nessuno strumento: fai una domanda di chiarimento breve, proponendo opzioni quando possibile.'
+            . 'Ogni risposta passa da uno strumento: scegli SEMPRE quello che si avvicina di piu\' alla '
+            . 'richiesta e usalo subito, anche se la richiesta contiene dettagli che lo strumento non '
+            . 'prevede (periodi, paginazione, formato, colonne): quei dettagli li gestisce gia\' la '
+            . 'schermata, non chiederli mai. Se la richiesta nomina un tipo di dato preciso (rimborsi, '
+            . 'pratiche, contatti, clienti, documenti, comunicazioni, attivita\') usa il suo elenco; il '
+            . 'report solo per riepiloghi generali, totali, statistiche o andamento. Per aprire una '
+            . 'persona per nome senza dire cosa sia, cerca prima tra i contatti. Fai una domanda di '
+            . 'chiarimento, breve e con opzioni, solo se nessuno strumento c\'entra o se il messaggio '
+            . 'puo\' riferirsi a due elementi diversi (es. due persone con lo stesso nome).'
             . $contextNote;
 
         return $this->provider() === 'openai'

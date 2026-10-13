@@ -50,8 +50,10 @@ final class ShowReportTool implements PromptToolInterface
 
     public function description(): string
     {
-        return "Mostra il report riepilogativo: pratiche, nuovi contatti, comunicazioni, "
-            . "attivita' in scadenza e documenti mancanti.";
+        return "Mostra il report riepilogativo con totali e tabelle: valore dei rimborsi, pratiche "
+            . "aperte e per stato, nuovi contatti e comunicazioni degli ultimi 7 giorni, attivita' in "
+            . "scadenza, documenti e rimborsi per stato. Usalo per riepiloghi, resoconti, statistiche, "
+            . "totali, andamento della settimana o del periodo, situazione generale.";
     }
 
     public function inputSchema(): array

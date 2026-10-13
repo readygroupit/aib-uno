@@ -22,9 +22,13 @@ function whenLabel(createdAt) {
     return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
+// Riga compatta (stile "Da approvare" del design): volto, chi e', il
+// messaggio su massimo due righe, i pulsanti a destra. La bozza preparata
+// dall'agente resta chiusa: si apre con "Rivedi".
 function buildMessage(item, canEdit, refresh) {
     const done = item.state === 'done';
-    const actions = el('div', { className: 'agent-msg__actions' });
+    const actions = el('div', { className: 'agent-row__actions' });
+    const draft = item.detail ? el('blockquote', { className: 'agent-msg__draft', hidden: '' }, [item.detail]) : null;
 
     if (!done && canEdit && item.actionType) {
         const approve = el('button', { type: 'button', className: 'btn btn--primary btn--small' }, [item.actionLabel || 'Approva']);
@@ -36,34 +40,58 @@ function buildMessage(item, canEdit, refresh) {
         });
         actions.appendChild(approve);
     }
-    if (item.linkHref) {
+    if (draft) {
+        const review = el('button', { type: 'button', className: 'btn btn--secondary btn--small' }, ['Rivedi']);
+        review.addEventListener('click', () => {
+            draft.hidden = !draft.hidden;
+            review.textContent = draft.hidden ? 'Rivedi' : 'Chiudi';
+        });
+        actions.appendChild(review);
+    } else if (item.linkHref) {
         actions.appendChild(el('a', { className: 'btn btn--secondary btn--small', href: item.linkHref }, [item.actionType && !done ? 'Rivedi' : 'Apri']));
     }
     if (!done && canEdit) {
-        const dismiss = el('button', { type: 'button', className: 'btn btn--ghost btn--small' }, [item.actionType ? 'Ignora' : 'Ok, letto']);
+        const dismiss = el('button', { type: 'button', className: 'agent-row__dismiss', title: item.actionType ? 'Ignora' : 'Ok, letto', 'aria-label': item.actionType ? 'Ignora' : 'Ok, letto' }, ['\u00d7']);
         dismiss.addEventListener('click', async () => { dismiss.disabled = true; await post(`/agenti/messaggi/${item.id}/ignora`); refresh(); });
         actions.appendChild(dismiss);
     }
 
-    const bubble = [el('p', { className: 'agent-msg__text' }, [item.body])];
-    if (item.detail) {
-        bubble.push(el('blockquote', { className: 'agent-msg__draft' }, [item.detail]));
-    }
-    if (done && item.resultText) {
-        bubble.push(el('div', { className: 'agent-msg__result' }, [icon('circle-check'), item.resultText]));
-    }
-    if (actions.children.length) bubble.push(actions);
-
-    return el('div', { className: 'agent-msg' + (done ? ' is-done' : '') }, [
-        el('span', { className: 'agent-msg__avatar' }, [agentAvatar(item.agentCode, 40)]),
-        el('div', { className: 'agent-msg__main' }, [
-            el('div', { className: 'agent-msg__head' }, [
-                el('span', { className: 'agent-msg__name' }, [item.agentName]),
-                el('span', { className: 'agent-msg__role' }, [item.agentRole]),
-                el('span', { className: 'agent-msg__time' }, [whenLabel(item.createdAt)]),
-            ]),
-            el('div', { className: 'agent-msg__bubble' }, bubble),
+    const main = [
+        el('div', { className: 'agent-row__head' }, [
+            el('span', { className: 'agent-row__name' }, [item.agentName]),
+            el('span', { className: 'agent-row__role' }, [item.agentRole]),
+            el('span', { className: 'agent-row__time' }, [whenLabel(item.createdAt)]),
         ]),
+        el('p', { className: 'agent-row__text', title: item.body }, [item.body]),
+    ];
+    if (draft) main.push(draft);
+    if (done && item.resultText) {
+        main.push(el('div', { className: 'agent-msg__result' }, [icon('circle-check'), item.resultText]));
+    }
+
+    return el('div', { className: 'agent-row' + (done ? ' is-done' : '') }, [
+        el('span', { className: 'agent-row__avatar' }, [agentAvatar(item.agentCode, 36)]),
+        el('div', { className: 'agent-row__main' }, main),
+        actions.children.length ? actions : null,
+    ].filter(Boolean));
+}
+
+const AUTONOMY_LABELS = { auto: 'Autonomo', approval: 'Chiede OK', suggest: 'Suggerisce' };
+
+// Colonna destra "Agenti al lavoro" (stile del design): stato, autonomia e
+// quante cose aspettano il tuo OK.
+function buildTeam(agents) {
+    return el('aside', { className: 'agent-team' }, [
+        el('span', { className: 'agent-feed__eyebrow agent-team__head' }, ['Agenti al lavoro']),
+        el('ul', { className: 'agent-team__list' }, agents.map((agent) => el('li', { className: 'agent-team__item' + (agent.enabled ? '' : ' is-off') }, [
+            el('span', { className: 'agent-team__avatar' }, [agentAvatar(agent.code, 28)]),
+            el('span', { className: 'agent-team__who' }, [
+                el('span', { className: 'agent-team__name' }, [agent.name]),
+                el('span', { className: 'agent-team__role' }, [agent.role]),
+            ]),
+            agent.pending ? el('span', { className: 'agent-team__pending', title: 'Da approvare' }, [String(agent.pending)]) : null,
+            el('span', { className: `agent-team__chip agent-team__chip--${agent.enabled ? agent.autonomy : 'off'}` }, [agent.enabled ? (AUTONOMY_LABELS[agent.autonomy] || agent.autonomy) : 'Spento']),
+        ].filter(Boolean)))),
     ]);
 }
 
@@ -102,7 +130,10 @@ function renderAgentFeed(data) {
             pendingBadge,
             el('a', { className: 'btn btn--secondary btn--small', href: '/agenti' }, ['Gestisci agenti']),
         ]),
-        list,
+        el('div', { className: 'agent-feed__body' }, [
+            list,
+            data.agents && data.agents.length ? buildTeam(data.agents) : null,
+        ].filter(Boolean)),
         el('p', { className: 'agent-feed__demo' }, ['Ambiente dimostrativo: gli agenti leggono i dati veri ma non inviano nulla all\'esterno.']),
     ]);
 }

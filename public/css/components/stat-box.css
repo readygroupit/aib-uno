@@ -134,9 +134,15 @@
 .stat-box--hero-teal { --stat-hero-border: rgba(95, 138, 134, 0.3); --stat-hero-bg: #e9f0ef; }
 .stat-box--hero-danger { --stat-hero-border: rgba(162, 59, 44, 0.3); --stat-hero-bg: #f6e6e2; }
 
-/* 6 card (report, cruscotto): 3 per riga invece di 4 + 2 con un buco. */
+/* 6 card (report, cruscotto): tutte in fila sugli schermi larghi (come
+   il design), 3 per riga sui medi invece di 4 + 2 con un buco. */
 @media (min-width: 900px) {
     .stat-grid:has(> :nth-child(6):last-child) {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@media (min-width: 1440px) {
+    .stat-grid:has(> :nth-child(6):last-child) {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
     }
 }

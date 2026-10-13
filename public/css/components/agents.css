@@ -329,3 +329,82 @@
 .agent-card__run-result:empty {
     display: none;
 }
+
+/* Home: flusso compatto a righe (stile "Da approvare" del design) e, a
+   destra, gli agenti al lavoro - meta' dello spazio dei fumetti di prima. */
+.agent-feed__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (min-width: 1100px) {
+    .agent-feed__body { grid-template-columns: minmax(0, 1.75fr) minmax(260px, 1fr); }
+}
+.agent-feed .agent-feed__list { gap: 8px; }
+
+.agent-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(18, 51, 63, 0.08);
+}
+.agent-row.is-done { background: rgba(79, 123, 92, 0.08); }
+.agent-row__avatar { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%; overflow: hidden; align-self: flex-start; }
+.agent-row__avatar svg { display: block; }
+.agent-row__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.agent-row__head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.agent-row__name { font-family: var(--font-heading); font-weight: 600; font-size: 13.5px; color: var(--color-petrol); }
+.agent-row__role { padding: 1px 7px; border-radius: 999px; background: rgba(18, 51, 63, 0.06); font-size: 11px; color: rgba(18, 51, 63, 0.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.agent-row__time { margin-left: auto; font-size: 11.5px; color: rgba(18, 51, 63, 0.5); white-space: nowrap; }
+.agent-row__text {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgba(18, 51, 63, 0.82);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.agent-row .agent-msg__draft { margin-top: 6px; }
+.agent-row .agent-msg__draft[hidden] { display: none; }
+.agent-row .agent-msg__result { margin-top: 4px; }
+.agent-row__actions { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; }
+.agent-row__dismiss {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: rgba(18, 51, 63, 0.45);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+.agent-row__dismiss:hover { background: rgba(18, 51, 63, 0.07); color: var(--color-petrol); }
+@media (max-width: 640px) {
+    .agent-row { flex-wrap: wrap; }
+    .agent-row__actions { width: 100%; justify-content: flex-end; }
+}
+
+.agent-team {
+    padding: 14px 14px 6px;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(18, 51, 63, 0.08);
+}
+.agent-team__head { margin-bottom: 8px; }
+.agent-team__list { list-style: none; margin: 0; padding: 0; }
+.agent-team__item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid rgba(18, 51, 63, 0.06); }
+.agent-team__item:first-child { border-top: none; }
+.agent-team__item.is-off { opacity: 0.55; }
+.agent-team__avatar { flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50%; overflow: hidden; }
+.agent-team__avatar svg { display: block; }
+.agent-team__who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.agent-team__name { font-family: var(--font-heading); font-weight: 600; font-size: 13px; color: var(--color-petrol); }
+.agent-team__role { font-size: 11.5px; color: rgba(18, 51, 63, 0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.agent-team__pending { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--color-accent); color: var(--color-petrol); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.agent-team__chip { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; border: 1px solid transparent; }
+.agent-team__chip--auto { background: #e1efe5; color: #3d6b4f; }
+.agent-team__chip--approval { background: #fbf0cf; color: #8a6510; }
+.agent-team__chip--suggest { background: #e8e6f2; color: #5f5786; }
+.agent-team__chip--off { background: rgba(18, 51, 63, 0.06); color: rgba(18, 51, 63, 0.55); }

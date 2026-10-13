@@ -65,7 +65,9 @@ function buildBarSparkline(values, dotColor) {
 
         return el('span', {
             className: 'stat-box__bar',
-            style: `height:${pct}%;background:${isLast ? highlight : 'rgba(18,51,63,0.14)'}`,
+            // Tutte nel colore della card (le precedenti piu' chiare), non
+            // grigie: si legge l'andamento, non solo l'ultimo giorno.
+            style: `height:${pct}%;background:${highlight};opacity:${isLast ? 1 : 0.38}`,
         });
     });
 

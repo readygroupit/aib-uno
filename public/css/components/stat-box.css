@@ -133,3 +133,10 @@
 .stat-box--hero-brass { --stat-hero-border: rgba(185, 147, 51, 0.3); --stat-hero-bg: #f6f0df; }
 .stat-box--hero-teal { --stat-hero-border: rgba(95, 138, 134, 0.3); --stat-hero-bg: #e9f0ef; }
 .stat-box--hero-danger { --stat-hero-border: rgba(162, 59, 44, 0.3); --stat-hero-bg: #f6e6e2; }
+
+/* 6 card (report, cruscotto): 3 per riga invece di 4 + 2 con un buco. */
+@media (min-width: 900px) {
+    .stat-grid:has(> :nth-child(6):last-child) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

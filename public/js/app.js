@@ -3,6 +3,7 @@ import { openGuide, loadSetupState, setupIsPending } from './onboarding.js';
 import './auth.js';
 import './components/data-table.js';
 import './components/stat-box.js';
+import './components/breakdown.js';
 import './components/menu-grid.js';
 import './components/form.js';
 import './components/dashboard-header.js';

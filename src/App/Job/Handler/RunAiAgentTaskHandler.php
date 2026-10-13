@@ -7,13 +7,13 @@ namespace App\Job\Handler;
 use App\Core\Container;
 use App\Job\JobHandlerInterface;
 use App\Repository\AiAgentTaskRepository;
-use App\Service\ClaudeService;
+use App\Service\AiService;
 
 /**
  * Handler generico per job_type 'run_ai_agent_task': collega 'scheduler'
  * a 'ai_agent_tasks' senza che nessuno dei due sappia dell'altro (vedi
  * le note di sessione sul perche' sono pacchetti separati). Chiama
- * davvero Claude per proporre un'azione (ClaudeService::suggestAction(),
+ * davvero Claude per proporre un'azione (AiService::suggestAction(),
  * nessun tool: qui non deve mai eseguire nulla di suo, solo scrivere un
  * suggerimento) - primo scorcio reale di comportamento agente, non piu'
  * solo la creazione di un record vuoto. Se Claude non risponde (API non
@@ -29,12 +29,12 @@ use App\Service\ClaudeService;
 final class RunAiAgentTaskHandler implements JobHandlerInterface
 {
     private AiAgentTaskRepository $repository;
-    private ClaudeService $claude;
+    private AiService $ai;
 
     public function __construct(Container $container)
     {
         $this->repository = $container->get(AiAgentTaskRepository::class);
-        $this->claude = $container->get(ClaudeService::class);
+        $this->ai = $container->get(AiService::class);
     }
 
     public function handle(array $payload): array
@@ -49,7 +49,7 @@ final class RunAiAgentTaskHandler implements JobHandlerInterface
 
         $suggestedAction = null;
         try {
-            $suggestedAction = $this->claude->suggestAction($this->buildPrompt($payload));
+            $suggestedAction = $this->ai->suggestAction($this->buildPrompt($payload));
         } catch (\Throwable $e) {
             // Non blocca la creazione del task: resta 'pending' senza
             // proposta, un operatore puo' comunque vederlo e agire a

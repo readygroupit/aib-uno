@@ -9,7 +9,7 @@ use App\Prompt\PromptConversationalInterface;
 use App\Prompt\PromptToolInterface;
 use App\Prompt\PromptToolRegistry;
 use App\Service\AuthService;
-use App\Service\ClaudeService;
+use App\Service\AiService;
 
 final class PromptController extends AuthController
 {
@@ -55,14 +55,14 @@ final class PromptController extends AuthController
             return;
         }
 
-        /** @var ClaudeService $claude */
-        $claude = $this->container->get(ClaudeService::class);
+        /** @var AiService $claude */
+        $ai = $this->container->get(AiService::class);
 
         try {
-            $outcome = $claude->converse($message, $history, $context);
+            $outcome = $ai->converse($message, $history, $context);
         } catch (\Throwable $e) {
             $this->json([
-                'reply' => "Non sono riuscito a contattare Claude ({$e->getMessage()}). Riprova tra poco, oppure riformula la richiesta usando una delle frasi che conosco a memoria (es. \"elenco clienti\", \"lista pratiche\").",
+                'reply' => "Non sono riuscito a contattare l\'intelligenza artificiale ({$e->getMessage()}). Riprova tra poco, oppure riformula la richiesta usando una delle frasi che conosco a memoria (es. \"elenco clienti\", \"lista pratiche\").",
                 'components' => [],
                 'suggestions' => [],
                 'history' => $history,
@@ -124,7 +124,7 @@ final class PromptController extends AuthController
     /**
      * Verbi che, seguiti dall'entita' del contesto, aprono la sua
      * scheda. Placeholder deliberatamente rozzo: un vero "capisce cosa
-     * intendi" resta compito di Claude (vedi ClaudeService::converse() e
+     * intendi" resta compito di Claude (vedi AiService::converse() e
      * il 'contextNote' li' dentro, stesso principio ma con comprensione
      * vera del linguaggio).
      */

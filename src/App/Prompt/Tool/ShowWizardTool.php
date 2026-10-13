@@ -211,7 +211,7 @@ final class ShowWizardTool implements PromptToolInterface, PromptConversationalI
     }
 
     /**
-     * description() e' scritta per Claude (vedi ClaudeService::converse()
+     * description() e' scritta per Claude (vedi AiService::converse()
      * - descrive QUANDO scegliere questo tool, non COSA fa per un
      * operatore che legge): la frase "Usalo quando..." e gli esempi tra
      * parentesi che la seguono hanno senso li', non in un pannello di

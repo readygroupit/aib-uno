@@ -228,11 +228,14 @@ assistenza voli).
 dichiara `name/description/inputSchema/menuLabel/requiredPermission/triggers`
 e `execute()` che torna dati componente (mai HTML - stesso motore di Fase 2).
 
-- `App\Service\ClaudeService` - chiamata HTTP diretta alla Messages API
-  (niente SDK ufficiale, `uno` non ha Composer), tool-use: Claude sceglie una
-  capacita' o fa una domanda di chiarimento (nessun tool) se la richiesta non
-  e' chiara. Chiave in `config/autoload/local.php` -> `claude.apiKey`
-  (gitignored, da valorizzare a mano).
+- `App\Service\AiService` - chiamata HTTP diretta (niente SDK, `uno` non ha
+  Composer) a OpenAI (Chat Completions) o Claude (Messages API), scelto da
+  `ai.provider` in `config/autoload/global.php` (oggi `openai`, modello
+  `gpt-5-mini`): il modello sceglie una capacita' (tool) o fa una domanda di
+  chiarimento se la richiesta non e' chiara. Usato anche dagli agenti
+  (`RunAiAgentTaskHandler`). Chiavi in `ai.openai.apiKey` / `ai.claude.apiKey`
+  di `global.php` (valgono anche in produzione); sul PC `local.php` puo'
+  sovrascriverle.
 - **Fast-path locale**: `PromptController::matchLocalTool()` controlla prima
   se il messaggio corrisponde (esatto o contenuto) a una delle
   `triggers()` di una capacita' gia' registrata - se si', esegue subito senza
@@ -282,7 +285,7 @@ Come nei progetti di Core: `config/autoload/global.php` (versionato) ha i
 valori di sviluppo e di produzione e sceglie con `APPLICATION_ENV`:
 `localhost` (SetEnv dei vhost del PC) = sviluppo, qualunque altro valore o
 nessuno (vhost `prod`, cron di root) = produzione. In produzione non c'e'
-`local.php`; sul PC e' facoltativo (solo la chiave Claude). I progetti
+`local.php`; sul PC e' facoltativo (es. un'altra chiave IA). I progetti
 generati hanno in piu' `config/autoload/project.php` (versionato: nome,
 slug, database per ambiente). Ordine: global -> project -> local.
 Dal terminale del PC: `APPLICATION_ENV=localhost php8.4 bin/...`.

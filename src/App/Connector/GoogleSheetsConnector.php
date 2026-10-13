@@ -175,7 +175,22 @@ final class GoogleSheetsConnector extends AbstractOAuthConnector
         );
 
         if ($response['status'] === 403) {
-            throw new ConnectorException("Il foglio esiste ma non e' condiviso con l'account di servizio. Aprilo, premi \"Condividi\" e aggiungi come Editor: {$clientEmail}");
+            // Google risponde 403 anche quando l'API Sheets non e' attiva nel
+            // progetto Cloud dell'account di servizio: non e' un problema di
+            // condivisione, e il messaggio di Google contiene il link per attivarla.
+            $message = (string) ($response['json']['error']['message'] ?? '');
+            $reasons = array_column($response['json']['error']['details'] ?? [], 'reason');
+            if (in_array('SERVICE_DISABLED', $reasons, true) || stripos($message, 'has not been used') !== false || stripos($message, 'is disabled') !== false) {
+                preg_match('#https://console\.(?:developers|cloud)\.google\.com/\S+#', $message, $link);
+                throw new ConnectorException('L\'API "Google Sheets" non e\' attiva nel progetto Google Cloud dell\'account di servizio. Attivala'
+                    . (isset($link[0]) ? ' da qui: ' . rtrim($link[0], '.') : ' (Google Cloud Console > API e servizi > Libreria > Google Sheets API > Abilita)')
+                    . ', aspetta un paio di minuti e riprova.');
+            }
+            throw new ConnectorException("Il foglio esiste ma non e' condiviso con l'account di servizio. Aprilo, premi \"Condividi\" e aggiungi come Editor: {$clientEmail}"
+                . ($message !== '' ? " (Google dice: {$message})" : ''));
+        }
+        if ($response['status'] === 400) {
+            throw new ConnectorException('Questo file non e\' un foglio Google ma un file Excel caricato su Drive. Aprilo e scegli File > Salva come Fogli Google, poi usa l\'indirizzo del nuovo foglio.');
         }
         if ($response['status'] === 404) {
             throw new ConnectorException('Google non trova nessun foglio con questo indirizzo. Controlla di aver copiato l\'indirizzo giusto.');

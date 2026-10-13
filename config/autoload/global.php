@@ -68,8 +68,18 @@ return [
         // ricevono questo file. Cambiarla invalida i link non ancora usati.
         'tokenKey' => 'b4a97a976da9a30f8870c93023cea5db16f47927addf7e5bce0faa2ca245136d',
     ],
-    'claude' => [
-        'apiKey' => null,
-        'model' => 'claude-opus-4-8',
+    // Intelligenza artificiale del prompt e degli agenti (App\Service\AiService):
+    // 'provider' sceglie quale dei due usare. Chiave valida su sviluppo e
+    // produzione (sul PC local.php puo' sovrascriverla).
+    'ai' => [
+        'provider' => 'openai',
+        'openai' => [
+            'apiKey' => '',
+            'model' => 'gpt-5-mini',
+        ],
+        'claude' => [
+            'apiKey' => '',
+            'model' => 'claude-opus-4-8',
+        ],
     ],
 ];

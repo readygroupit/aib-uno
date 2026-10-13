@@ -33,7 +33,7 @@ final class DataTableComponent extends AbstractComponent
             // Tipo di entita' mostrata (es. 'user') - non un dato visivo,
             // serve al client per dire a Claude "l'operatore ha davanti
             // questo" quando manda la richiesta successiva (vedi hero.js
-            // e ClaudeService::converse()): cosi' un riferimento ambiguo
+            // e AiService::converse()): cosi' un riferimento ambiguo
             // come un nome proprio si puo' risolvere sul contesto invece
             // di restare indovinato o chiedere sempre chiarimento. Null
             // per le tabelle che non rappresentano un'entita' precisa.

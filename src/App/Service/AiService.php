@@ -1,0 +1,252 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Service;
+
+use App\Core\Config;
+use App\Core\Container;
+use App\Prompt\PromptToolRegistry;
+
+/**
+ * Intelligenza artificiale del prompt e degli agenti, con fornitore
+ * scelto da config 'ai.provider': 'openai' (Chat Completions) o 'claude'
+ * (Messages API). Chiamate HTTP dirette, niente SDK (niente Composer per
+ * scelta). Un solo giro: il modello sceglie una capacita' (tool) o
+ * risponde con una domanda di chiarimento (solo testo, nessun tool).
+ *
+ * Chiave e modello in config/autoload/global.php -> 'ai' (sul PC si
+ * possono sovrascrivere in local.php).
+ */
+final class AiService
+{
+    private Config $config;
+    private PromptToolRegistry $registry;
+
+    public function __construct(Container $container)
+    {
+        $this->config = $container->get(Config::class);
+        $this->registry = $container->get(PromptToolRegistry::class);
+    }
+
+    /**
+     * @param array<int,array{role:string,content:string}> $history
+     * @param array{entities?: string[]} $context tipi di entita' (es.
+     *     'user') attualmente visualizzati dall'operatore - non i dati,
+     *     solo il tipo (vedi hero.js extractEntities()). Serve a risolvere
+     *     un riferimento ambiguo (es. un nome proprio senza dire "utente")
+     *     sul contesto invece di lasciarlo indovinare a caso o costringere
+     *     sempre a una domanda di chiarimento.
+     * @return array{reply: ?string, toolName: ?string, toolInput: ?array}
+     */
+    public function converse(string $message, array $history, array $context = []): array
+    {
+        $messages = $history;
+        $messages[] = ['role' => 'user', 'content' => $message];
+
+        $contextNote = '';
+        $entities = $context['entities'] ?? [];
+        if (!empty($entities)) {
+            $list = implode(', ', $entities);
+            $contextNote = " Contesto attuale: l'operatore ha davanti a se' un elenco/scheda di tipo "
+                . "'{$list}'. Se il messaggio nomina qualcosa che potrebbe riferirsi a un elemento di "
+                . 'questo tipo (es. un nome proprio senza specificare a cosa appartiene), preferisci '
+                . "quell'interpretazione invece di chiedere chiarimento - la ricerca dello strumento "
+                . 'copre comunque tutti i dati, non solo quelli visibili in questo momento. Se invece il '
+                . 'messaggio menziona chiaramente un altro tipo di entita\', ignora questo contesto.';
+        }
+
+        $system = "Sei l'assistente conversazionale di " . APP_NAME . '. Rispondi in italiano. '
+            . 'Se la richiesta e\' chiara, usa uno strumento tra quelli disponibili. '
+            . 'Se manca un\'informazione necessaria o la richiesta e\' ambigua, non usare '
+            . 'nessuno strumento: fai una domanda di chiarimento breve, proponendo opzioni quando possibile.'
+            . $contextNote;
+
+        return $this->provider() === 'openai'
+            ? $this->converseOpenAi($system, $messages)
+            : $this->converseClaude($system, $messages);
+    }
+
+    /**
+     * Chiamata semplice, senza tool: usata da RunAiAgentTaskHandler per
+     * generare la proposta testuale di un task-agente (non un giro del
+     * prompt conversazionale, quindi niente 'tools' - qui non deve mai
+     * scegliere una capacita' del sistema, solo scrivere un suggerimento
+     * che un operatore rivedra' prima di eseguirlo per davvero, coerente
+     * con la supervisione umana richiesta dal documento Assilevi).
+     */
+    public function suggestAction(string $prompt): string
+    {
+        $system = "Sei un agente AI che assiste un operatore di un sistema gestionale. Proponi "
+                . "un'azione concreta e breve (2-4 righe), in italiano, in base al task descritto. Non "
+                . "stai eseguendo nulla direttamente: la tua proposta verra' sempre rivista da una "
+                . 'persona prima di essere applicata, quindi scrivi un suggerimento chiaro e azionabile, '
+                . 'non una domanda.';
+        $messages = [['role' => 'user', 'content' => $prompt]];
+
+        if ($this->provider() === 'openai') {
+            $message = $this->callOpenAi($this->openAiPayload($system, $messages, 1024))['choices'][0]['message'] ?? [];
+
+            return trim((string) ($message['content'] ?? ''));
+        }
+
+        $response = $this->callClaude([
+            'model' => $this->settings('claude')['model'],
+            'max_tokens' => 512,
+            'system' => $system,
+            'messages' => $messages,
+        ]);
+        $text = '';
+        foreach ($response['content'] ?? [] as $block) {
+            if (($block['type'] ?? null) === 'text') {
+                $text .= $block['text'];
+            }
+        }
+
+        return trim($text);
+    }
+
+    /** @return array{reply: ?string, toolName: ?string, toolInput: ?array} */
+    private function converseOpenAi(string $system, array $messages): array
+    {
+        $payload = $this->openAiPayload($system, $messages, 2048);
+        $payload['tools'] = array_map(static fn ($tool) => [
+            'type' => 'function',
+            'function' => [
+                'name' => $tool->name(),
+                'description' => $tool->description(),
+                'parameters' => self::objectSchema($tool->inputSchema()),
+            ],
+        ], $this->registry->all());
+
+        $message = $this->callOpenAi($payload)['choices'][0]['message'] ?? [];
+        $call = $message['tool_calls'][0]['function'] ?? null;
+        $input = $call !== null ? json_decode((string) ($call['arguments'] ?? '{}'), true) : null;
+
+        return [
+            'reply' => isset($message['content']) && $message['content'] !== '' ? (string) $message['content'] : null,
+            'toolName' => $call['name'] ?? null,
+            'toolInput' => is_array($input) ? $input : ($call !== null ? [] : null),
+        ];
+    }
+
+    /** @return array{reply: ?string, toolName: ?string, toolInput: ?array} */
+    private function converseClaude(string $system, array $messages): array
+    {
+        $response = $this->callClaude([
+            'model' => $this->settings('claude')['model'],
+            'max_tokens' => 1024,
+            'system' => $system,
+            'messages' => $messages,
+            'tools' => array_map(static fn ($tool) => [
+                'name' => $tool->name(),
+                'description' => $tool->description(),
+                'input_schema' => $tool->inputSchema(),
+            ], $this->registry->all()),
+        ]);
+
+        $toolUse = null;
+        $text = null;
+        foreach ($response['content'] ?? [] as $block) {
+            if (($block['type'] ?? null) === 'tool_use') {
+                $toolUse = $block;
+            } elseif (($block['type'] ?? null) === 'text') {
+                $text = ($text ?? '') . $block['text'];
+            }
+        }
+
+        return [
+            'reply' => $text,
+            'toolName' => $toolUse['name'] ?? null,
+            'toolInput' => $toolUse['input'] ?? null,
+        ];
+    }
+
+    private function openAiPayload(string $system, array $messages, int $maxTokens): array
+    {
+        $model = (string) $this->settings('openai')['model'];
+        $payload = [
+            'model' => $model,
+            'messages' => [['role' => 'system', 'content' => $system], ...$messages],
+            'max_completion_tokens' => $maxTokens,
+        ];
+        // I modelli che ragionano (gpt-5*, o*) spendono token anche per
+        // pensare: poco ragionamento, risposta piu' rapida ed economica.
+        if (preg_match('/^(gpt-5|o\d)/', $model) === 1) {
+            $payload['reasoning_effort'] = 'low';
+        }
+
+        return $payload;
+    }
+
+    /** OpenAI vuole sempre un oggetto JSON per 'properties', anche vuoto. */
+    private static function objectSchema(array $schema): array
+    {
+        $schema['type'] ??= 'object';
+        if (empty($schema['properties'])) {
+            $schema['properties'] = new \stdClass();
+        }
+
+        return $schema;
+    }
+
+    private function provider(): string
+    {
+        return (string) ($this->config->get('ai')['provider'] ?? 'openai');
+    }
+
+    /** @return array{apiKey: string, model: string} */
+    private function settings(string $provider): array
+    {
+        $settings = $this->config->get('ai')[$provider] ?? [];
+        if (empty($settings['apiKey'])) {
+            throw new \RuntimeException("chiave API {$provider} non impostata (config 'ai.{$provider}.apiKey')");
+        }
+
+        return $settings;
+    }
+
+    private function callOpenAi(array $payload): array
+    {
+        return $this->post('https://api.openai.com/v1/chat/completions', $payload, [
+            'authorization: Bearer ' . $this->settings('openai')['apiKey'],
+        ], 'OpenAI');
+    }
+
+    private function callClaude(array $payload): array
+    {
+        return $this->post('https://api.anthropic.com/v1/messages', $payload, [
+            'x-api-key: ' . $this->settings('claude')['apiKey'],
+            'anthropic-version: 2023-06-01',
+        ], 'Claude');
+    }
+
+    private function post(string $url, array $payload, array $headers, string $label): array
+    {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => ['content-type: application/json', ...$headers],
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_TIMEOUT => 60,
+        ]);
+
+        $body = curl_exec($ch);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($body === false) {
+            throw new \RuntimeException("Chiamata a {$label} fallita: {$error}");
+        }
+
+        $decoded = json_decode($body, true);
+        if ($status >= 400) {
+            $message = $decoded['error']['message'] ?? $body;
+            throw new \RuntimeException("{$label} ha risposto {$status}: {$message}");
+        }
+
+        return $decoded;
+    }
+}

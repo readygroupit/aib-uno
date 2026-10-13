@@ -3,6 +3,7 @@ import { icon } from '../icons.js';
 import { mountComponents } from './registry.js';
 import { attachDictation } from '../speech.js';
 import { openGuide, onSetupChange, setupIsPending } from '../onboarding.js';
+import { homeGreeting, homeShortLine, HOME_SUGGESTIONS } from '../greetings.js';
 
 // Stesso pattern di data-table.js (closeAllActionMenus): un solo listener
 // a livello di documento invece che uno per menu, cosi' aprirne uno chiude
@@ -39,6 +40,9 @@ const MAX_RESULTS_HISTORY = 20;
 // modulo invece che richiedere di passare questi riferimenti ovunque.
 let resultsPanel = null;
 let messagesEl = null;
+// Primo messaggio dell'assistente sulla home (vedi greetings.js): scelto
+// una volta per caricamento, resta finche' non si scrive qualcosa.
+let homeGreetingText = null;
 
 // Tipi di entita' (es. 'user') presenti nei componenti appena mostrati -
 // non le righe, solo il tipo: serve a dire a Claude "l'operatore ha
@@ -164,6 +168,11 @@ function renderSuggestions(suggestions) {
 // una conversazione lunga si riempirebbe di chip ripetute.
 function renderTranscript(container) {
     container.textContent = '';
+
+    if (homeGreetingText && !resultsHistory.some((entry) => entry.prompt)) {
+        container.appendChild(renderAssistantBubble(homeGreetingText));
+        container.appendChild(renderSuggestions(HOME_SUGGESTIONS));
+    }
 
     resultsHistory.forEach((entry, index) => {
         if (!entry.prompt) return;
@@ -576,7 +585,7 @@ export function mountPromptShell(root, initialComponents) {
     const logoBig = el('img', { src: window.UNO_LOGO, alt: 'Uno', className: 'hero__logo hero__logo--big' });
     const greeting = el('div', { className: 'hero__greeting' }, [
         el('p', { className: 'hero__greeting-line1' }, ['Ciao, sono Uno']),
-        el('p', { className: 'hero__greeting-line2' }, ['il tuo assistente. Dimmi di cosa hai bisogno.']),
+        el('p', { className: 'hero__greeting-line2' }, [homeShortLine()]),
     ]);
     const intro = el('div', { className: 'hero__intro' }, [logoBig, greeting]);
 
@@ -625,6 +634,13 @@ export function mountPromptShell(root, initialComponents) {
     if (!isHomePage || hasInitialContent) {
         wrap.classList.add('hero-wrap--top');
         root.classList.add('has-history');
+    }
+
+    // Home con cruscotto: la colonna della chat non parte vuota, l'assistente
+    // saluta per primo (una frase diversa a ogni apertura).
+    if (isHomePage && hasInitialContent) {
+        homeGreetingText = homeGreeting();
+        renderTranscript(messagesEl);
     }
 
     // Tasto indietro/avanti del browser: se punta a un url gia' presente

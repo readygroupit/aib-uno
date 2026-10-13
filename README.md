@@ -223,6 +223,12 @@ assistenza voli).
 
 ## Interfaccia a prompt
 
+**Primo messaggio sulla home** (`public/js/greetings.js`): sulla home con
+cruscotto l'assistente saluta per primo nella colonna della chat, con una
+frase a caso tra una dozzina (nome di chi e' collegato, saluto dell'ora) e
+tre spunti cliccabili; sulla home vuota di Uno ruota la frase sotto
+"Ciao, sono Uno". Le frasi si cambiano in quel file.
+
 `App\Prompt\PromptToolRegistry` - stesso principio di registrazione di
 `JobHandlerRegistry`/`EventDispatcher`. Ogni "capacita'" (`App\Prompt\Tool\*`)
 dichiara `name/description/inputSchema/menuLabel/requiredPermission/triggers`

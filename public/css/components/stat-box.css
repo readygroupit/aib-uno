@@ -141,7 +141,7 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
-@media (min-width: 1440px) {
+@media (min-width: 1760px) {
     .stat-grid:has(> :nth-child(6):last-child) {
         grid-template-columns: repeat(6, minmax(0, 1fr));
     }

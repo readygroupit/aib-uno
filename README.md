@@ -233,9 +233,10 @@ e `execute()` che torna dati componente (mai HTML - stesso motore di Fase 2).
   `ai.provider` in `config/autoload/global.php` (oggi `openai`, modello
   `gpt-5-mini`): il modello sceglie una capacita' (tool) o fa una domanda di
   chiarimento se la richiesta non e' chiara. Usato anche dagli agenti
-  (`RunAiAgentTaskHandler`). Chiavi in `ai.openai.apiKey` / `ai.claude.apiKey`
-  di `global.php` (valgono anche in produzione); sul PC `local.php` puo'
-  sovrascriverle.
+  (`RunAiAgentTaskHandler`). Chiavi in `config/autoload/secrets.php`
+  (fuori da git: GitHub blocca i push con segreti; modello in
+  `secrets.php.dist`), da creare a mano su ogni server; i progetti generati
+  ne ricevono una copia dal provisioner.
 - **Fast-path locale**: `PromptController::matchLocalTool()` controlla prima
   se il messaggio corrisponde (esatto o contenuto) a una delle
   `triggers()` di una capacita' gia' registrata - se si', esegue subito senza
@@ -287,7 +288,7 @@ valori di sviluppo e di produzione e sceglie con `APPLICATION_ENV`:
 nessuno (vhost `prod`, cron di root) = produzione. In produzione non c'e'
 `local.php`; sul PC e' facoltativo (es. un'altra chiave IA). I progetti
 generati hanno in piu' `config/autoload/project.php` (versionato: nome,
-slug, database per ambiente). Ordine: global -> project -> local.
+slug, database per ambiente). Ordine: global -> secrets (chiavi API, fuori da git) -> project -> local.
 Dal terminale del PC: `APPLICATION_ENV=localhost php8.4 bin/...`.
 
 Database: Uno `dev_aib_uno` (sviluppo) / `prod_aib_uno` (produzione); progetti

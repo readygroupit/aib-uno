@@ -223,6 +223,18 @@ assistenza voli).
 
 ## Interfaccia a prompt
 
+**Navigazione tra le schermate** (`hero.js`): ogni risultato (dal prompt o
+da un link cliccato dentro i risultati, aperto in Ajax da `openInPanel()`)
+e' una voce della cronologia del browser (`pushEntry()`,
+`history.state.unoEntry`): il tasto indietro del browser e il pulsante
+"Indietro" del pannello tornano alla schermata precedente, non alla pagina
+caricata prima. Le pagine che non rispondono a componenti si aprono
+normalmente.
+
+**Operato degli agenti** (`ShowAgentActivityTool`, componente
+`agent-activity`): questa settimana contro la precedente, agente per agente;
+la gestione/programmazione resta su `ShowAgentsTool`.
+
 **Primo messaggio sulla home** (`public/js/greetings.js`): sulla home con
 cruscotto l'assistente saluta per primo nella colonna della chat, con una
 frase a caso tra una dozzina (nome di chi e' collegato, saluto dell'ora) e

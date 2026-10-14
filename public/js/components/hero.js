@@ -43,6 +43,10 @@ let messagesEl = null;
 // Primo messaggio dell'assistente sulla home (vedi greetings.js): scelto
 // una volta per caricamento, resta finche' non si scrive qualcosa.
 let homeGreetingText = null;
+// Ogni risultato e' anche una voce della cronologia del browser
+// (history.state.unoEntry = id della voce): il tasto indietro del browser
+// torna alla schermata precedente, non alla pagina caricata prima.
+let nextEntryId = 1;
 
 // Tipi di entita' (es. 'user') presenti nei componenti appena mostrati -
 // non le righe, solo il tipo: serve a dire a Claude "l'operatore ha
@@ -100,11 +104,12 @@ function renderResultsEntry(panel, entry) {
                 {
                     type: 'button',
                     className: 'results-panel__back',
-                    title: 'Risultato precedente',
-                    'aria-label': 'Risultato precedente',
-                    onClick: () => goToIndex(resultsHistoryIndex - 1),
+                    title: 'Torna alla schermata precedente',
+                    // Stesso effetto del tasto indietro del browser: ogni
+                    // schermata e' una voce della sua cronologia (pushEntry).
+                    onClick: () => window.history.back(),
                 },
-                [icon('chevron-left')]
+                [icon('chevron-left'), el('span', {}, ['Indietro'])]
             )
         );
     }
@@ -203,9 +208,64 @@ function goToIndex(index) {
     const entry = resultsHistory[index];
     renderResultsEntry(resultsPanel, entry);
     renderTranscript(messagesEl);
-    if (entry.url && window.location.pathname !== entry.url) {
-        window.history.pushState(null, '', entry.url);
+    window.history.pushState({ unoEntry: entry.id }, '', entry.url || window.location.pathname);
+}
+
+// Nuova schermata nello storico (risposta del prompt o link aperto dentro
+// i risultati): la mostra e la aggiunge alla cronologia del browser.
+function pushEntry(entry) {
+    entry.id = nextEntryId++;
+    resultsHistory = resultsHistory.slice(0, resultsHistoryIndex + 1);
+    resultsHistory.push(entry);
+    if (resultsHistory.length > MAX_RESULTS_HISTORY) {
+        resultsHistory.shift();
     }
+    resultsHistoryIndex = resultsHistory.length - 1;
+    renderResultsEntry(resultsPanel, entry);
+    renderTranscript(messagesEl);
+    window.history.pushState({ unoEntry: entry.id }, '', entry.url || window.location.pathname);
+}
+
+// Link dentro i risultati (riquadri, righe, "Apri"...): niente ricarica
+// della pagina, il dettaglio si apre nel pannello come una nuova schermata.
+// Se la pagina non risponde a componenti (form classici, login...), si va
+// li' normalmente.
+function openInPanel(href) {
+    resultsPanel.classList.add('is-loading');
+    fetch(href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then((res) => {
+            if (!(res.headers.get('content-type') || '').includes('json')) throw new Error('not json');
+            return res.json();
+        })
+        .then((data) => {
+            resultsPanel.classList.remove('is-loading');
+            if (!data.components || !data.components.length) {
+                window.location.assign(href);
+                return;
+            }
+            pushEntry({
+                prompt: null,
+                reply: '',
+                suggestions: [],
+                components: data.components,
+                entities: extractEntities(data.components),
+                url: extractUrl(data.components) || href,
+            });
+            resultsPanel.scrollTop = 0;
+        })
+        .catch(() => window.location.assign(href));
+}
+
+function interceptResultLinks(panel) {
+    panel.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href]');
+        if (!link || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        if ((link.target && link.target !== '_self') || link.hasAttribute('download') || 'reload' in link.dataset) return;
+        const url = new URL(link.href, window.location.href);
+        if (url.origin !== window.location.origin || url.pathname === '/logout' || url.hash && url.pathname === window.location.pathname) return;
+        e.preventDefault();
+        openInPanel(url.pathname + url.search);
+    });
 }
 
 /**
@@ -228,8 +288,10 @@ export function refreshCurrentEntry(components) {
         entities: extractEntities(components),
         url,
     };
+    // Stessa schermata aggiornata (es. contatto appena creato su un url
+    // nuovo): si sostituisce la voce di cronologia, non se ne aggiunge una.
     if (url && window.location.pathname !== url) {
-        window.history.pushState(null, '', url);
+        window.history.replaceState({ unoEntry: resultsHistory[resultsHistoryIndex].id }, '', url);
     }
     renderResultsEntry(resultsPanel, resultsHistory[resultsHistoryIndex]);
 }
@@ -276,8 +338,7 @@ function submitPrompt(wrapEl, text) {
             if (data.components && data.components.length) {
                 const url = extractUrl(data.components);
 
-                resultsHistory = resultsHistory.slice(0, resultsHistoryIndex + 1);
-                resultsHistory.push({
+                pushEntry({
                     prompt: text,
                     reply: data.reply || '',
                     suggestions: data.suggestions || [],
@@ -285,23 +346,6 @@ function submitPrompt(wrapEl, text) {
                     entities: extractEntities(data.components),
                     url,
                 });
-                if (resultsHistory.length > MAX_RESULTS_HISTORY) {
-                    resultsHistory.shift();
-                }
-                resultsHistoryIndex = resultsHistory.length - 1;
-
-                renderResultsEntry(resultsPanel, resultsHistory[resultsHistoryIndex]);
-                renderTranscript(messagesEl);
-
-                // Il risultato corrisponde a una pagina vera (es. la
-                // richiesta era "lista permessi" mentre si era su
-                // /utenti): la barra degli indirizzi deve rifletterlo,
-                // altrimenti il tasto indietro del browser non avrebbe
-                // nulla da "disfare" per tornare a prima di questo invio
-                // - e l'url mostrato mentirebbe su cosa si sta vedendo.
-                if (url && window.location.pathname !== url) {
-                    window.history.pushState(null, '', url);
-                }
             } else {
                 // Nessun componente (domanda di chiarimento, permesso
                 // negato, richiesta non capita): niente nuovo "posto" da
@@ -609,6 +653,7 @@ export function mountPromptShell(root, initialComponents) {
     // normale) si impilano nell'ordine in cui compaiono qui.
     root.appendChild(wrap);
     resultsPanel = getOrCreatePanel(root, 'results-panel');
+    interceptResultLinks(resultsPanel);
 
     // L'unica situazione "vuota" e' la home senza nessun contenuto -
     // dappertutto altrove (altra pagina, o home con gia' uno storico) il
@@ -628,6 +673,8 @@ export function mountPromptShell(root, initialComponents) {
             },
         ];
         resultsHistoryIndex = 0;
+        resultsHistory[0].id = 0;
+        window.history.replaceState({ unoEntry: 0 }, '');
         renderResultsEntry(resultsPanel, resultsHistory[0]);
     }
 
@@ -650,7 +697,16 @@ export function mountPromptShell(root, initialComponents) {
     // rispondere JSON invece di una pagina intera) e lo mostriamo senza
     // aggiungerlo allo storico (evita di confondere l'ordine di un
     // tasto indietro con una nuova voce).
-    window.addEventListener('popstate', () => {
+    window.addEventListener('popstate', (event) => {
+        const entryId = event.state ? event.state.unoEntry : undefined;
+        const byId = entryId === undefined ? -1 : resultsHistory.findIndex((entry) => entry.id === entryId);
+        if (byId !== -1) {
+            resultsHistoryIndex = byId;
+            renderResultsEntry(resultsPanel, resultsHistory[byId]);
+            renderTranscript(messagesEl);
+            return;
+        }
+
         const path = window.location.pathname;
         const cachedIndex = resultsHistory.findIndex((entry) => entry.url === path);
 

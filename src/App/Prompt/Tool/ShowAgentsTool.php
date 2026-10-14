@@ -24,8 +24,9 @@ final class ShowAgentsTool implements PromptToolInterface
 
     public function description(): string
     {
-        return "Mostra gli agenti AI (colleghi digitali): cosa fa ciascuno, come e' programmato e quanta autonomia ha. "
-            . "Usalo quando l'utente chiede degli agenti, degli assistenti o di programmarli.";
+        return "Mostra la gestione degli agenti AI (colleghi digitali): cosa fa ciascuno, come e' programmato e "
+            . "quanta autonomia ha. Usalo per configurarli o programmarli; per sapere cosa hanno fatto (operato, "
+            . "risultati, settimane) usa show_agent_activity.";
     }
 
     public function inputSchema(): array

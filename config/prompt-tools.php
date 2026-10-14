@@ -42,6 +42,7 @@ use App\Prompt\Tool\ListTasksTool;
 use App\Prompt\Tool\ListUsersTool;
 use App\Prompt\Tool\ShowHomeDashboardTool;
 use App\Prompt\Tool\ShowMenuTool;
+use App\Prompt\Tool\ShowAgentActivityTool;
 use App\Prompt\Tool\ShowAgentsTool;
 use App\Prompt\Tool\ShowProjectsTool;
 use App\Prompt\Tool\ShowReportTool;
@@ -96,5 +97,6 @@ return static function (PromptToolRegistry $registry): void {
     $registry->register(ShowReportTool::class, 'leads', 'cases', 'document_requests', 'communications', 'tasks', 'refunds');
     $registry->register(ShowSetupTool::class, 'connectors', 'message_templates');
     $registry->register(ShowAgentsTool::class, 'agents', 'leads', 'cases', 'document_requests', 'communications', 'refunds');
+    $registry->register(ShowAgentActivityTool::class, 'agents');
     $registry->register(ShowProjectsTool::class, 'provisioning');
 };

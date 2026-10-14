@@ -17,6 +17,7 @@ import './components/profile-layout.js';
 import './components/claim-table.js';
 import './components/setup-checklist.js';
 import './components/agent-feed.js';
+import './components/agent-activity.js';
 import './components/agents-board.js';
 import './components/projects-board.js';
 

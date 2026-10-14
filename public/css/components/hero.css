@@ -54,18 +54,19 @@
 .results-panel__back {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 4px;
     align-self: flex-start;
-    width: 34px;
-    height: 34px;
-    margin-bottom: -8px;
+    height: 30px;
+    padding: 0 12px 0 8px;
+    margin-bottom: -6px;
     border: none;
-    border-radius: var(--radius-md);
+    border-radius: 999px;
     background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 55%);
     background-color: var(--color-petrol);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    color: #fff;
+    font: 600 12.5px var(--font-body);
     cursor: pointer;
-    padding: 0;
 }
 
 .results-panel__back:hover {
@@ -73,10 +74,17 @@
 }
 
 .results-panel__back .icon svg {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     color: #fff;
     display: block;
+}
+
+/* Dettaglio aperto da un link dei risultati in arrivo (vedi openInPanel). */
+.results-panel.is-loading {
+    opacity: 0.55;
+    transition: opacity 0.15s;
+    pointer-events: none;
 }
 
 /*

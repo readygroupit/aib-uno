@@ -42,6 +42,8 @@ use App\Prompt\Tool\ListTasksTool;
 use App\Prompt\Tool\ListUsersTool;
 use App\Prompt\Tool\ShowHomeDashboardTool;
 use App\Prompt\Tool\ShowMenuTool;
+use App\Prompt\Tool\AnalyzeDataTool;
+use App\Prompt\Tool\ShowImportTool;
 use App\Prompt\Tool\ShowAgentActivityTool;
 use App\Prompt\Tool\ShowAgentsTool;
 use App\Prompt\Tool\ShowProjectsTool;
@@ -98,5 +100,8 @@ return static function (PromptToolRegistry $registry): void {
     $registry->register(ShowSetupTool::class, 'connectors', 'message_templates');
     $registry->register(ShowAgentsTool::class, 'agents', 'leads', 'cases', 'document_requests', 'communications', 'refunds');
     $registry->register(ShowAgentActivityTool::class, 'agents');
+    $registry->register(ShowImportTool::class, 'leads', 'cases', 'connectors');
+    // Ultima: l'analisi libera per le domande a cui nessuna schermata pronta risponde.
+    $registry->register(AnalyzeDataTool::class);
     $registry->register(ShowProjectsTool::class, 'provisioning');
 };

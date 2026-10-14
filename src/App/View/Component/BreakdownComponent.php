@@ -36,7 +36,10 @@ final class BreakdownComponent extends AbstractComponent
                     'label' => (string) $label,
                     'count' => (int) $count,
                     'percent' => $total > 0 ? (int) round($count * 100 / $total) : 0,
-                    'tone' => self::tone((string) $label),
+                    // Colore scelto da chi chiama (es. l'analisi libera) o dedotto dall'etichetta.
+                    'tone' => in_array($group['tones'][$label] ?? null, ['success', 'warning', 'danger', 'info', 'neutral'], true)
+                        ? $group['tones'][$label]
+                        : self::tone((string) $label),
                 ];
             }
             $groups[] = [

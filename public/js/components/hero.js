@@ -296,6 +296,32 @@ export function refreshCurrentEntry(components) {
     renderResultsEntry(resultsPanel, resultsHistory[resultsHistoryIndex]);
 }
 
+// Attesa lunga (es. l'analisi libera, 20-30 secondi): dopo un attimo il
+// "..." diventa una frase che cambia, cosi' si capisce che sta lavorando.
+const WAITING_LINES = [
+    'Sto leggendo i dati...',
+    'Incrocio le informazioni...',
+    'Preparo numeri e grafici...',
+    'Scelgo come mostrartelo...',
+    'Ultimi ritocchi alla pagina...',
+];
+
+function startWaiting(bubbleRow) {
+    const bubble = bubbleRow.querySelector('.hero__bubble');
+    let index = 0;
+    let interval = null;
+    const timeout = setTimeout(() => {
+        bubble.textContent = WAITING_LINES[0];
+        bubble.classList.add('hero__bubble--waiting');
+        interval = setInterval(() => {
+            index = Math.min(index + 1, WAITING_LINES.length - 1);
+            bubble.textContent = WAITING_LINES[index];
+        }, 4000);
+    }, 2500);
+
+    return () => { clearTimeout(timeout); clearInterval(interval); };
+}
+
 function submitPrompt(wrapEl, text) {
     if (!text || !text.trim()) return;
 
@@ -308,8 +334,10 @@ function submitPrompt(wrapEl, text) {
     // risultato fantasma navigabile, vedi il .catch() piu' sotto).
     renderTranscript(messagesEl);
     messagesEl.appendChild(renderUserBubble(text, true));
-    messagesEl.appendChild(renderAssistantBubble('...'));
+    const waitingRow = renderAssistantBubble('...');
+    messagesEl.appendChild(waitingRow);
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    const stopWaiting = startWaiting(waitingRow);
 
     // Entita' del risultato ATTUALMENTE in vista (che coincide con
     // l'ultimo inviato solo se non si e' tornati indietro nello storico)
@@ -331,7 +359,7 @@ function submitPrompt(wrapEl, text) {
         },
         body: JSON.stringify({ message: text, history: conversationHistory, context }),
     })
-        .then((res) => res.json())
+        .then((res) => { stopWaiting(); return res.json(); })
         .then((data) => {
             conversationHistory = data.history || conversationHistory;
 
@@ -362,6 +390,7 @@ function submitPrompt(wrapEl, text) {
             }
         })
         .catch(() => {
+            stopWaiting();
             renderTranscript(messagesEl);
             messagesEl.appendChild(renderUserBubble(text, true));
             messagesEl.appendChild(

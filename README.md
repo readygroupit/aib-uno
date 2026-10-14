@@ -223,6 +223,46 @@ assistenza voli).
 
 ## Interfaccia a prompt
 
+**Importazione dal foglio** (`src/App/Import`, pagina `/importazione`,
+prompt "importa"): una tantum o quando serve, niente scheduler. Sorgente:
+il foglio Google collegato (`GoogleSheetsConnector::readAllTabs()`) o un file
+.xlsx caricato (`XlsxReader`, senza librerie). `TabMapper` riconosce ogni
+scheda (contatti, contatti da modulo, pratiche, rimborsi, documenti, da
+saltare) e il ruolo di ogni colonna con una chiamata all'IA per scheda,
+mandando solo intestazioni e valori ricorrenti (mai nomi, email, telefoni);
+senza IA ripiega su parole chiave. `SheetImporter` pulisce (telefoni, date,
+aeroporti -> tratta, data dall'ID Jotform se manca), scarta righe di prova,
+collega contatti -> pratiche/clienti -> rimborsi/documenti; i contatti si
+abbinano solo per ID invio (i doppioni restano separati), il resto per ID,
+email, telefono, nome. Rilanciabile: aggiorna, non duplica. Opzione "togli
+prima i dati demo" (eliminazione logica, `ImportRepository`). Il foglio non
+viene mai modificato.
+
+**Analisi libera** (`src/App/Analysis`, tool `analyze_data`): quando nessuna
+schermata pronta risponde esattamente a una domanda sui dati, l'IA
+1. riceve la mappa dei dati (`DataCatalog`: tabelle dei pacchetti
+   installati + utenti, etichette dai manifest, valori presenti nei campi a
+   categorie, collegamenti; mai password/token/chiavi/credenziali/permessi);
+2. chiede i dati con un linguaggio controllato (aggregati con
+   raggruppamenti per campo o per data, filtri, periodi, elenchi di righe,
+   percorsi tra tabelle collegate come `case_id.lead_id.airline`): li
+   traduce in SQL di sola lettura `AnalysisRepository`, solo su campi del
+   catalogo e con parametri; un'interrogazione sbagliata viene corretta
+   dall'IA una volta;
+3. compone la pagina con i mattoncini (`header`, `kpis` con una card
+   protagonista scura, `chart` rows/columns, `breakdown`, `table`,
+   `insight`, `group`) seguendo le regole di gerarchia ed estetica in
+   `AnalysisService::COMPOSE_RULES`; `PageComposer` valida tutto e lo
+   traduce nei componenti (`ChartComponent`, `InsightComponent`,
+   `PanelComponent`, `StatBoxComponent`, `BreakdownComponent`,
+   `DataTableComponent`).
+
+2 chiamate all'IA (3 con la scelta del tool, 4 se serve la correzione),
+20-35 secondi: nel frattempo la chat mostra frasi di attesa. Piano e
+risultati finiscono in `data/logs/<data>/analysis.log`. Le schermate pronte
+restano la via veloce: il prompt di sistema (`AiService::converse()`) manda
+ad `analyze_data` solo cio' che nessun altro tool copre esattamente.
+
 **Navigazione tra le schermate** (`hero.js`): ogni risultato (dal prompt o
 da un link cliccato dentro i risultati, aperto in Ajax da `openInPanel()`)
 e' una voce della cronologia del browser (`pushEntry()`,

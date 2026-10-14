@@ -861,3 +861,7 @@
 .menu-grid__item:hover .menu-grid__item-arrow {
     transform: translateX(3px);
 }
+
+/* Attesa lunga: la frase "sta lavorando" pulsa piano (vedi startWaiting). */
+.hero__bubble--waiting { animation: hero-waiting 1.6s ease-in-out infinite; }
+@keyframes hero-waiting { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }

@@ -47,6 +47,51 @@ final class GoogleSheetsConnector extends AbstractOAuthConnector
         }
     }
 
+    /**
+     * Tutte le schede del foglio collegato, come righe di testo (valori
+     * formattati come li vede chi apre il foglio). Per l'importazione.
+     *
+     * @return array<string, list<list<string>>> nome scheda => righe
+     */
+    public function readAllTabs(): array
+    {
+        $meta = $this->meta();
+        $token = $this->accessToken();
+        $spreadsheetId = (string) ($meta['spreadsheet_id'] ?? '');
+        if ($token === null || $spreadsheetId === '') {
+            throw new ConnectorException('Google Sheets non e\' collegato: collegalo dalla Configurazione.');
+        }
+        $this->fetchSpreadsheet($token, $spreadsheetId, (string) ($meta['client_email'] ?? ''));
+
+        $info = Http::request('GET', "https://sheets.googleapis.com/v4/spreadsheets/{$spreadsheetId}?fields=sheets.properties.title", ["Authorization: Bearer {$token}"]);
+        $titles = array_map(static fn ($sheet) => (string) $sheet['properties']['title'], $info['json']['sheets'] ?? []);
+        if ($titles === []) {
+            return [];
+        }
+
+        $query = implode('&', array_map(static fn ($title) => 'ranges=' . rawurlencode("'" . str_replace("'", "''", $title) . "'"), $titles));
+        $response = Http::request(
+            'GET',
+            "https://sheets.googleapis.com/v4/spreadsheets/{$spreadsheetId}/values:batchGet?{$query}&valueRenderOption=FORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING",
+            ["Authorization: Bearer {$token}"],
+            null,
+            60
+        );
+        if ($response['status'] !== 200) {
+            throw new ConnectorException("Google non ha restituito i dati del foglio (codice {$response['status']}).");
+        }
+
+        $tabs = [];
+        foreach ($response['json']['valueRanges'] ?? [] as $i => $range) {
+            $tabs[trim($titles[$i] ?? ('Scheda ' . ($i + 1)))] = array_map(
+                static fn ($row) => array_map(static fn ($cell) => trim((string) $cell), (array) $row),
+                $range['values'] ?? []
+            );
+        }
+
+        return $tabs;
+    }
+
     public function setupSpec(): array
     {
         return [

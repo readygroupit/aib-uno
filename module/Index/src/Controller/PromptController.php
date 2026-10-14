@@ -83,10 +83,14 @@ final class PromptController extends AuthController
                 $reply = 'Non hai il permesso per eseguire questa richiesta.';
             } else {
                 $components = $result['components'];
-                $reply ??= '';
                 if ($tool instanceof PromptConversationalInterface) {
+                    // La frase del tool (es. l'analisi libera) se l'IA non ne ha scritta una sua.
+                    if ($reply === null || trim($reply) === '') {
+                        $reply = $tool->replySummary($outcome['toolInput'] ?? []);
+                    }
                     $suggestions = $tool->followUpSuggestions();
                 }
+                $reply ??= '';
             }
         } elseif ($reply === null || trim($reply) === '') {
             // Claude non ha scelto nessun tool ED e' rimasto senza niente

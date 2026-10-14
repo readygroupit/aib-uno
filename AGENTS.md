@@ -59,6 +59,16 @@ petrolio, una sola per schermata), poi i contatori, poi le ripartizioni
 bordini colorati sui box, sfumature agli angoli solo nei colori del tema
 (petrolio, giallino accent).
 
+## Analisi libera (IA che interroga i dati e compone la pagina)
+
+`src/App/Analysis` + tool `analyze_data`: vedi README -> "Interfaccia a
+prompt". Regole: l'IA non scrive mai SQL (solo il linguaggio controllato
+tradotto da `AnalysisRepository`); campi sensibili e tabelle di sistema
+restano fuori da `DataCatalog`; un mattoncino nuovo va aggiunto sia alle
+regole di `AnalysisService::COMPOSE_RULES` sia a `PageComposer`. Durante lo
+sviluppo provare con piani/composizioni scritti a mano (nessuna chiamata
+all'IA), l'IA vera solo per la verifica finale.
+
 ## Dove sono le cose
 
 Vedi `README.md` -> sezione "Architettura" per la mappa completa. In breve:

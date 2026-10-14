@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Index\Controller\ImportController;
 use Index\Controller\AgentsController;
 use Index\Controller\AppointmentsController;
 use Index\Controller\BlogController;
@@ -44,6 +45,16 @@ use Index\Controller\WizardController;
 function entityRoutes(string $name, string $path, string $controllerClass): array
 {
     return [
+    'import' => [
+        'path' => '/importazione',
+        'controller' => ImportController::class,
+        'action' => 'index',
+    ],
+    'import-run' => [
+        'path' => '/importazione/avvia',
+        'controller' => ImportController::class,
+        'action' => 'run',
+    ],
         $name => ['path' => $path, 'controller' => $controllerClass, 'action' => 'index'],
         "{$name}-new" => ['path' => "{$path}/nuovo", 'controller' => $controllerClass, 'action' => 'new'],
         // Router::compile() ancora il pattern con '^...$' (match sull'intero

@@ -1,0 +1,100 @@
+/* Mattoncini dell'analisi libera (App\Analysis): grafico, "In sintesi",
+   gruppo. Stesse regole del report: sfumature solo nei colori del tema
+   (petrolio, giallino accent), niente bordini colorati. */
+
+/* Grafico */
+.chart { display: flex; flex-direction: column; gap: 18px; }
+.chart__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.chart__title { margin: 0; font-family: var(--font-heading); font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
+.chart__subtitle { margin: 4px 0 0; font-size: 12.5px; color: rgba(18, 51, 63, 0.6); }
+.chart__legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: rgba(18, 51, 63, 0.72); }
+.chart__legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.chart__swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.chart__empty { margin: 0; font-size: 13px; color: rgba(18, 51, 63, 0.55); }
+
+.chart__rows { display: flex; flex-direction: column; gap: 14px; }
+.chart__row { display: grid; grid-template-columns: minmax(110px, 180px) minmax(0, 1fr); gap: 14px; align-items: center; }
+.chart__row-label { font-size: 13px; font-weight: 600; color: var(--color-petrol); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chart__row-bars { display: flex; flex-direction: column; gap: 4px; }
+.chart__row-bar { display: grid; grid-template-columns: minmax(0, 1fr) 72px; align-items: center; gap: 10px; }
+.chart__track { height: 8px; border-radius: 999px; background: rgba(18, 51, 63, 0.06); overflow: hidden; }
+.chart__row-bar.is-main .chart__track { height: 12px; }
+.chart__fill { display: block; height: 100%; border-radius: 999px; transition: width 0.6s ease; }
+.chart__value { font-size: 12px; text-align: right; color: rgba(18, 51, 63, 0.6); }
+.chart__row-bar.is-main .chart__value { font-family: var(--font-heading); font-size: 13.5px; font-weight: 600; color: var(--color-petrol); }
+
+.chart__columns { display: flex; align-items: stretch; gap: 10px; height: 220px; padding-top: 18px; border-bottom: 1px solid rgba(18, 51, 63, 0.1); }
+.chart__column { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.chart__column-bars { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 3px; }
+.chart__col { position: relative; flex: 1 1 0; max-width: 34px; border-radius: 6px 6px 2px 2px; min-height: 0; }
+.chart__col em { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-style: normal; font-family: var(--font-heading); font-size: 11.5px; font-weight: 600; color: var(--color-petrol); white-space: nowrap; }
+.chart__column-label { margin-bottom: -26px; font-size: 11.5px; text-align: center; color: rgba(18, 51, 63, 0.6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chart:has(.chart__columns) { padding-bottom: 34px; }
+
+/* In sintesi */
+.insight {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    background:
+        radial-gradient(90% 120% at 100% 100%, rgba(229, 201, 121, 0.32), transparent 55%),
+        radial-gradient(80% 100% at 0% 0%, rgba(18, 51, 63, 0.07), transparent 50%),
+        var(--color-panel);
+}
+.insight__icon { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-petrol); color: var(--color-accent); }
+.insight__icon svg { width: 18px; height: 18px; }
+.insight__body { flex: 1; min-width: 0; }
+.insight__title { margin: 2px 0 8px; font-family: var(--font-heading); font-size: 16px; font-weight: 600; }
+.insight__points { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.insight__points li { position: relative; padding-left: 16px; font-size: 13.5px; line-height: 1.5; color: rgba(18, 51, 63, 0.85); }
+.insight__points li::before { content: ''; position: absolute; left: 0; top: 0.6em; width: 6px; height: 6px; border-radius: 50%; background: var(--color-brass); }
+
+/* Gruppo di elementi affini */
+.panel { display: flex; flex-direction: column; gap: 16px; }
+.panel__eyebrow { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: rgba(18, 51, 63, 0.6); }
+.panel__title { margin: 2px 0 0; font-family: var(--font-heading); font-size: 19px; font-weight: 600; letter-spacing: -0.3px; }
+.panel__subtitle { margin: 4px 0 0; font-size: 13px; color: rgba(18, 51, 63, 0.6); }
+.panel__body { display: flex; flex-direction: column; gap: 14px; }
+.panel__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; align-items: start; }
+.panel .card { box-shadow: 0 1px 2px rgba(18, 51, 63, 0.05); border: 1px solid rgba(18, 51, 63, 0.08); background-color: #fff; }
+.panel .breakdown { padding: 0; border: none; box-shadow: none; background: transparent; }
+
+/* Nel gruppo, una ripartizione con piu' riquadri prende tutta la riga. */
+.panel__grid > .breakdown:has(.breakdown__group + .breakdown__group) { grid-column: 1 / -1; }
+.chart:not(.panel .chart) {
+    background:
+        radial-gradient(110% 80% at 0% 0%, rgba(18, 51, 63, 0.06), transparent 45%),
+        radial-gradient(110% 80% at 100% 100%, rgba(229, 201, 121, 0.18), transparent 50%),
+        var(--color-panel);
+}
+
+/* Importa dati (sheet-import.js) */
+.sheet-import { display: flex; flex-direction: column; gap: 18px; }
+.sheet-import__eyebrow { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: rgba(18, 51, 63, 0.6); }
+.sheet-import__title { margin: 4px 0 0; font-family: var(--font-heading); font-size: 20px; font-weight: 600; }
+.sheet-import__text { margin: 6px 0 0; max-width: 760px; font-size: 13.5px; line-height: 1.55; color: rgba(18, 51, 63, 0.72); }
+.sheet-import__source { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.sheet-import__option { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: var(--radius-lg); border: 1px solid rgba(18, 51, 63, 0.1); background: radial-gradient(110% 90% at 100% 100%, rgba(229, 201, 121, 0.18), transparent 50%), #fff; font-size: 13px; color: rgba(18, 51, 63, 0.7); }
+.sheet-import__option strong { font-family: var(--font-heading); font-size: 14px; color: var(--color-petrol); }
+.sheet-import__check { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; }
+.sheet-import__actions { display: flex; gap: 10px; }
+.sheet-import__status { font-size: 13.5px; }
+.sheet-import__status.is-working { padding: 12px 14px; border-radius: var(--radius-md); background: rgba(18, 51, 63, 0.05); animation: hero-waiting 1.6s ease-in-out infinite; }
+.sheet-import__status.is-error { padding: 12px 14px; border-radius: var(--radius-md); background: #f8e3df; color: #9b3b30; }
+.sheet-import__result { display: flex; flex-direction: column; gap: 14px; }
+.sheet-import__done { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; color: #3d6b4f; }
+.sheet-import__done svg { width: 16px; height: 16px; }
+.sheet-import__kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.sheet-import__kpi { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: var(--radius-lg); background: #fff; border: 1px solid rgba(18, 51, 63, 0.08); }
+.sheet-import__kpi span { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(18, 51, 63, 0.6); }
+.sheet-import__kpi strong { font-family: var(--font-heading); font-size: 24px; color: var(--color-petrol); }
+.sheet-import__kpi.is-main { background: radial-gradient(110% 90% at 100% 100%, rgba(229, 201, 121, 0.38), transparent 55%), linear-gradient(150deg, #12333f, #0b2430); border: none; }
+.sheet-import__kpi.is-main span { color: rgba(255, 255, 255, 0.72); }
+.sheet-import__kpi.is-main strong { color: #fff; }
+.sheet-import__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sheet-import__table th { text-align: left; padding: 8px 10px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(18, 51, 63, 0.6); background: rgba(18, 51, 63, 0.04); }
+.sheet-import__table td { padding: 8px 10px; border-top: 1px solid rgba(18, 51, 63, 0.07); }
+.sheet-import__table tr.is-skipped td { color: rgba(18, 51, 63, 0.45); }
+.sheet-import__hint { margin: 0; font-size: 12.5px; color: rgba(18, 51, 63, 0.6); }
+.sheet-import__links { display: flex; gap: 8px; }
+@media (max-width: 640px) { .sheet-import__kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

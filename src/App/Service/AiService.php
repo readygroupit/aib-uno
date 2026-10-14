@@ -57,12 +57,13 @@ final class AiService
         }
 
         $system = "Sei l'assistente conversazionale di " . APP_NAME . '. Rispondi in italiano. '
-            . 'Ogni risposta passa da uno strumento: scegli SEMPRE quello che si avvicina di piu\' alla '
-            . 'richiesta e usalo subito, anche se la richiesta contiene dettagli che lo strumento non '
-            . 'prevede (periodi, paginazione, formato, colonne): quei dettagli li gestisce gia\' la '
-            . 'schermata, non chiederli mai. Se la richiesta nomina un tipo di dato preciso (rimborsi, '
-            . 'pratiche, contatti, clienti, documenti, comunicazioni, attivita\') usa il suo elenco; il '
-            . 'report solo per riepiloghi generali, totali, statistiche o andamento. Per aprire una '
+            . 'Ogni risposta passa da uno strumento. Se uno strumento risponde esattamente alla richiesta '
+            . 'usalo subito, senza chiedere dettagli che non prevede (paginazione, formato). Se invece la '
+            . 'richiesta chiede sui dati qualcosa che nessuno strumento copre esattamente (confronti tra '
+            . 'periodi o anni, classifiche, incroci, raggruppamenti, statistiche particolari) usa '
+            . 'analyze_data con la richiesta completa. Se la richiesta chiede semplicemente di vedere un tipo '
+            . 'di dato (es. \'i rimborsi\', \'a che punto sono le pratiche\') usa il suo elenco; il report per il '
+            . 'riepilogo generale della settimana. Per aprire una '
             . 'persona per nome senza dire cosa sia, cerca prima tra i contatti. Fai una domanda di '
             . 'chiarimento, breve e con opzioni, solo se nessuno strumento c\'entra o se il messaggio '
             . 'puo\' riferirsi a due elementi diversi (es. due persone con lo stesso nome).'
@@ -110,6 +111,42 @@ final class AiService
         }
 
         return trim($text);
+    }
+
+    /**
+     * Risposta in JSON (oggetto) a una richiesta con istruzioni di sistema:
+     * usata dall'analisi libera (App\Analysis) per il piano delle
+     * interrogazioni e per la composizione della pagina.
+     */
+    public function json(string $system, string $user, int $maxTokens = 4000): array
+    {
+        if ($this->provider() === 'openai') {
+            $payload = $this->openAiPayload($system, [['role' => 'user', 'content' => $user]], $maxTokens);
+            $payload['response_format'] = ['type' => 'json_object'];
+            $text = (string) ($this->callOpenAi($payload)['choices'][0]['message']['content'] ?? '');
+        } else {
+            $response = $this->callClaude([
+                'model' => $this->settings('claude')['model'],
+                'max_tokens' => $maxTokens,
+                'system' => $system . "\nRispondi solo con un oggetto JSON valido, senza testo prima o dopo.",
+                'messages' => [['role' => 'user', 'content' => $user]],
+            ]);
+            $text = '';
+            foreach ($response['content'] ?? [] as $block) {
+                if (($block['type'] ?? null) === 'text') {
+                    $text .= $block['text'];
+                }
+            }
+        }
+
+        $start = strpos($text, '{');
+        $end = strrpos($text, '}');
+        $decoded = $start !== false && $end !== false ? json_decode(substr($text, $start, $end - $start + 1), true) : null;
+        if (!is_array($decoded)) {
+            throw new \RuntimeException('Risposta dell\'IA non leggibile (JSON non valido).');
+        }
+
+        return $decoded;
     }
 
     /** @return array{reply: ?string, toolName: ?string, toolInput: ?array} */

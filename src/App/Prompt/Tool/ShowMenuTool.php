@@ -20,6 +20,15 @@ use App\View\Component\MenuGridComponent;
  */
 final class ShowMenuTool implements PromptToolInterface
 {
+    /** Le voci di tutti i giorni, in testa alla loro sezione; le altre seguono nell'ordine di registrazione. */
+    private const FIRST = [
+        'show_my_day', 'show_team', 'show_checkin', 'list_tasks', 'list_work_orders', 'show_calendar',
+        'show_editorial_plan', 'search_media',
+        'list_customers', 'show_client_requests', 'show_client_health',
+        'show_quotes', 'show_due_schedule', 'list_invoices', 'show_expenses',
+        'show_setup', 'list_users', 'show_profiles',
+    ];
+
     private PromptToolRegistry $registry;
     private MenuGridComponent $menuGrid;
     private AuthService $auth;
@@ -85,8 +94,9 @@ final class ShowMenuTool implements PromptToolInterface
             $sectionKey = $tool->menuSection();
 
             $items[] = [
+                'name' => $tool->name(),
                 'label' => $label,
-                'description' => $tool->description(),
+                'description' => self::shortDescription($tool->description()),
                 'prompt' => $label,
                 'count' => $tool->menuCount(),
                 'section' => $sectionKey,
@@ -98,6 +108,15 @@ final class ShowMenuTool implements PromptToolInterface
                 $sectionCounts[$sectionKey] = ($sectionCounts[$sectionKey] ?? 0) + 1;
             }
         }
+
+        // Raggruppate per sezione, nell'ordine di Sections::ALL; dentro la
+        // sezione l'ordine di registrazione (le voci piu' usate prima).
+        $order = array_flip(array_keys(Sections::ALL));
+        $first = array_flip(self::FIRST);
+        $position = array_flip(array_keys($items));
+        $key = static fn (int $i) => [$order[$items[$i]['section']] ?? 99, $first[$items[$i]['name']] ?? 99, $position[$i]];
+        uksort($items, static fn ($a, $b) => $key($a) <=> $key($b));
+        $items = array_values($items);
 
         // Stesso ordine di Sections::ALL - e solo le sezioni che hanno
         // almeno una voce DAVVERO visibile a questo utente (rispetta lo
@@ -116,5 +135,16 @@ final class ShowMenuTool implements PromptToolInterface
         }
 
         return [$this->menuGrid->toData(['title' => 'Menu', 'items' => $items, 'sections' => $sections])];
+    }
+
+    /**
+     * La descrizione di uno strumento e' scritta per l'IA (quando usarlo,
+     * i parametri): nel menu basta la prima frase.
+     */
+    private static function shortDescription(string $description): string
+    {
+        $first = preg_split('/(?<=[.!?])\s/', trim($description), 2)[0] ?? $description;
+
+        return mb_strimwidth($first, 0, 120, "\u{2026}");
     }
 }

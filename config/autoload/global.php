@@ -83,4 +83,9 @@ return [
             'model' => 'claude-opus-4-8',
         ],
     ],
+    // Archivio foto e video (pacchetto media_library): oltre a Google Drive,
+    // una cartella del server o un NAS montato. Vuoto = non usata.
+    'media' => [
+        'localPath' => '',
+    ],
 ];

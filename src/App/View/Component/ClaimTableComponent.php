@@ -6,7 +6,7 @@ namespace App\View\Component;
 
 /**
  * "Clienti" ricostruita come vista sulla pratica in corso di ognuno
- * (non il semplice elenco anagrafico) - vedi ListCustomersTool, l'unico
+ * (non il semplice elenco anagrafico) - vedi ListCustomerClaimsTool, l'unico
  * chiamante, per come si costruiscono riga/dettaglio/timeline.
  * Bespoke: la combinazione tabella+pannello dettaglio+timeline non si
  * ottiene componendo DataTableComponent/StatBoxComponent gia' esistenti
@@ -28,13 +28,13 @@ final class ClaimTableComponent extends AbstractComponent
             'createHref' => $config['createHref'] ?? null,
             'createLabel' => $config['createLabel'] ?? null,
             'exportHref' => $config['exportHref'] ?? null,
-            // gia' dati StatBoxComponent (vedi ListCustomersTool) - qui solo trasportati
+            // gia' dati StatBoxComponent (vedi ListCustomerClaimsTool) - qui solo trasportati
             'stats' => $config['stats'] ?? [],
             // [{label, value, count, active}]
             'filterTabs' => $config['filterTabs'] ?? [],
             'searchable' => (bool) ($config['searchable'] ?? true),
             'emptyMessage' => $config['emptyMessage'] ?? 'Nessun risultato.',
-            // vedi ListCustomersTool::buildRow() per la forma completa di ogni riga
+            // vedi ListCustomerClaimsTool::buildRow() per la forma completa di ogni riga
             'rows' => $config['rows'] ?? [],
         ];
     }

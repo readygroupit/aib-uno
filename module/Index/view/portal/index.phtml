@@ -1,0 +1,230 @@
+<?php
+/**
+ * Area del cliente (vedi PortalController/PortalService). Prima cio' che
+ * aspetta il cliente (contenuti da approvare, pagamenti), poi come paga,
+ * poi i servizi e lo storico. Nessun JavaScript: form e <details>.
+ *
+ * @var array $view
+ * @var string $token
+ * @var ?array $flash
+ */
+$base = '/area/' . rawurlencode($token);
+$p = $view['payment'];
+$todo = count($view['posts']) + count($view['due']) + count($view['quotes']);
+include __DIR__ . '/_head.phtml';
+?>
+<body class="portal">
+<main class="portal__main">
+    <header class="portal-card portal-card--hero">
+        <span class="portal__agency"><?= $this->e($view['agency']) ?></span>
+        <h1 class="portal__title">Ciao <?= $this->e($view['customer']) ?></h1>
+        <p class="portal__lead">
+            <?php if ($todo === 0): ?>
+                Nessuna cosa in sospeso: e' tutto a posto.
+            <?php else: ?>
+                <?= $todo === 1 ? "C'e' una cosa" : "Ci sono {$todo} cose" ?> che aspettano te:
+                <?= implode(' e ', array_filter([
+                    $view['quotes'] ? (count($view['quotes']) === 1 ? '1 proposta da guardare' : count($view['quotes']) . ' proposte da guardare') : null,
+                    $view['posts'] ? (count($view['posts']) === 1 ? '1 contenuto da approvare' : count($view['posts']) . ' contenuti da approvare') : null,
+                    $view['due'] ? (count($view['due']) === 1 ? '1 pagamento' : count($view['due']) . ' pagamenti') : null,
+                ])) ?>.
+            <?php endif; ?>
+        </p>
+    </header>
+
+    <?php if ($flash): ?>
+        <div class="portal-flash portal-flash--<?= $this->e($flash['tone']) ?>" role="status"><?= $this->e($flash['text']) ?></div>
+    <?php endif; ?>
+
+    <?php foreach ($view['quotes'] as $quote): ?>
+    <section class="portal-card">
+        <h2 class="portal__section">La nostra proposta: <?= $this->e($quote['title']) ?></h2>
+        <p class="portal__hint">Preventivo <?= $this->e($quote['number']) ?><?= $quote['validUntil'] ? ', valido fino al ' . $this->e($quote['validUntil']) : '' ?></p>
+        <?php if ($quote['intro']): ?><p class="portal__lead portal__lead--small"><?= nl2br($this->e($quote['intro'])) ?></p><?php endif; ?>
+        <div class="portal-list">
+            <?php foreach ($quote['lines'] as $line): ?>
+            <div class="portal-row">
+                <div class="portal-row__text">
+                    <span class="portal-row__title"><?= $this->e($line['description']) ?></span>
+                    <?php if ($line['details'] || $line['plan']): ?><span class="portal-row__meta"><?= $this->e(implode(' · ', array_filter([$line['details'], $line['plan']]))) ?></span><?php endif; ?>
+                </div>
+                <span class="portal-row__amount"><?= $this->e($line['amount']) ?></span>
+            </div>
+            <?php endforeach; ?>
+            <?php foreach ($quote['totals'] as $total): ?>
+            <div class="portal-row">
+                <div class="portal-row__text"><span class="portal-row__title"><?= $this->e($total['label']) ?></span></div>
+                <span class="portal-row__amount"><?= $this->e($total['value']) ?></span>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php if ($quote['paymentTerms']): ?><p class="portal__hint">Pagamento: <?= $this->e($quote['paymentTerms']) ?><?= $quote['revisions'] !== null ? ' · ' . (int) $quote['revisions'] . ' giri di modifiche compresi per lavoro' : '' ?></p><?php endif; ?>
+        <?php if ($quote['conditions']): ?><p class="portal__hint"><?= nl2br($this->e($quote['conditions'])) ?></p><?php endif; ?>
+        <form method="post" action="<?= $base ?>/accetta-preventivo" class="portal-inline">
+            <?= $this->csrfField() ?>
+            <input type="hidden" name="quote" value="<?= (int) $quote['id'] ?>">
+            <button class="btn btn--primary" type="submit">Accetto la proposta</button>
+        </form>
+    </section>
+    <?php endforeach; ?>
+
+    <?php if ($view['posts']): ?>
+    <section class="portal-card">
+        <h2 class="portal__section">Da approvare</h2>
+        <p class="portal__hint">Guarda i contenuti in uscita: approva, oppure scrivici cosa cambiare.</p>
+        <?php if (count($view['posts']) > 1): ?>
+        <form method="post" action="<?= $base ?>/approva-tutti" class="portal-approve-all">
+            <?= $this->csrfField() ?>
+            <button class="btn btn--secondary btn--small" type="submit">Vanno bene tutti: approvo i <?= count($view['posts']) ?> contenuti</button>
+        </form>
+        <?php endif; ?>
+        <div class="portal-posts">
+            <?php foreach ($view['posts'] as $post): ?>
+            <article class="portal-post">
+                <div class="portal-post__head">
+                    <span class="portal-chip"><?= $this->e($post['channel']) ?> · <?= $this->e($post['format']) ?></span>
+                    <span class="portal-post__when"><?= $this->e($post['when']) ?></span>
+                </div>
+                <h3 class="portal-post__title"><?= $this->e($post['title']) ?></h3>
+                <?php if ($post['caption']): ?><p class="portal-post__caption"><?= nl2br($this->e($post['caption'])) ?></p><?php endif; ?>
+                <?php if ($post['media']): ?><p class="portal-post__media"><?= $this->e($post['media']) ?></p><?php endif; ?>
+                <div class="portal-post__actions">
+                    <form method="post" action="<?= $base ?>/approva">
+                        <?= $this->csrfField() ?>
+                        <input type="hidden" name="post" value="<?= (int) $post['id'] ?>">
+                        <button class="btn btn--primary" type="submit">Approvo</button>
+                    </form>
+                    <details class="portal-post__changes">
+                        <summary class="btn btn--secondary">Vorrei delle modifiche</summary>
+                        <form method="post" action="<?= $base ?>/modifiche" class="portal-form">
+                            <?= $this->csrfField() ?>
+                            <input type="hidden" name="post" value="<?= (int) $post['id'] ?>">
+                            <label class="portal-form__label" for="c<?= (int) $post['id'] ?>">Cosa cambieresti?</label>
+                            <textarea id="c<?= (int) $post['id'] ?>" name="comment" rows="3" required placeholder="Es. usiamo la foto del negozio, togliamo il prezzo..."></textarea>
+                            <button class="btn btn--primary" type="submit">Manda all'agenzia</button>
+                        </form>
+                    </details>
+                </div>
+            </article>
+            <?php endforeach; ?>
+        </div>
+    </section>
+    <?php endif; ?>
+
+    <?php if ($view['due']): ?>
+    <section class="portal-card">
+        <h2 class="portal__section">Da pagare</h2>
+        <div class="portal-list">
+            <?php foreach ($view['due'] as $due): ?>
+            <div class="portal-row<?= $due['late'] ? ' portal-row--late' : '' ?>">
+                <div class="portal-row__text">
+                    <span class="portal-row__title"><?= $this->e($due['description']) ?></span>
+                    <span class="portal-row__meta"><?= $p['autoPay'] && !$due['late'] ? 'si addebita da solo il ' : 'entro il ' ?><?= $this->e($due['due']) ?> · <?= $this->e($due['when']) ?></span>
+                </div>
+                <span class="portal-row__amount"><?= $this->e($due['amount']) ?></span>
+                <?php if ($due['processing']): ?>
+                    <span class="portal-chip portal-chip--info">addebito in corso</span>
+                <?php elseif ($p['online'] && !($p['autoPay'] && !$due['late'])): ?>
+                    <form method="post" action="<?= $base ?>/paga">
+                        <?= $this->csrfField() ?>
+                        <input type="hidden" name="installment" value="<?= (int) $due['id'] ?>">
+                        <button class="btn btn--primary btn--small" type="submit">Paga ora</button>
+                    </form>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php if ($p['iban'] && !$p['autoPay']): ?>
+            <p class="portal__hint">Preferisci il bonifico? IBAN <strong><?= $this->e($p['iban']) ?></strong>, con la descrizione del pagamento nella causale.</p>
+        <?php endif; ?>
+    </section>
+    <?php endif; ?>
+
+    <section class="portal-card">
+        <h2 class="portal__section">Come paghi</h2>
+        <?php if ($p['autoPay']): ?>
+            <p class="portal__lead portal__lead--small">Addebito automatico <strong>attivo</strong>: rate e rinnovi si pagano da soli alla scadenza.</p>
+            <form method="post" action="<?= $base ?>/automatico/disattiva" class="portal-inline">
+                <?= $this->csrfField() ?>
+                <button class="btn btn--ghost btn--small" type="submit">Disattiva l'addebito automatico</button>
+            </form>
+        <?php else: ?>
+            <form method="post" action="<?= $base ?>/metodo" class="portal-methods">
+                <?= $this->csrfField() ?>
+                <?php foreach ($p['methods'] as $method): ?>
+                    <label class="portal-method<?= $method === $p['method'] ? ' is-selected' : '' ?>">
+                        <input type="radio" name="method" value="<?= $this->e($method) ?>"<?= $method === $p['method'] ? ' checked' : '' ?>>
+                        <span><?= $this->e(ucfirst($method)) ?></span>
+                    </label>
+                <?php endforeach; ?>
+                <button class="btn btn--secondary btn--small" type="submit">Salva</button>
+            </form>
+            <?php if ($p['canAutoPay']): ?>
+            <div class="portal-autopay">
+                <div>
+                    <span class="portal-row__title">Vuoi non pensarci piu'?</span>
+                    <span class="portal-row__meta">Salva una carta o il conto (addebito SEPA): rate e rinnovi si pagano da soli alla scadenza, ti avvisiamo prima.</span>
+                </div>
+                <form method="post" action="<?= $base ?>/automatico">
+                    <?= $this->csrfField() ?>
+                    <button class="btn btn--primary btn--small" type="submit">Attiva l'addebito automatico</button>
+                </form>
+            </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </section>
+
+    <?php if ($view['services']): ?>
+    <section class="portal-card">
+        <h2 class="portal__section">I tuoi servizi</h2>
+        <div class="portal-list">
+            <?php foreach ($view['services'] as $service): ?>
+            <div class="portal-row">
+                <div class="portal-row__text">
+                    <span class="portal-row__title"><?= $this->e($service['title']) ?></span>
+                    <span class="portal-row__meta"><?= $this->e(implode(' · ', array_filter([$service['stage'] !== 'attivo' ? $service['stage'] : null, $service['renewal']]))) ?></span>
+                </div>
+                <span class="portal-row__amount"><?= $this->e($service['price']) ?></span>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </section>
+    <?php endif; ?>
+
+    <?php if ($view['invoices'] || $view['paid']): ?>
+    <section class="portal-card">
+        <h2 class="portal__section">Fatture e pagamenti fatti</h2>
+        <div class="portal-list">
+            <?php foreach ($view['invoices'] as $invoice): ?>
+            <div class="portal-row">
+                <div class="portal-row__text">
+                    <span class="portal-row__title">Fattura <?= $this->e($invoice['number']) ?></span>
+                    <span class="portal-row__meta">del <?= $this->e($invoice['date']) ?></span>
+                </div>
+                <span class="portal-row__amount"><?= $this->e($invoice['total']) ?></span>
+                <span class="portal-chip<?= $invoice['paid'] ? ' portal-chip--success' : '' ?>"><?= $invoice['paid'] ? 'pagata' : 'da pagare' ?></span>
+            </div>
+            <?php endforeach; ?>
+            <?php if (!$view['invoices']): foreach ($view['paid'] as $paid): ?>
+            <div class="portal-row">
+                <div class="portal-row__text">
+                    <span class="portal-row__title"><?= $this->e($paid['description']) ?></span>
+                    <span class="portal-row__meta">pagato il <?= $this->e($paid['date']) ?></span>
+                </div>
+                <span class="portal-row__amount"><?= $this->e($paid['amount']) ?></span>
+            </div>
+            <?php endforeach; endif; ?>
+        </div>
+        <?php if ($view['invoices']): ?><p class="portal__hint">Le fatture elettroniche le ricevi anche nel tuo cassetto fiscale.</p><?php endif; ?>
+    </section>
+    <?php endif; ?>
+
+    <footer class="portal__footer">
+        <?= $this->e($view['agency']) ?>
+        <?php if ($view['agencyEmail']): ?> · <a href="mailto:<?= $this->e($view['agencyEmail']) ?>"><?= $this->e($view['agencyEmail']) ?></a><?php endif; ?>
+        <?php if ($view['agencyPhone']): ?> · <a href="tel:<?= $this->e(preg_replace('/[^\d+]/', '', $view['agencyPhone'])) ?>"><?= $this->e($view['agencyPhone']) ?></a><?php endif; ?>
+        <br>Questo e' il tuo link personale: non inoltrarlo.
+    </footer>
+</main>
+</body>
+</html>

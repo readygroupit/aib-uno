@@ -36,8 +36,8 @@ function buildCard(item) {
 }
 
 /**
- * Riorganizzato in sezioni filtrabili (Sistema/CRM/Operativita/Vendite/
- * Contenuti - vedi ShowMenuTool::SECTIONS, l'unica fonte di questa
+ * Riorganizzato in sezioni filtrabili (Lavoro/Contenuti/Clienti/Amministrazione/
+ * Impostazioni - vedi App\Support\Sections, l'unica fonte di questa
  * tassonomia) + ricerca libera per label/descrizione, invece della sola
  * griglia piatta di prima: a parita' di dati (nessuna voce nuova, solo
  * 'section'/'count' aggiunti al payload) diventa molto piu' rapido
@@ -66,9 +66,22 @@ function render(data) {
     function renderGrid() {
         while (grid.firstChild) grid.removeChild(grid.firstChild);
 
-        const visible = items.filter(matches).map(buildCard);
-        visible.forEach((card) => grid.appendChild(card));
-        staggerReveal(visible, 55);
+        const filtered = items.filter(matches);
+        const visible = filtered.map(buildCard);
+        // "Tutte" senza ricerca: le voci sotto il titolo della loro sezione.
+        const grouped = activeSection === null && query === '';
+        let lastSection;
+        filtered.forEach((item, i) => {
+            if (grouped && item.section !== lastSection && item.sectionLabel) {
+                grid.appendChild(el('h3', { className: 'menu-grid__heading' }, [
+                    el('span', { className: 'menu-grid__tab-dot', style: `background: var(--color-${item.sectionColor || 'petrol'});` }),
+                    item.sectionLabel,
+                ]));
+                lastSection = item.section;
+            }
+            grid.appendChild(visible[i]);
+        });
+        staggerReveal(visible, 35);
         emptyState.hidden = visible.length > 0;
     }
 

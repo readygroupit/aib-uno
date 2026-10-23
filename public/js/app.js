@@ -19,6 +19,34 @@ import './components/permission-summary.js';
 import './components/activity-feed.js';
 import './components/profile-layout.js';
 import './components/claim-table.js';
+import './components/customer-list.js';
+import './components/customer-profile.js';
+import './components/due-board.js';
+import './components/service-summary.js';
+import './components/notice.js';
+import './components/work-order-board.js';
+import './components/work-order-summary.js';
+import './components/task-board.js';
+import './components/task-summary.js';
+import './components/type-steps.js';
+import './components/calendar-week.js';
+import './components/appointment-summary.js';
+import './components/day-plan.js';
+import './components/team-plan.js';
+import './components/check-in.js';
+import './components/worklog-week.js';
+import './components/work-insights.js';
+import './components/invoice-board.js';
+import './components/invoice-summary.js';
+import './components/editorial-board.js';
+import './components/post-summary.js';
+import './components/client-health.js';
+import './components/media-library.js';
+import './components/media-summary.js';
+import './components/request-board.js';
+import './components/simple-board.js';
+import './components/quote-summary.js';
+import { checkWorklogNudge } from './worklog-nudge.js';
 import './components/setup-checklist.js';
 import './components/agent-feed.js';
 import './components/agent-activity.js';
@@ -48,6 +76,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!document.getElementById('page-root')) {
         return;
     }
+
+    // Registro attivita': se e' il momento, l'avviso discreto in basso.
+    checkWorklogNudge();
 
     // Su ogni pagina: alimenta il riquadro rosso nella toolbar (hero.js).
     const setup = await loadSetupState();

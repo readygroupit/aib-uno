@@ -230,7 +230,8 @@ function pushEntry(entry) {
 // della pagina, il dettaglio si apre nel pannello come una nuova schermata.
 // Se la pagina non risponde a componenti (form classici, login...), si va
 // li' normalmente.
-function openInPanel(href) {
+/** Apre un indirizzo nel pannello dei risultati, come un link (es. dopo "Prepara fattura"). */
+export function openInPanel(href) {
     resultsPanel.classList.add('is-loading');
     fetch(href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then((res) => {
@@ -294,6 +295,11 @@ export function refreshCurrentEntry(components) {
         window.history.replaceState({ unoEntry: resultsHistory[resultsHistoryIndex].id }, '', url);
     }
     renderResultsEntry(resultsPanel, resultsHistory[resultsHistoryIndex]);
+    // Un esito in cima (es. "Servizio creato") va visto subito.
+    if (components[0]?.type === 'notice') {
+        resultsPanel.scrollTop = 0;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
 
 // Attesa lunga (es. l'analisi libera, 20-30 secondi): dopo un attimo il

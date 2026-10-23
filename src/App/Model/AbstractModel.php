@@ -32,14 +32,40 @@ abstract class AbstractModel
     public static function fromArray(array $row): static
     {
         $model = new static();
+        $intProperties = self::intProperties();
         foreach ($row as $column => $value) {
             $property = self::propertyFromColumn($column);
-            if (property_exists($model, $property)) {
-                $model->$property = $value;
+            if (!property_exists($model, $property)) {
+                continue;
             }
+            // Dal database gli interi arrivano interi, da un form o da una
+            // query string arrivano stringhe ("5"): stessa cosa, si converte.
+            if (isset($intProperties[$property]) && is_string($value)) {
+                $value = $value === '' ? null : (is_numeric($value) ? (int) $value : null);
+            }
+            $model->$property = $value;
         }
 
         return $model;
+    }
+
+    /** @return array<string,true> proprieta' di tipo int di questa classe */
+    private static function intProperties(): array
+    {
+        static $cache = [];
+        if (isset($cache[static::class])) {
+            return $cache[static::class];
+        }
+
+        $result = [];
+        foreach ((new \ReflectionClass(static::class))->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
+            $type = $property->getType();
+            if ($type instanceof \ReflectionNamedType && $type->getName() === 'int') {
+                $result[$property->getName()] = true;
+            }
+        }
+
+        return $cache[static::class] = $result;
     }
 
     /** Nome colonna snake_case (es. 'company_name') -> proprieta' camelCase (es. 'companyName'). */

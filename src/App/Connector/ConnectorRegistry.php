@@ -27,6 +27,11 @@ final class ConnectorRegistry
         $this->connectors[$connector->code()] = $connector;
     }
 
+    public function has(string $code): bool
+    {
+        return isset($this->connectors[$code]);
+    }
+
     public function get(string $code): ConnectorInterface
     {
         if (!isset($this->connectors[$code])) {

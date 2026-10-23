@@ -8,6 +8,10 @@ use App\Controller\AuthController;
 use App\Model\AbstractModel;
 use App\Repository\CaseFileRepository;
 use App\Repository\CustomerRepository;
+use App\Repository\CustomerServiceRepository;
+use App\Repository\ServiceRepository;
+use App\Repository\WorkOrderRepository;
+use App\Repository\WorkOrderTypeRepository;
 use App\Repository\LeadRepository;
 use App\Repository\UserRepository;
 use App\Service\AuthService;
@@ -28,13 +32,43 @@ use App\Service\AuthService;
  */
 final class EntityReferenceController extends AuthController
 {
-    /** @var array<string, array{repository:class-string, columns:list<string>, fallback?:string, permission:?string}> */
+    /** @var array<string, array{repository:class-string, columns:list<string>, fallback?:string, permission:?string, fill?:array<string,string>}> */
     private const SOURCES = [
         'customers' => [
             'repository' => CustomerRepository::class,
-            'columns' => ['first_name', 'last_name'],
-            'fallback' => 'company_name',
+            'columns' => ['company_name', 'first_name', 'last_name'],
             'permission' => 'customers.view',
+        ],
+        // I colleghi, per "chi lo segue": nomi che chiunque in azienda
+        // conosce gia', non serve il permesso di gestire gli utenti.
+        'staff' => [
+            'repository' => UserRepository::class,
+            'columns' => ['first_name', 'last_name'],
+            'fallback' => 'username',
+            'permission' => null,
+        ],
+        'services' => [
+            'repository' => ServiceRepository::class,
+            'columns' => ['name'],
+            'permission' => 'services.view',
+            // Scelto un servizio del listino, il form si compila da solo
+            // con i suoi dati (solo i campi ancora vuoti, vedi form.js).
+            'fill' => ['title' => 'name', 'price' => 'price', 'billing_type' => 'billing_type', 'recurrence' => 'recurrence', 'cost_price' => 'cost_price', 'description' => 'name', 'unit_price' => 'price'],
+        ],
+        'work_order_types' => [
+            'repository' => WorkOrderTypeRepository::class,
+            'columns' => ['name'],
+            'permission' => 'work_orders.view',
+        ],
+        'work_orders' => [
+            'repository' => WorkOrderRepository::class,
+            'columns' => ['title'],
+            'permission' => 'work_orders.view',
+        ],
+        'customer_services' => [
+            'repository' => CustomerServiceRepository::class,
+            'columns' => ['title'],
+            'permission' => 'customer_services.view',
         ],
         'leads' => [
             'repository' => LeadRepository::class,
@@ -94,7 +128,21 @@ final class EntityReferenceController extends AuthController
     /** @param array{columns:list<string>,fallback?:string} $source */
     private function toOption(AbstractModel $model, array $source): array
     {
-        return ['value' => $model->id, 'label' => $this->labelFor($model, $source)];
+        $label = method_exists($model, 'displayName') ? $model->displayName() : $this->labelFor($model, $source);
+        $option = ['value' => $model->id, 'label' => $label];
+
+        if (isset($source['fill'])) {
+            $fill = [];
+            foreach ($source['fill'] as $field => $column) {
+                $value = $model->{AbstractModel::propertyFromColumn($column)} ?? null;
+                if ($value !== null && $value !== '') {
+                    $fill[$field] = (string) $value;
+                }
+            }
+            $option['fill'] = $fill;
+        }
+
+        return $option;
     }
 
     /** @param array{columns:list<string>,fallback?:string} $source */

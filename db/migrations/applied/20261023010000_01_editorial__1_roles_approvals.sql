@@ -1,0 +1,10 @@
+ALTER TABLE `editorial_posts` ADD COLUMN `writer_user_id` INT UNSIGNED NULL;
+ALTER TABLE `editorial_posts` ADD COLUMN `source_link` VARCHAR(500) NULL;
+ALTER TABLE `editorial_posts` ADD COLUMN `output_link` VARCHAR(500) NULL;
+ALTER TABLE `editorial_posts` ADD COLUMN `parent_post_id` INT UNSIGNED NULL;
+ALTER TABLE `editorial_posts` ADD COLUMN `review_note` TEXT NULL;
+ALTER TABLE `editorial_posts` ADD COLUMN `internal_approved_by` INT UNSIGNED NULL;
+ALTER TABLE `editorial_posts` ADD COLUMN `internal_approved_at` DATETIME NULL;
+ALTER TABLE `editorial_posts` ADD COLUMN `approved_via` VARCHAR(60) NULL;
+ALTER TABLE `editorial_posts` ADD COLUMN `revision_count` SMALLINT UNSIGNED NULL;
+ALTER TABLE `editorial_posts` ADD COLUMN `writer_task_id` INT UNSIGNED NULL;

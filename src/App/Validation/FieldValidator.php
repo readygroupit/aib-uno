@@ -31,6 +31,7 @@ final class FieldValidator
     public const FORMAT_PHONE = 'phone';
     public const FORMAT_DATE = 'date';
     public const FORMAT_DATETIME = 'datetime';
+    public const FORMAT_TIME = 'time';
     public const FORMAT_CODICE_FISCALE = 'codice_fiscale';
     public const FORMAT_PARTITA_IVA = 'partita_iva';
     public const FORMAT_IBAN = 'iban';
@@ -53,6 +54,7 @@ final class FieldValidator
             self::FORMAT_PHONE => self::checkPhone($value),
             self::FORMAT_DATE => self::checkDate($value, 'Y-m-d'),
             self::FORMAT_DATETIME => self::checkDate($value, 'Y-m-d H:i:s'),
+            self::FORMAT_TIME => preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $value) === 1 ? null : 'Ora non valida (es. 09:30).',
             self::FORMAT_CODICE_FISCALE => self::checkCodiceFiscale($value),
             self::FORMAT_PARTITA_IVA => self::checkPartitaIva($value),
             self::FORMAT_IBAN => self::checkIban($value),

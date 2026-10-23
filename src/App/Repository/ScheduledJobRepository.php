@@ -25,4 +25,27 @@ final class ScheduledJobRepository extends AbstractRepository
             $this->db->fetchAll($sql)
         );
     }
+
+    /**
+     * Un job ricorrente "di sistema" (es. la sincronizzazione del
+     * calendario): lo crea se non c'e', cosi' basta il cron di
+     * bin/run-scheduler.php e nessuno deve programmarlo a mano.
+     */
+    public function ensureRecurring(string $jobType, int $intervalMinutes): void
+    {
+        $row = $this->db->fetchRow(
+            'SELECT id FROM scheduled_jobs WHERE status != 0 AND job_type = :type AND interval_minutes IS NOT NULL LIMIT 1',
+            ['type' => $jobType]
+        );
+        if ($row !== null) {
+            return;
+        }
+
+        $this->insert([
+            'job_type' => $jobType,
+            'payload' => '{}',
+            'run_at' => date('Y-m-d H:i:s'),
+            'interval_minutes' => $intervalMinutes,
+        ]);
+    }
 }

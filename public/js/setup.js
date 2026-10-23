@@ -117,6 +117,11 @@ function connectorView(item, api) {
         controls.forEach((control, key) => { values[key] = control.value; });
         const result = await post('/configurazione/connettori/' + item.key, values);
 
+        if (result.ok && result.redirect) {
+            submit.textContent = 'Apro Google...';
+            window.location.href = result.redirect;
+            return;
+        }
         if (result.ok) {
             api.update(result, `${item.label}: ${result.message}.`);
             return;

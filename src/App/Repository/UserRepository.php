@@ -116,4 +116,15 @@ final class UserRepository extends AbstractRepository
 
         return $this->db->fetchRow($sql, ['username' => $username, 'id' => $exceptId]) !== null;
     }
+
+    /** @return array<int,int> profilo => quante persone attive lo hanno */
+    public function countPerProfile(): array
+    {
+        $result = [];
+        foreach ($this->db->fetchAll('SELECT profile_id, COUNT(*) AS n FROM users WHERE status != 0 GROUP BY profile_id') as $row) {
+            $result[(int) $row['profile_id']] = (int) $row['n'];
+        }
+
+        return $result;
+    }
 }

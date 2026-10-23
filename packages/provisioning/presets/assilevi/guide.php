@@ -27,7 +27,7 @@ return [
             'key' => 'journey',
             'label' => 'Percorso pratica',
             'blocks' => [
-                // Stessi 5 stati/colori di ListCustomersTool::STAGE_META.
+                // Stessi 5 stati/colori di ListCustomerClaimsTool::STAGE_META.
                 ['text' => 'Ogni pratica passa (nell\'ordine) per questi 5 stati - sono gli stessi che vedi come etichette colorate in Clienti e Pratiche.'],
                 ['steps' => [
                     ['accent', 'Raccolta documenti', 'Si chiedono al cliente i documenti che servono: carta d\'imbarco, documento d\'identita\', mandato.'],

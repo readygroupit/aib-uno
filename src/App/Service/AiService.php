@@ -139,6 +139,50 @@ final class AiService
             }
         }
 
+        return self::decodeJson($text);
+    }
+
+    /**
+     * Come json(), ma con delle immagini da guardare (foto, fotogrammi di
+     * un video): l'IA le descrive secondo le istruzioni.
+     *
+     * @param list<array{mime:string, data:string}> $images data = binario dell'immagine (JPEG/PNG)
+     */
+    public function jsonWithImages(string $system, string $user, array $images, int $maxTokens = 2000): array
+    {
+        if ($this->provider() === 'openai') {
+            $content = [['type' => 'text', 'text' => $user]];
+            foreach ($images as $image) {
+                $content[] = ['type' => 'image_url', 'image_url' => ['url' => 'data:' . $image['mime'] . ';base64,' . base64_encode($image['data'])]];
+            }
+            $payload = $this->openAiPayload($system, [['role' => 'user', 'content' => $content]], $maxTokens);
+            $payload['response_format'] = ['type' => 'json_object'];
+            $text = (string) ($this->callOpenAi($payload)['choices'][0]['message']['content'] ?? '');
+        } else {
+            $content = [];
+            foreach ($images as $image) {
+                $content[] = ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $image['mime'], 'data' => base64_encode($image['data'])]];
+            }
+            $content[] = ['type' => 'text', 'text' => $user];
+            $response = $this->callClaude([
+                'model' => $this->settings('claude')['model'],
+                'max_tokens' => $maxTokens,
+                'system' => $system . "\nRispondi solo con un oggetto JSON valido, senza testo prima o dopo.",
+                'messages' => [['role' => 'user', 'content' => $content]],
+            ]);
+            $text = '';
+            foreach ($response['content'] ?? [] as $block) {
+                if (($block['type'] ?? null) === 'text') {
+                    $text .= $block['text'];
+                }
+            }
+        }
+
+        return self::decodeJson($text);
+    }
+
+    private static function decodeJson(string $text): array
+    {
         $start = strpos($text, '{');
         $end = strrpos($text, '}');
         $decoded = $start !== false && $end !== false ? json_decode(substr($text, $start, $end - $start + 1), true) : null;
@@ -147,6 +191,14 @@ final class AiService
         }
 
         return $decoded;
+    }
+
+    /** Vero se c'e' una chiave per il fornitore scelto: senza, le funzioni IA si spengono con garbo. */
+    public function isConfigured(): bool
+    {
+        $settings = $this->config->get('ai')[$this->provider()] ?? [];
+
+        return !empty($settings['apiKey']);
     }
 
     /** @return array{reply: ?string, toolName: ?string, toolInput: ?array} */
@@ -272,7 +324,8 @@ final class AiService
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => ['content-type: application/json', ...$headers],
             CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_TIMEOUT => 60,
+            // Le immagini (fotogrammi dei video) richiedono piu' tempo.
+            CURLOPT_TIMEOUT => 120,
         ]);
 
         $body = curl_exec($ch);

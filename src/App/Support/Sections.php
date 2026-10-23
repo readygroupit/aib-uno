@@ -17,12 +17,15 @@ namespace App\Support;
  */
 final class Sections
 {
+    // L'ordine e' quello del menu: prima il lavoro di tutti i giorni, in
+    // fondo le impostazioni. Le chiavi restano quelle storiche (manifest e
+    // strumenti le usano), cambiano solo le etichette.
     public const ALL = [
-        'sistema' => ['label' => 'Sistema', 'color' => 'petrol'],
-        'crm' => ['label' => 'CRM', 'color' => 'moss'],
-        'operativita' => ['label' => 'Operativita', 'color' => 'lilac'],
-        'vendite' => ['label' => 'Vendite', 'color' => 'brass'],
+        'operativita' => ['label' => 'Lavoro', 'color' => 'lilac'],
         'contenuti' => ['label' => 'Contenuti', 'color' => 'teal'],
+        'crm' => ['label' => 'Clienti', 'color' => 'moss'],
+        'vendite' => ['label' => 'Amministrazione', 'color' => 'brass'],
+        'sistema' => ['label' => 'Impostazioni', 'color' => 'petrol'],
     ];
 
     public static function label(?string $key): ?string

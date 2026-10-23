@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Index\Controller;
 
 use App\Controller\AbstractEntityController;
+use App\Portal\PortalService;
 use App\Prompt\Tool\EditCustomerTool;
+use App\Prompt\PromptToolRegistry;
 use App\Prompt\Tool\ListCustomersTool;
 use App\Repository\CustomerRepository;
 
@@ -26,9 +28,12 @@ final class CustomersController extends AbstractEntityController
         return EditCustomerTool::class;
     }
 
+    /** La lista registrata come 'list_customers': generica, o con le pratiche dove ci sono (vedi config/prompt-tools.php). */
     protected function listToolClass(): string
     {
-        return ListCustomersTool::class;
+        $registry = $this->container->get(PromptToolRegistry::class);
+
+        return $registry->has('list_customers') ? $registry->get('list_customers')::class : ListCustomersTool::class;
     }
 
     protected function packageName(): string
@@ -59,12 +64,42 @@ final class CustomersController extends AbstractEntityController
     /** 'export' non e' fra i 4 casi standard di AbstractEntityController: stesso permesso di 'index', e' solo un altro modo di leggere la stessa lista. */
     protected function requiredPermissionForAction(string $action): ?string
     {
-        return $action === 'export' ? 'customers.view' : parent::requiredPermissionForAction($action);
+        return match ($action) {
+            'export' => 'customers.view',
+            'portalLink' => 'customers.edit',
+            default => parent::requiredPermissionForAction($action),
+        };
+    }
+
+    /**
+     * Il link dell'area del cliente (contratto, pagamenti, approvazioni,
+     * senza password), con un messaggio pronto. ?nuovo=1 lo sostituisce:
+     * il vecchio smette di funzionare.
+     */
+    public function portalLinkAction(): void
+    {
+        $customer = $this->repository()->find((int) $this->param('id'));
+        if ($customer === null) {
+            $this->json(['ok' => false, 'message' => 'Cliente non trovato.'], 404);
+
+            return;
+        }
+        $renew = $this->request->get('nuovo') === '1';
+        $url = $this->container->get(PortalService::class)->link((int) $customer->id, $this->request->baseUrl(), $renew);
+
+        $this->json(['ok' => true, 'share' => [
+            'title' => $renew ? 'Nuovo link dell\'area cliente' : 'Area cliente',
+            'intro' => ($renew ? 'Il link di prima non funziona piu\'. ' : '') . "Con questo link {$customer->displayName()} vede servizi, rinnovi e pagamenti, paga online, sceglie come pagare e approva i contenuti. Niente password: mandalo solo a lui.",
+            'url' => $url,
+            'email' => $customer->email,
+            'subject' => 'La tua area',
+            'text' => "Ciao,\nqui trovi la tua area: servizi attivi, rinnovi, pagamenti e i contenuti da approvare.\n{$url}\n\nE' personale, tienila per te. A presto!",
+        ]]);
     }
 
     /**
      * CSV con la stessa situazione-pratica mostrata in tabella (vedi
-     * ListCustomersTool::buildRow()), non solo l'anagrafica - a un
+     * ListCustomerClaimsTool::buildRow()), non solo l'anagrafica - a un
      * operatore che scarica l'elenco serve poter aprire il file e
      * vedere subito volo/stato/importo, non doverli ricostruire a mano
      * incrociando altre schermate. Delimitatore ';' e virgola come

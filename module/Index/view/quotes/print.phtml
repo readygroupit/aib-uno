@@ -1,0 +1,87 @@
+<?php
+/**
+ * Preventivo da stampare o salvare in PDF dal browser (Ctrl+P). Pagina a
+ * se': niente menu, solo il documento.
+ *
+ * @var array $quote QuoteOverviewService::detail()
+ * @var ?\App\Model\CompanyProfile $company
+ * @var ?\App\Model\Customer $customer
+ */
+?>
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= $this->e($title) ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= $this->asset('/css/tokens.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/quote-print.css') ?>">
+</head>
+<body class="qp">
+<main class="qp__page">
+    <header class="qp__head">
+        <div>
+            <div class="qp__company"><?= $this->e($company?->companyName ?: APP_NAME) ?></div>
+            <?php if ($company): ?>
+                <div class="qp__small"><?= $this->e(trim("{$company->address}, {$company->postalCode} {$company->city} ({$company->province})", ' ,()')) ?><?= $company->vatNumber ? ' · P.IVA ' . $this->e($company->vatNumber) : '' ?></div>
+                <div class="qp__small"><?= $this->e(implode(' · ', array_filter([$company->email, $company->phone]))) ?></div>
+            <?php endif; ?>
+        </div>
+        <div class="qp__meta">
+            <div class="qp__label">Preventivo</div>
+            <div class="qp__number"><?= $this->e($quote['number']) ?></div>
+            <div class="qp__small">del <?= $this->e($quote['date']) ?><?= $quote['validUntil'] ? ' · valido fino al ' . $this->e($quote['validUntil']) : '' ?></div>
+        </div>
+    </header>
+
+    <section class="qp__to">
+        <div class="qp__label">Per</div>
+        <div class="qp__customer"><?= $this->e($quote['customer']) ?></div>
+        <?php if ($customer): ?>
+            <div class="qp__small"><?= $this->e(implode(' · ', array_filter([$customer->address, $customer->vatNumber ? 'P.IVA/CF ' . $customer->vatNumber : null, $customer->email]))) ?></div>
+        <?php endif; ?>
+    </section>
+
+    <h1 class="qp__title"><?= $this->e($quote['title']) ?></h1>
+    <?php if ($quote['intro']): ?><p class="qp__text"><?= nl2br($this->e($quote['intro'])) ?></p><?php endif; ?>
+
+    <table class="qp__lines">
+        <thead><tr><th>Descrizione</th><th class="qp__num">Importo</th></tr></thead>
+        <tbody>
+        <?php foreach ($quote['lines'] as $line): ?>
+            <tr>
+                <td>
+                    <strong><?= $this->e($line['description']) ?></strong>
+                    <?php if ($line['details']): ?><div class="qp__small"><?= nl2br($this->e($line['details'])) ?></div><?php endif; ?>
+                    <?php if ($line['quantity'] || $line['plan']): ?><div class="qp__small"><?= $this->e(implode(' · ', array_filter([$line['quantity'], $line['plan']]))) ?></div><?php endif; ?>
+                </td>
+                <td class="qp__num"><?= $this->e($line['amount']) ?></td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <div class="qp__totals">
+        <?php if ($quote['discount']): ?><div>Sconto applicato: <?= $this->e($quote['discount']) ?></div><?php endif; ?>
+        <?php foreach ($quote['totals'] as $total): ?>
+            <div class="qp__total"><span><?= $this->e($total['label']) ?></span><strong><?= $this->e($total['value']) ?></strong></div>
+        <?php endforeach; ?>
+    </div>
+
+    <section class="qp__conditions">
+        <?php if ($quote['paymentTerms']): ?><p><strong>Pagamento:</strong> <?= $this->e($quote['paymentTerms']) ?></p><?php endif; ?>
+        <?php if ($quote['revisions'] !== null): ?><p><strong>Modifiche comprese:</strong> <?= (int) $quote['revisions'] ?> giri di modifiche per ogni lavoro; oltre, quotati a parte.</p><?php endif; ?>
+        <?php if ($quote['conditions']): ?><p><?= nl2br($this->e($quote['conditions'])) ?></p><?php endif; ?>
+    </section>
+
+    <section class="qp__sign">
+        <div>Per accettazione<br><span class="qp__line"></span></div>
+        <div>Data<br><span class="qp__line"></span></div>
+    </section>
+    <p class="qp__noprint"><button onclick="window.print()">Stampa o salva in PDF</button></p>
+</main>
+</body>
+</html>

@@ -195,13 +195,530 @@ proposte e scartate esplicitamente.
 
 ### Pacchetti esistenti
 
-`customers`, `geo` (dati geografici italiani reali, presi dalla libreria Core
-esistente - `region`/`district`/`municipality`/`postal_code`,
+`customers` (con i referenti, `customer_contacts`), `geo` (dati geografici
+italiani reali, presi dalla libreria Core esistente -
+`region`/`district`/`municipality`/`postal_code`,
 `selectableDirectly=>false`), `leads`, `cases`, `case_participants`,
 `document_requests`, `tasks`, `communications`, `scheduler`,
-`ai_agent_tasks`. Nessuno e' specifico di un cliente - generalizzati apposta
-a partire dal brief di un progetto reale (Assilevi, gestione pratiche di
-assistenza voli).
+`ai_agent_tasks`, `services`, `customer_services`, `installments`,
+`work_orders`, `appointments`, `planner`, `worklog`, `editorial`, `invoices`,
+`client_health`, `media_library`, `client_requests`, `leaves`, `expenses`,
+`quotes`. Nessuno e'
+specifico di un cliente - generalizzati apposta a partire dal brief di un
+progetto reale (Assilevi, gestione pratiche di assistenza voli; Brains at
+Work, agenzia di comunicazione).
+
+**Installare un pacchetto su un progetto che esiste gia'** (anche Uno):
+`APPLICATION_ENV=localhost php8.4 bin/install-packages.php <nomi>` -
+migrazioni con tutti i campi del catalogo (come il provisioner), dati di
+riferimento, permessi `{pacchetto}.view/create/edit/delete` al profilo
+amministratore (`PackagePermissionRepository`). Le migrazioni finiscono in
+`db/migrations/applied` e arrivano in produzione da git gia' "applicate":
+li' serve lo script SQL in `public/tmp` preparato insieme (stesse CREATE
+TABLE + permessi, rilanciabile).
+
+### Campi del manifest per i form
+
+Oltre a `format`/`help`/`autocomplete`/`input`:
+- `'options' => [...]`: menu a tendina, e il valore salvato deve essere uno di
+  quelli (controllato in `AbstractEntityController::collectAndValidate()`);
+- `'format' => 'boolean'`: interruttore si'/no (`TINYINT(1)`, salva 1/0);
+- `'showIf' => ['field' => 'billing_type', 'in' => ['ricorrente']]`: il campo
+  compare solo con quei valori dell'altro (un box senza campi visibili sparisce);
+- `'help'`: compare sotto il campo, in piccolo;
+- date con il calendario del browser, decimali anche con la virgola
+  ("1.250,50" -> 1250.50);
+- `?campo=valore` nell'url di "nuovo" precompila il form (es.
+  `/servizi-clienti/nuovo?customer_id=5`);
+- una sorgente di `EntityReferenceController` con `'fill'` compila altri
+  campi quando si sceglie una voce (es. un servizio del listino porta
+  descrizione, prezzo, rinnovo);
+- `'format' => 'datetime'`: data e ora del browser (salvata `Y-m-d H:i:s`);
+- `hiddenFields()` nel tool: campi che viaggiano col form senza vedersi (es.
+  a quale commessa appartiene un'attivita', arriva da `?entity_type=...`);
+- `'optionsSource' => 'staff'`: scelta multipla a chip dei colleghi, salvata
+  come "2,3";
+- `crossFieldErrors()` nel controller: controlli tra piu' campi (es. la fine
+  dopo l'inizio); `afterDelete()` dopo un'eliminazione.
+
+Pagina di un elemento: `AbstractEditEntityTool::buildPage()` mette prima la
+scheda (`detailComponents()`, es. la scheda cliente) e sotto il form chiuso
+("Dati del cliente - Modifica"); dopo un salvataggio l'esito compare in cima
+(componente `notice`). Hook del controller: `afterCreate()`,
+`afterUpdate()`, `componentsAfterCreate()`.
+
+## Clienti, servizi venduti e scadenzario
+
+Prima fase del progetto Brains at Work (agenzia di comunicazione), fatta
+come pacchetti generici e attiva anche su Uno (sviluppo):
+- `customers`: tipo di rapporto (cliente, intermediario, fornitore,
+  collaboratore), importanza (chiave/abituale/occasionale), settore,
+  referente interno, "portato da" con percentuale/accordo
+  dell'intermediario; referenti in `customer_contacts`
+  (`/clienti/referenti/...`, chi decide in evidenza);
+- `services`: listino, una tantum o ricorrente (mensile ... annuale), costo
+  per voi (margine), fornitore, durata (servira' a pianificare);
+- `customer_services` (`/servizi-clienti`): il servizio venduto, con data
+  di rinnovo propria, rinnovo automatico, preavviso, piano di pagamento
+  (unica soluzione, acconto e saldo, rate mensili), metodo di pagamento;
+- `installments` (`/scadenzario`): una riga per ogni incasso atteso,
+  generata da `App\Billing\PaymentPlanService` (alla creazione, e di
+  nuovo se cambiano importo o piano e nulla e' ancora incassato). "In
+  ritardo" non si salva: e' una scadenza passata ancora da incassare.
+
+`App\Billing\AccountOverviewService` calcola per tutte e tre le schermate
+valore annuo, prossimo rinnovo, incassi aperti/scaduti e **la cosa da fare
+adesso** per ogni cliente (sollecita, conferma il rinnovo, avvisa
+dell'addebito, proponi qualcosa): lista clienti con pannello
+(`customer-list`, colonna "Situazione" = la cosa piu' urgente), scheda
+cliente (`customer-profile`), scadenzario (`due-board`), servizio
+(`service-summary`). Azioni con un clic (`public/js/accounts-ui.js`):
+"Incassato", "Ho sollecitato" (salva solo la data), "Rinnova ora". Numeri e
+date "a voce" in `App\Support\ItalianFormat`. Prompt: "clienti",
+"scadenzario", "chi deve pagare", "rinnovi" (tool `list_customers`,
+`show_due_schedule`, risposta in una frase con `replySummary()`). Dove
+ci sono le pratiche (Assilevi) "Clienti" resta la vista pratiche
+(`ListCustomerClaimsTool`, registrato dopo con lo stesso nome).
+
+Rinnovi automatici: job `renew_customer_services` (handler
+`RenewCustomerServicesHandler`, una volta al giorno) crea le scadenze dei
+periodi arrivati, anche arretrati. L'addebito vero (Stripe, SEPA, PayPal) e
+la fattura elettronica sono fasi successive.
+
+Preset `brainsatwork` (`packages/provisioning/presets/brainsatwork`):
+`generate-demo.php` crea nel database di sviluppo un'agenzia inventata
+(clienti, intermediario, fornitori, listino, servizi, incassi passati
+pagati e due in ritardo) e la esporta in `demo.sql`.
+
+## Commesse e attivita'
+
+Seconda fase Brains at Work, pacchetti generici:
+- `work_orders` (`/commesse`): la commessa per un cliente (tipo, titolo,
+  stato, priorita', responsabile, fornitore esterno, inizio, consegna,
+  attesa del cliente, ultimo sollecito, ultimo movimento) e i **tipi di
+  commessa** (`/tipi-commessa`) con le **fasi a modello** (ordine, giorno
+  previsto dall'inizio, tempo, "aspetta il cliente", checklist);
+- `tasks` (`/attivita`) ampliato: giorno previsto, priorita', tempo previsto
+  e impiegato, ordine, aspetta il cliente, checklist, ricorrenza. Le fasi di
+  una commessa sono attivita' con `entity_type = 'work_orders'` (niente FK:
+  `tasks` resta installabile da solo).
+
+`App\Work\WorkOrderService` fa da solo cio' che non va deciso:
+- crea le fasi dal tipo (date dall'inizio, consegna dalla durata tipica);
+- lo stato segue le fasi: "in attesa del cliente" quando tocca a una fase
+  che aspetta il cliente, di nuovo "in corso" quando e' fatta;
+- **ripianifica** (`replan()`): chiusa una fase, se la prossima e' gia'
+  nel passato le rimaste slittano insieme a oggi, con gli stessi intervalli.
+
+Pausa, consegna e annullamento restano decisioni dell'operatore.
+"Il cliente ha risposto" chiude la fase di attesa e passa alla prossima.
+
+`App\Work\TaskService` gestisce:
+- fatta / riaperta, con il tempo impiegato;
+- la prossima occorrenza di un'attivita' ricorrente, senza arretrati.
+
+`App\Work\WorkOrderOverviewService` prepara i dati di tutte le schermate:
+- bacheca per stato, con avanzamento, prossima fase e segnali: in ritardo,
+  ferma da `STALE_DAYS`, giorni di attesa;
+- scheda commessa con le fasi da spuntare e il previsto contro l'impiegato;
+- attivita' per giorno: in ritardo, aspettano il cliente, oggi, 7 giorni,
+  piu' avanti, senza data, fatte di recente;
+- la frase "cosa fare adesso" di ogni commessa: sollecita, consegna in
+  ritardo, la consegna rischia di slittare, ferma, da avviare.
+
+I giorni delle fasi successive di una commessa ferma sono calcolati
+(`effectiveDays()`, mai salvati): niente falsi ritardi a catena.
+
+Componenti: `work-order-board`, `work-order-summary`, `task-board`,
+`task-summary`, `type-steps` (JS comune in `public/js/work-ui.js`), stile
+in `public/css/components/work.css`. La scheda cliente mostra le sue
+commesse.
+
+Prompt: "commesse", "lavori in corso", "attivita", "cosa devo fare",
+"le mie attivita", "tipi di commessa".
+
+## Calendario e Google Calendar
+
+Terza fase Brains at Work.
+
+**Appuntamenti** (`appointments`, `/appuntamenti`, prompt "calendario",
+"agenda", "uscite") ampliati con:
+- tipo: shooting, riprese, incontro dal cliente o in sede, call,
+  sopralluogo, evento;
+- luogo, viaggio in minuti, videochiamata;
+- responsabile piu' colleghi (`attendee_user_ids` "2,3", campo a chip con
+  `'optionsSource' => 'staff'`);
+- cliente, collegamento a una commessa (`entity_type`/`entity_id`),
+  checklist, promemoria;
+- campi scritti dalla sincronizzazione: `google_event_id`, `meet_url`,
+  `google_synced_at`, `source`.
+
+Il collegamento ai contatti (`lead_id`) e' stato tolto: si portava dietro
+il pacchetto `leads`.
+
+`App\Calendar\CalendarOverviewService` prepara:
+- la settimana, con gli appuntamenti all'altezza della loro ora,
+  affiancati se si sovrappongono, il viaggio tratteggiato prima e dopo, le
+  attivita' del giorno in testata;
+- i conflitti: la stessa persona in due appuntamenti, viaggio compreso;
+- l'elenco dei prossimi 14 giorni, che e' anche la vista da telefono;
+- la scheda di un appuntamento, con mappa, Meet, partecipanti e checklist.
+
+Componenti `calendar-week` e `appointment-summary`, stile
+`public/css/components/calendar.css`. Clic su uno spazio vuoto della
+settimana: nuovo appuntamento a quell'ora. Durata proposta per tipo
+(shooting 8 h, call 30 min). Le schede di commessa e cliente mostrano i
+loro appuntamenti.
+
+**Google Calendar** (`App\Connector\GoogleCalendarConnector`, OAuth web
+con refresh token):
+- si collega da `/configurazione` con ID client e segreto di Google
+  Cloud, poi si autorizza su Google;
+- il ritorno arriva su `/configurazione/google/callback`, URI da
+  registrare in Google Cloud; Google lo accetta in https, quindi va
+  provato sul server, non su `*.localhost`;
+- il connettore implementa `RedirectingConnectorInterface` e setup.js
+  segue il `redirect`.
+
+`App\Calendar\CalendarSyncService` sincronizza nei due sensi:
+- verso Google: ogni salvataggio diventa un evento, con i colleghi
+  invitati per email, il promemoria e il link Meet per le videochiamate
+  (`conferenceData`); annullato o eliminato vuol dire evento cancellato;
+- da Google, con il syncToken: eventi nuovi o spostati aggiornano o
+  creano appuntamenti, quelli cancellati li annullano. Vince l'ultima
+  modifica.
+
+Se Google non risponde l'appuntamento resta "da mandare" (`findToPush()`):
+lo recupera il job `sync_google_calendar` ogni 5 minuti.
+
+`bin/run-scheduler.php` crea da solo i job di sistema (`ensureRecurring`):
+sincronizzazione ogni 5 minuti e rinnovi una volta al giorno. Serve un cron
+ogni minuto come utente www-data.
+
+**Configurazione**: `SetupService` mostra solo i passaggi dei pacchetti
+installati. Assilevi resta com'era; l'agenzia vede Google Calendar.
+
+**Giorni lavorativi** (`App\Work\Workdays`): fasi delle commesse,
+slittamenti e ricorrenze giornaliere non cadono di sabato o domenica.
+
+## Organizer
+
+Quarta fase Brains at Work: la giornata di ognuno messa in ordine dal
+sistema.
+
+**Pacchetto `planner`**
+- Contiene solo gli orari di lavoro (`work_schedules`, pagina `/orari`):
+  inizio, fine, pausa, giorni, `focus_percent`, cioe' la parte della
+  giornata da riempire con il lavoro pianificato. Il resto resta margine
+  per telefonate e imprevisti; per un socio commerciale e' bassa.
+- Chi non ha un orario lavora 9-18, pausa 13-14, lun-ven, 85%.
+- Ha permessi propri (`'permissions'` nel manifest, letto da
+  `PackagePermissionRepository`): `planner.view` per la propria giornata,
+  `planner.team` per vedere il team, spostare e riassegnare.
+- Nuovi campi form: `'format' => 'time'` e `'optionsSource' => 'weekdays'`.
+
+**Il motore: `App\Planner\DayPlanner::plan(persona, giorno)`**
+1. Prende gli appuntamenti come blocchi fissi, con il viaggio prima e dopo.
+2. Calcola le finestre libere nell'orario, tolta la pausa; per oggi parte
+   da adesso.
+3. Mette in fila le cose da fare:
+   - solleciti: commesse ferme sul cliente da 3+ giorni al responsabile,
+     incassi scaduti al referente interno del cliente;
+   - quello rimasto indietro, dal piu' vecchio;
+   - le scadenze del giorno;
+   - poi per priorita'; a parita', le commesse con la consegna piu' vicina
+     e i lavori piu' brevi.
+4. Riempie le finestre fino alla parte pianificabile:
+   - un lavoro lungo si spezza tra le finestre;
+   - un lavoro piu' lungo del giorno si fa in parte, il resto "prosegue";
+   - quello che non ci sta resta fuori.
+
+Altre regole:
+- Una fase che coincide con un appuntamento della stessa commessa quel
+  giorno (es. la giornata di shooting) si fa durante l'appuntamento e non
+  occupa altro tempo.
+- Oggi e il prossimo giorno di lavoro si portano dietro gli arretrati.
+- Non salva niente: si ricalcola sempre.
+
+**`App\Planner\PlannerOverviewService`** prepara le schermate:
+- "La mia giornata" (`/oggi`, `?giorno=`, `?persona=` con `planner.team`):
+  - saluto con il bilancio ("non ci sta tutto: 1 h 30 restano fuori...");
+  - percentuale di carico;
+  - "Da sapere": consegne vicine, uscite di domani con cosa preparare,
+    sovrapposizioni, uscite nello stesso posto in giorni diversi della
+    settimana;
+  - scaletta con la riga "Adesso";
+  - "Non ci sta oggi", con "Sposta a domani";
+  - "Aspettano il cliente", "Se avanzi tempo", "Fatto oggi";
+  - dopo l'orario diventa il bilancio di fine giornata.
+- "Il team" (`/team`):
+  - per persona: carico, cosa sta facendo adesso e dopo, ritardi, ore
+    libere o che non ci stanno;
+  - proposte "passala a ..." da chi e' pieno a chi ha tempo
+    (`/oggi/riassegna`);
+  - la settimana a colori.
+
+Componenti `day-plan` e `team-plan`, stile
+`public/css/components/planner.css`.
+
+Prompt: "oggi", "cosa devo fare (oggi)", "la mia giornata", "organizer"
+(`show_my_day`; l'IA passa 'day' e 'person' per "cosa ha Lena domani");
+"il team", "chi e' libero", "cosa stanno facendo" (`show_team`).
+
+## Registro attivita'
+
+Quinta fase Brains at Work: cosa ha fatto ognuno e quanto ci ha messo, per
+capire quanto durano davvero i lavori (non per controllare le persone).
+
+**Pacchetto `worklog`**
+- Tabelle `work_entries` (persona, giorno, minuti, cosa, attivita',
+  cliente) e `work_checkins` (quando ognuno ha risposto).
+- Permessi propri: `worklog.view` per segnare il proprio lavoro,
+  `worklog.team` per tempi e andamento.
+- Le attivita' hanno `source_step_id`, la fase del modello da cui nascono,
+  scritta da `WorkOrderService`: serve a confrontare lo stesso lavoro tra
+  commesse diverse.
+
+**Quando lo chiede: `App\Worklog\CheckinService`**
+- Due momenti: alla pausa (la mattina) e mezz'ora prima della fine (il
+  pomeriggio). Se si salta la mattina, la sera si chiede la giornata
+  intera.
+- Propone:
+  - gli appuntamenti, gia' segnati come fatti con la loro durata;
+  - le attivita' spuntate senza tempo;
+  - cio' che il piano prevedeva in quel pezzo di giornata.
+- Per ogni riga: Fatto / In parte / No e i minuti, con - e +; in piu' le
+  cose fuori programma.
+- "Fatto" chiude l'attivita' (commessa, ripianificazione, ricorrenze).
+  Il tempo impiegato e' la somma delle voci.
+
+**Dove si vede**
+- Avviso discreto in basso quando e' il momento (`public/js/worklog-nudge.js`,
+  `/registro/stato`, "Piu' tardi" lo rimanda di un'ora); pulsante "Segna
+  cosa hai fatto" nel bilancio di fine giornata dell'organizer.
+- Schermate: `/registro/check-in`, `/registro` (la propria settimana),
+  `/registro/voci/...` (a mano, solo le proprie).
+
+**Tempi medi: `App\Worklog\DurationStats`**
+- Mediana per tipo di lavoro: la fase del modello, o il titolo normalizzato
+  per le attivita' sciolte. Servono almeno 3 casi in 180 giorni.
+- Con 3+ casi `DayPlanner` usa il tempo vero ("dal registro").
+- Scarti da guardare, scritti come domande e non come sentenze:
+  - un lavoro recente durato almeno 1,5 volte il solito;
+  - una persona che sullo stesso lavoro impiega stabilmente il 40% in piu'
+    degli altri.
+- "Usa X nel modello" aggiorna la stima della fase (`/registro/modello`).
+
+**Pannello dei titolari** (`/registro/andamento`, `WorklogOverviewService`):
+- ore segnate nella settimana e chi oggi non ha ancora risposto;
+- da guardare: chi e' oltre il carico, i casi fuori dal solito, le
+  commesse ferme e le attivita' ferme. Per le fasi conta il giorno "vero",
+  e una commessa ferma non si ripete fase per fase;
+- tempi per tipo di lavoro;
+- in fondo, sempre, la nota su privacy e art. 4 dello Statuto dei
+  Lavoratori.
+
+Componenti `check-in`, `worklog-week`, `work-insights`, stile
+`public/css/components/worklog.css`. Prompt: "cosa ho fatto", "segna il
+lavoro", "fine giornata", "il mio registro", "tempi", "andamento", "chi
+non ha segnato".
+
+## Piano editoriale
+
+Sesta fase Brains at Work: i contenuti social di ogni cliente, dall'idea
+alla pubblicazione, con la revisione interna e l'approvazione del cliente.
+
+**Pacchetto `editorial`**
+- `editorial_posts`: cliente, canale (Instagram, Facebook, TikTok,
+  LinkedIn), formato, data e ora, tema, testo, cosa serve, stato (idea, in
+  lavorazione, revisione interna, da approvare = dal cliente, approvato, da
+  modificare, programmato, pubblicato, scartato).
+  - Due mani: chi scrive il testo (`writer_user_id`) e chi lo realizza
+    (`assigned_user_id`, grafica o video), ognuno con la sua attivita'.
+  - Due approvazioni registrate a parte, con chi, quando e come:
+    `internal_approved_by/at` e `approved_at/approved_via`.
+  - `source_link` (materiale) e `output_link` (file finito) al posto delle
+    colonne di link dell'Excel; `parent_post_id` (la storia nata dal post);
+    `revision_count` (giri di modifiche).
+- `editorial_quotas`: contenuti a settimana da contratto per cliente e
+  canale (`/piano-editoriale/contratti`).
+- `editorial_strategies`: la strategia social del cliente (obiettivi,
+  pubblico, tono, rubriche, da fare e da evitare).
+- Permesso proprio `editorial.approve` (revisione interna).
+
+**Logica: `App\Editorial\EditorialService`**
+- `advance()`: il passo successivo. "Pronto" va in revisione interna, o
+  dritto al cliente se chi lo segna puo' approvare; "da modificare" conta
+  il giro e riapre il lavoro per oggi (stima ridotta), con la nota della
+  revisione o il commento del cliente.
+- `approveAllInternally()` / `approveAllByClient()`: il piano del mese
+  approvato in un colpo (dal piano editoriale e dall'area cliente).
+- `syncTask()`: testo 4 giorni lavorativi prima, realizzazione 2 giorni
+  prima, con i tempi del formato; per un'idea con chi scrive a parte prima
+  solo "tema e testo"; per i video in checklist copertina e sottotitoli.
+- Chi scrive e chi realizza, se mancano, dalla squadra del cliente
+  (`defaultPeople()`).
+- `fillGaps()`: le bozze che mancano al contratto; con la strategia
+  `proposeIdeas()` fa proporre all'IA tema, testo e materiale.
+- `deriveStory()`: la storia dal post.
+
+**Schermate**
+- `/piano-editoriale`: la settimana per cliente (con il link alla strategia
+  e i giri di modifiche), "Da approvare internamente" con "Approva tutti"
+  (solo per chi approva), "Mancano contenuti" con "Crea N bozze" e
+  "Proponi con l'IA".
+- `/piano-editoriale/:id`: anteprima, il passo successivo, le due
+  approvazioni, materiale e file finito, "Crea la storia", "Scrivi con
+  l'IA", "Link per il cliente".
+- Organizer: a chi approva, "Approva i contenuti in revisione".
+
+## Fatture e fattura elettronica
+
+**Pacchetto `invoices`** (riscritto): fattura a una riga (descrizione,
+imponibile, aliquota), numero progressivo per anno assegnato all'emissione,
+stato SdI; `company_profiles` con i dati di chi emette (in Configurazione,
+obbligatorio: `/fatture/dati-azienda`).
+
+**`App\Invoicing`**
+- `InvoiceService`: bozza da un incasso dello scadenzario (pulsante
+  "Fattura"), emissione (numero, IVA, totale; di un incasso gia' arrivato
+  nasce pagata), XML, invio, pagata (incassa anche l'incasso collegato).
+  Incassato un incasso, anche la sua fattura emessa risulta pagata
+  (`PaymentPlanService::markPaid()`).
+- `FatturaPaXml`: XML FatturaPA FPR12 (TD01, una riga, regime ordinario o
+  forfettario N2.2, codice SDI o PEC, IBAN per il bonifico). Sempre
+  scaricabile (`/fatture/:id/xml`). Note di credito, ritenute, bollo,
+  clienti esteri: non ancora.
+- Invio allo SdI con un fornitore collegato (`InvoiceProviderInterface`):
+  `FattureInCloudConnector` (crea la fattura su Fatture in Cloud e la invia
+  da li') o `ArubaInvoiceConnector` (carica l'XML). Senza fornitore: XML da
+  caricare a mano. Lo stato "consegnata/scartata" non torna ancora in
+  automatico.
+- `/fatture`: da fatturare, bozze, da inviare allo SdI, da incassare,
+  pagate di recente.
+
+**Pro forma** (`document_type`): richiesta di pagamento senza valore
+fiscale, numerata a parte (PF2026/N), mai allo SdI; "Trasforma in fattura"
+crea la fattura in bozza e passa l'incasso. Dal "Da fatturare" si puo'
+preparare la pro forma invece della fattura.
+
+## Pagamenti online
+
+`App\Payments\PaymentService` con `StripeConnector` (carta e addebito SEPA)
+e `PayPalConnector`, collegabili da Configurazione (facoltativi).
+- Link di pagamento per un incasso ("Link" sulla riga dello scadenzario o
+  "Paga ora" dall'area cliente): il cliente paga il lordo (totale della
+  fattura o importo + IVA).
+- Pagamento automatico: il cliente salva carta o mandato SEPA dall'area
+  cliente (Stripe, mode=setup); il job giornaliero `charge_due_installments`
+  addebita le scadenze arrivate.
+- Conferme: webhook Stripe `/pagamenti/webhook/stripe` (rotta con
+  `'csrf' => false`, la protegge la firma `Stripe-Signature`), ritorno da
+  PayPal `/pagamenti/paypal/ritorno` che incassa l'ordine. L'incasso
+  risulta incassato da solo.
+- PayPal: solo pagamenti singoli (gli abbonamenti PayPal non ci sono).
+
+## Temperatura dei clienti
+
+**Pacchetto `client_health`**: `customer_touchpoints`, il registro dei
+contatti (quando, come, chi, com'era, prossimo passo). Un prossimo passo
+con data diventa un'attivita' di chi ha sentito il cliente.
+
+**`App\ClientHealth\HealthScore`**: da 100 si tolgono punti per i segnali
+(non sentito da 25/45 giorni, ultimo umore, risultati scarsi o parziali dei
+servizi venduti - campo `results` -, pagamenti scaduti, commesse ferme sul
+cliente); bene / da seguire / a rischio. Tiepido a ridosso del rinnovo o
+scontento di recente = a rischio. Il suggerimento dipende dal segnale piu'
+serio. Soglie costanti nella classe.
+
+**Dove si vede**: `/clienti/temperatura` ("clienti a rischio"), pallino e
+scheda "A rischio" nella lista clienti, riquadro "Temperatura" nella scheda
+cliente con "Com'e' andata", e nell'organizzatore di chi segue il cliente
+("Senti X", se non sentito da una settimana).
+
+## Squadra del cliente
+
+`customer_team_members` (pacchetto `customers`): chi segue il cliente e per
+cosa (referente, social, grafica, video, sviluppo, ADV, strategia).
+Riquadro "Squadra interna" nella scheda cliente; scheda "I miei" nella
+lista clienti (referente o in squadra). Serve a proporre chi scrive e chi
+realizza i contenuti e a chi va una richiesta. Il rapporto `influencer`
+e' tra i tipi di contatto; i servizi venduti hanno un `reference` (es. il
+dominio).
+
+## Richieste dei clienti
+
+Pacchetto `client_requests` (`/richieste`, `App\ClientRequests`): quello
+che arriva al telefono, su WhatsApp o per email si segna in pochi secondi
+(anche da "Segna una richiesta" nella scheda cliente).
+- Chi la fa si propone dalla squadra del cliente (social per modifiche e
+  contenuti, sviluppo per l'assistenza tecnica, il referente per il
+  resto); diventa la sua attivita' nell'organizer, e l'attivita' fatta
+  chiude la richiesta (`TaskService::complete()`).
+- Le non assegnate le smista chi ha `client_requests.assign` (promemoria
+  nell'organizer).
+- Lavoro extra: con l'importo, fatto, va nello scadenzario con un clic
+  ("Nello scadenzario").
+- "Chi chiede di piu'" negli ultimi 30 giorni.
+
+## Preventivi
+
+Pacchetto `quotes` (`/preventivi`, `App\Quotes`): `quotes` e `quote_lines`.
+- Righe dal listino (l'autocompletamento compila descrizione e prezzo), una
+  tantum o ricorrenti, ognuna con il suo piano di pagamento; sconto, giri di
+  modifiche inclusi, condizioni, pagamento (proposto dal cliente).
+- Numero P2026/N alla creazione; "Prima di mandarlo manca" (righe, prezzi,
+  dati del cliente, scadenza, pagamento).
+- Approvazione (`quotes.approve`, promemoria nell'organizer) prima
+  dell'invio; stampa/PDF da `/preventivi/:id/stampa`.
+- Il cliente lo vede e lo accetta dalla sua area; accettato (o segnato
+  dall'agenzia), ogni riga diventa un servizio venduto con le scadenze
+  (`QuoteService::accept()`). Inviato e non accettato entro la validita':
+  scaduto.
+
+## Ferie, permessi e spese
+
+- `leaves` (`/ferie`): ferie, permessi (anche a ore), ROL, malattia; chi
+  approva (`leaves.approve`) decide con un clic. L'organizer non pianifica
+  lavoro a chi e' via e toglie le ore del permesso; la squadra lo mostra.
+- `expenses` (`/spese`): carburante, parcheggi, modelle, materiali, legate
+  a cliente e commessa; approvazione e rimborso (`expenses.approve`). Le
+  approvate sono il costo vivo della commessa (scheda commessa).
+- Chi non approva vede e modifica solo le sue.
+
+## Archivio foto e video
+
+Pacchetto `media_library` (`/materiali`, `App\Media`): l'indice di foto e
+video che restano su Google Drive (`GoogleDriveConnector`, sola lettura,
+stesso ID client e callback del Calendario) o in una cartella del
+server/NAS (`config 'media' => ['localPath' => ...]`, `LocalFolderSource`).
+- `MediaLibraryService::sync()` (job `sync_media_library`, ogni ora): file
+  nuovi, cambiati, spariti; il cliente si deduce dalla cartella.
+- `MediaAnalyzer` (job `describe_media`, 15 file ogni 10 minuti): l'IA
+  guarda l'immagine ridotta (Imagick) o fino a 8 fotogrammi del video
+  (ffmpeg, video fino a 300 MB; oltre, l'anteprima di Google) e salva la
+  descrizione: `description`, `tags`, persone, ambiente, occasione,
+  orientamento e il JSON completo (`analysis`, con i momenti del video).
+  Anteprima in `data/media-thumbs`.
+- `MediaSearchService`: la richiesta a parole diventa filtri e parole (con
+  sinonimi, dall'IA), il database trova i candidati, l'IA tiene quelli
+  adatti con il perche'. Senza IA: ricerca per parole.
+- Schede con "Apri" e "Link" (copia), scheda del file con i momenti del
+  video, descrizione correggibile a mano, "Rifai la descrizione".
+- Servono Imagick e ffmpeg sul server.
+- `AiService::jsonWithImages()`: le immagini all'IA (OpenAI o Claude).
+
+## Area cliente
+
+`/area/:token`, pagina pubblica senza password (`PortalController`,
+`PortalService`, vista `module/Index/view/portal`, stile `portal.css`): il
+token lungo e casuale in `customers.portal_token` e' la chiave. Il cliente
+vede cosa aspetta lui (proposte da accettare, contenuti da approvare,
+anche tutti insieme, pagamenti), come paga
+(metodo preferito, addebito automatico), servizi e rinnovi, fatture. Ogni
+azione ricontrolla che la riga sia sua; POST con CSRF e redirect. Link da
+"Area cliente" nella scheda cliente (`/clienti/:id/area-cliente`, `?nuovo=1`
+lo sostituisce) o da "Link per il cliente" su un contenuto.
 
 ## Scheduler + eventi (motore reale, non solo schema)
 
@@ -411,6 +928,22 @@ logo va in `public/uploads/` (fuori da git). Ogni pagina riporta al passo
 mancante, con i dati gia' inseriti; chiuso il wizard il link non conta piu'.
 Senza tabella `settings` o senza `setup.status` (Uno, Assilevi) il progetto
 vale come configurato. Preset oggi: `assilevi` (assistenza reclami voli).
+
+## Utenti, profili e menu
+
+- `/utenti`: nuovo utente, profilo, password provvisoria o "Manda il link
+  per la password" (lo stesso flusso di "password dimenticata", serve la
+  posta configurata), disattivazione. L'amministratore (id 1) resta
+  amministratore.
+- `/profili` (`ProfilesController`, `EditProfileTool`): i ruoli e i loro
+  permessi, una casella per area. `users.manage` non si toglie
+  all'amministratore. I permessi nuovi valgono dal prossimo accesso.
+- Menu (`ShowMenuTool`): voci raggruppate per sezione nell'ordine di
+  `App\Support\Sections` (Lavoro, Contenuti, Clienti, Amministrazione,
+  Impostazioni), con le voci di tutti i giorni in testa (`FIRST`) e la
+  prima frase della descrizione.
+- Il provisioner non copia nei progetti gli script SQL di Uno
+  (`public/tmp`), l'archivio di prova e le anteprime.
 
 ## Configurazione: cosa manca per essere operativi
 

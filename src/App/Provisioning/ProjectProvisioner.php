@@ -48,6 +48,8 @@ final class ProjectProvisioner
         '.git', 'nbproject', 'design', 'data/logs', 'data/cache', 'db/migrations',
         'packages', 'config/autoload/local.php', 'config/autoload/project.php', 'config/guide.php',
         'README.md', 'AGENTS.md', 'public/uploads',
+        // Gli script SQL di produzione di Uno, l'archivio di prova e le sue anteprime: non sono del progetto.
+        'public/tmp', 'data/media-demo', 'data/media-thumbs',
     ];
 
     // Il generatore di progetti e l'installatore di pacchetti restano su Uno:
@@ -55,7 +57,7 @@ final class ProjectProvisioner
     // Gli asset JS/CSS restano (app.js li importa), senza server dietro sono inerti.
     private const CONFIGURATOR_FILES = [
         'src/App/Provisioning', 'src/App/Model/Project.php', 'src/App/Repository/ProjectRepository.php',
-        'src/App/Repository/ProjectDatabaseRepository.php', 'src/App/View/Component/ProjectsBoardComponent.php',
+        'src/App/Repository/ProjectDatabaseRepository.php', 'src/App/Repository/DemoDataRepository.php', 'src/App/View/Component/ProjectsBoardComponent.php',
         'src/App/Prompt/Tool/ShowProjectsTool.php', 'src/App/Prompt/Tool/InstallPackageTool.php',
         'src/App/Prompt/Tool/ListPackagesTool.php', 'module/Index/src/Controller/ProjectsController.php',
         'bin/create-project.php',

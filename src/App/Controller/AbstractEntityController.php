@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Model\AbstractModel;
 use App\Package\PackageManifest;
 use App\Prompt\Tool\AbstractEditEntityTool;
 use App\Repository\AbstractRepository;
@@ -104,8 +105,10 @@ abstract class AbstractEntityController extends AuthController
             // sarebbe gia' fermata prima per "campo obbligatorio mancante"
             // anche quando esiste un default sensato (successo davvero,
             // vedi il pacchetto 'tasks').
+            // ?customer_id=5 dal pulsante "Nuovo servizio" della scheda
+            // cliente: il form arriva gia' collegato, niente da cercare.
             $modelClass = $this->repository()->modelClass();
-            $model = $modelClass::fromArray($this->defaultsOnCreate());
+            $model = $modelClass::fromArray($this->prefillFromQuery() + $this->defaultsOnCreate());
 
             return $this->renderPage([$tool->buildForm($model)], ['title' => $this->newPageTitle()]);
         }
@@ -117,8 +120,12 @@ abstract class AbstractEntityController extends AuthController
             $components = [$tool->buildForm($modelClass::fromArray($data), null, null, $fieldErrors)];
         } else {
             $repo = $this->repository();
+            foreach ($this->defaultsOnCreate() as $key => $default) {
+                $data[$key] ??= $default;
+            }
             $id = $repo->insert($data);
-            $components = [$tool->buildForm($repo->find($id), $this->createdMessage(), 'success')];
+            $this->afterCreate($id);
+            $components = $this->componentsAfterCreate($id);
         }
 
         return $this->renderPage($components, ['title' => $this->newPageTitle()]);
@@ -149,10 +156,11 @@ abstract class AbstractEntityController extends AuthController
             // modifiche fatte bene sugli altri.
             $modelClass = $repo->modelClass();
             $merged = $modelClass::fromArray(array_merge($model->toArray(), $data));
-            $components = [$tool->buildForm($merged, null, null, $fieldErrors)];
+            $components = $tool->buildPage($merged, null, null, $fieldErrors);
         } else {
             $repo->update($id, $data);
-            $components = [$tool->buildForm($repo->find($id), $this->updatedMessage(), 'success')];
+            $message = $this->afterUpdate($id, $model) ?? $this->updatedMessage();
+            $components = $tool->buildPage($repo->find($id), $message, 'success');
         }
 
         return $this->renderPage($components, ['title' => $this->editPageTitle()]);
@@ -171,10 +179,66 @@ abstract class AbstractEntityController extends AuthController
     {
         $id = (int) $this->param('id');
         $this->repository()->delete($id);
+        $this->afterDelete($id);
 
         $components = $this->container->get($this->listToolClass())->execute(['page' => 1]);
 
         return $this->renderPage($components, ['title' => $this->listPageTitle()]);
+    }
+
+    /** Dopo l'inserimento (es. generare lo scadenzario di un servizio venduto). */
+    protected function afterCreate(int $id): void
+    {
+    }
+
+    /** Dopo l'eliminazione (logica). */
+    protected function afterDelete(int $id): void
+    {
+    }
+
+    /**
+     * Controlli che legano piu' campi (es. la fine dopo l'inizio): campo =>
+     * messaggio. $data ha solo i campi arrivati dal form.
+     *
+     * @return array<string,string>
+     */
+    protected function crossFieldErrors(array $data): array
+    {
+        return [];
+    }
+
+    /** Dopo il salvataggio: puo' tornare un messaggio diverso da quello standard. */
+    protected function afterUpdate(int $id, AbstractModel $before): ?string
+    {
+        return null;
+    }
+
+    /** Cosa mostrare dopo una creazione riuscita: di norma la scheda appena creata. */
+    protected function componentsAfterCreate(int $id): array
+    {
+        /** @var AbstractEditEntityTool $tool */
+        $tool = $this->container->get($this->editToolClass());
+
+        return $tool->buildPage($this->repository()->find($id), $this->createdMessage(), 'success');
+    }
+
+    /** Solo campi del manifest, solo valori semplici: la query string non puo' scrivere altro. */
+    private function prefillFromQuery(): array
+    {
+        if ($this->request->getMethod() !== 'GET') {
+            return [];
+        }
+
+        $fields = (new PackageManifest($this->packageName()))->entities()[$this->manifestEntityKey()]['fields'];
+        $prefill = [];
+        foreach (array_keys($fields) as $key) {
+            $value = $this->request->get($key);
+            if (is_string($value) && $value !== '') {
+                $prefill[$key] = $value;
+            }
+        }
+
+        return $prefill;
     }
 
     protected function repository(): AbstractRepository
@@ -207,6 +271,17 @@ abstract class AbstractEntityController extends AuthController
             }
 
             $value = trim((string) $raw);
+            // "1.250,50" scritto all'italiana: si salva 1250.50.
+            if (($definition['format'] ?? null) === 'decimal' && $value !== '') {
+                $value = str_contains($value, ',') ? str_replace(['.', ','], ['', '.'], $value) : $value;
+            }
+            // Campo data e ora del browser: "2026-10-21T14:30" -> "2026-10-21 14:30:00".
+            if (($definition['format'] ?? null) === 'datetime' && preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $value) === 1) {
+                $value = str_replace('T', ' ', $value) . ':00';
+            }
+            if (($definition['format'] ?? null) === 'boolean') {
+                $value = in_array($value, ['1', 'on', 'true'], true) ? '1' : '0';
+            }
             $data[$key] = $value !== '' ? $value : null;
 
             if ($value === '') {
@@ -218,12 +293,21 @@ abstract class AbstractEntityController extends AuthController
                 continue;
             }
 
+            if (isset($definition['options']) && !in_array($value, $definition['options'], true)) {
+                $fieldErrors[$key] = 'Scegli uno dei valori proposti.';
+                continue;
+            }
+
             if (isset($definition['format'])) {
                 $error = FieldValidator::validate($definition['format'], $value, $definition['formatOptions'] ?? []);
                 if ($error !== null) {
                     $fieldErrors[$key] = $error;
                 }
             }
+        }
+
+        if ($fieldErrors === []) {
+            $fieldErrors = $this->crossFieldErrors($data);
         }
 
         return [$data, $fieldErrors];

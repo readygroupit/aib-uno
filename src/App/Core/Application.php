@@ -44,7 +44,7 @@ final class Application
              * ricordato form per form/endpoint per endpoint.
              */
             $submittedToken = $request->get('_csrf') ?? $request->csrfHeader();
-            if ($request->getMethod() === 'POST' && !Csrf::verify($submittedToken)) {
+            if ($request->getMethod() === 'POST' && ($match['csrf'] ?? true) && !Csrf::verify($submittedToken)) {
                 throw new Exception\ForbiddenException('Token CSRF non valido o mancante.');
             }
 

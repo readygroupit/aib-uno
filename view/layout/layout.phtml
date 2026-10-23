@@ -51,6 +51,13 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <link rel="stylesheet" href="<?= $this->asset('/css/components/activity-feed.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/profile-layout.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/claim-table.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/accounts.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/work.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/calendar.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/planner.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/worklog.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/editorial.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/media.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/setup.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/agents.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/projects.css') ?>">
@@ -89,6 +96,7 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <script>window.UNO_GUIDE = <?= json_encode(is_file(CONFIG_PATH . '/guide.php') ? require CONFIG_PATH . '/guide.php' : [], JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) ?>;</script>
     <script>window.UNO_DASHBOARD_HOME = <?= json_encode(APP_HAS_DASHBOARD) ?>;</script>
     <script>window.UNO_APP_NAME = <?= json_encode(APP_NAME) ?>;</script>
+    <script>window.UNO_WORKLOG = <?= json_encode(in_array('worklog.view', $_SESSION['user']['permissions'] ?? [], true) && in_array('worklog', \App\Package\PackageCatalogService::installedNames(), true)) ?>;</script>
     <script>window.UNO_SHOW_ONBOARDING = <?= json_encode($unoShowOnboarding) ?>;</script>
     <!-- Versione (?v=filemtime) di ogni file JS, anche di quelli importati da altri moduli: nessun file vecchio dalla cache del browser (vedi View::importMap()). -->
     <script type="importmap"><?= $this->importMap() ?></script>

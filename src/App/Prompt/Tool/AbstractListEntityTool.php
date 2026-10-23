@@ -78,6 +78,12 @@ abstract class AbstractListEntityTool implements PromptToolInterface
         return [];
     }
 
+    /** Per aggiungere o formattare colonne (es. il nome del cliente al posto dell'id) - righe invariate di default. */
+    protected function decorateRows(array $rows): array
+    {
+        return $rows;
+    }
+
     protected function orderBy(): string
     {
         return 'id DESC';
@@ -115,7 +121,7 @@ abstract class AbstractListEntityTool implements PromptToolInterface
     {
         $page = max(1, (int) ($input['page'] ?? 1));
         $result = $this->repository->paginate($page, $this->perPage(), [], $this->orderBy());
-        $rows = array_map(static fn ($model) => $model->toDisplayArray(), $result['items']);
+        $rows = $this->decorateRows(array_map(static fn ($model) => $model->toDisplayArray(), $result['items']));
 
         // 'hero' + colore di sezione invece del solito bianco: e' la
         // card protagonista di una lista, e il colore corrisponde

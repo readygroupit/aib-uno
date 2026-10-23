@@ -47,7 +47,7 @@ final class CasesController extends AbstractEntityController
     }
 
     /**
-     * Vocabolario allineato a ListCustomersTool::STAGE_META (5 stati del
+     * Vocabolario allineato a ListCustomerClaimsTool::STAGE_META (5 stati del
      * ciclo di vita reale di un reclamo, non piu' "non avviata" generico) -
      * una pratica nuova comincia sempre dalla raccolta documenti.
      */

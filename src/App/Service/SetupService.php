@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Connector\ConnectorRegistry;
 use App\Core\Container;
 use App\Package\PackageCatalogService;
+use App\Repository\CompanyProfileRepository;
 use App\Repository\MessageTemplateRepository;
 
 /**
@@ -45,9 +46,11 @@ final class SetupService
     private ConnectorRegistry $connectors;
     private MessageTemplateRepository $templates;
     private PackageCatalogService $packages;
+    private Container $container;
 
     public function __construct(Container $container)
     {
+        $this->container = $container;
         $this->connectors = $container->get(ConnectorRegistry::class);
         $this->templates = $container->get(MessageTemplateRepository::class);
         $this->packages = $container->get(PackageCatalogService::class);
@@ -56,14 +59,24 @@ final class SetupService
     /** @return array{items: list<array<string, mixed>>, progress: array{done: int, total: int, percent: int}} */
     public function payload(): array
     {
-        $items = [
-            $this->connectorItem('jotform', 'Collega Jotform', 'I moduli di raccolta contatti: qui si vedono quelli trovati.', true),
-            $this->connectorItem('google_sheets', 'Collega Google Sheets', 'Il foglio usato come archivio operativo.', true),
-            $this->templatesItem(),
-            $this->connectorItem('whatsapp', 'Collega WhatsApp', 'Il numero aziendale da cui far partire i messaggi ai clienti.', false),
-            $this->linkItem('conciliaweb', 'ConciliaWeb', 'Invio e monitoraggio delle pratiche in conciliazione: per ora si seguono a mano.', '/pratiche?setup=conciliaweb'),
-            $this->linkItem('classification', 'Classificazione del disservizio', 'Il tipo di disservizio si sceglie a mano per ogni pratica.', '/pratiche?setup=classification'),
-        ];
+        // Solo i passaggi che servono ai pacchetti di QUESTO progetto: il
+        // gestionale dei reclami voli e l'agenzia non hanno la stessa lista.
+        $has = fn (string ...$packages) => array_diff($packages, PackageCatalogService::installedNames()) === [];
+        $items = array_values(array_filter([
+            $has('leads') ? $this->connectorItem('jotform', 'Collega Jotform', 'I moduli di raccolta contatti: qui si vedono quelli trovati.', true) : null,
+            $has('leads') ? $this->connectorItem('google_sheets', 'Collega Google Sheets', 'Il foglio usato come archivio operativo.', true) : null,
+            $has('appointments') ? $this->connectorItem('google_calendar', 'Collega Google Calendar', 'Appuntamenti sul calendario dell\'agenzia, inviti ai colleghi, link Meet per le videochiamate.', true) : null,
+            $has('media_library', 'connectors') ? $this->connectorItem('google_drive', 'Collega Google Drive', 'L\'archivio di foto e video: Uno li fa descrivere dall\'IA e li rende ricercabili a parole.', true) : null,
+            $has('installments', 'connectors') ? $this->connectorItem('stripe', 'Collega Stripe', 'Il cliente paga con carta o addebito SEPA da un link; rate e rinnovi si addebitano da soli a chi attiva il pagamento automatico.', false) : null,
+            $has('installments', 'connectors') ? $this->connectorItem('paypal', 'Collega PayPal', 'Per i clienti che preferiscono pagare con PayPal.', false) : null,
+            $has('invoices') ? $this->companyItem() : null,
+            $has('invoices', 'connectors') ? $this->connectorItem('fatture_in_cloud', 'Collega Fatture in Cloud', 'Le fatture emesse partono allo SdI da Fatture in Cloud (con il PDF per il cliente). Basta uno tra Fatture in Cloud e Aruba.', false) : null,
+            $has('invoices', 'connectors') ? $this->connectorItem('aruba_invoices', 'Collega Aruba Fatturazione', 'In alternativa a Fatture in Cloud: l\'XML parte allo SdI dal vostro servizio Aruba.', false) : null,
+            $has('message_templates') ? $this->templatesItem() : null,
+            $has('communications') ? $this->connectorItem('whatsapp', 'Collega WhatsApp', 'Il numero aziendale da cui far partire i messaggi ai clienti.', false) : null,
+            $has('cases') ? $this->linkItem('conciliaweb', 'ConciliaWeb', 'Invio e monitoraggio delle pratiche in conciliazione: per ora si seguono a mano.', '/pratiche?setup=conciliaweb') : null,
+            $has('cases') ? $this->linkItem('classification', 'Classificazione del disservizio', 'Il tipo di disservizio si sceglie a mano per ogni pratica.', '/pratiche?setup=classification') : null,
+        ]));
 
         $required = array_filter($items, static fn (array $item) => $item['required']);
         $done = count(array_filter($required, static fn (array $item) => $item['done'] === true));
@@ -105,6 +118,25 @@ final class SetupService
             'status' => $connected ? 'Collegato' : 'Da collegare',
             'summary' => $connected ? $connector->summary() : null,
             'spec' => $connector->setupSpec(),
+        ];
+    }
+
+    /** I dati di chi emette le fatture: senza, niente fattura elettronica. */
+    private function companyItem(): array
+    {
+        $profile = $this->container->get(CompanyProfileRepository::class)->current();
+        $complete = $profile !== null && $profile->vatNumber && $profile->address && $profile->city && $profile->postalCode;
+
+        return [
+            'key' => 'company_profile',
+            'label' => 'Dati dell\'azienda per le fatture',
+            'description' => 'Ragione sociale, partita IVA, sede, regime fiscale e IBAN: finiscono in ogni fattura.',
+            'required' => true,
+            'kind' => 'link',
+            'href' => '/fatture/dati-azienda',
+            'done' => (bool) $complete,
+            'status' => $complete ? 'Compilati' : 'Da compilare',
+            'summary' => $complete ? $profile->companyName . ', P.IVA ' . $profile->vatNumber : null,
         ];
     }
 

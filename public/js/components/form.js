@@ -69,6 +69,20 @@ function buildAutocompleteControl(field) {
         hidden.value = item.value;
         display.value = item.label;
         closeList();
+        // Es. un servizio del listino: prezzo e rinnovo arrivano da li'.
+        // I campi di testo solo se vuoti: quello che l'operatore ha gia' scritto resta.
+        if (item.fill && hidden.form) {
+            Object.entries(item.fill).forEach(([name, value]) => {
+                const controls = hidden.form.querySelectorAll(`[name="${name}"]`);
+                const control = controls[controls.length - 1];
+                // Un menu a tendina ha sempre un valore di partenza: lo si
+                // allinea comunque al listino.
+                if (control && (!control.value || control.tagName === 'SELECT')) {
+                    control.value = value;
+                    control.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        }
     }
 
     function search(query) {
@@ -137,10 +151,91 @@ function buildAutocompleteControl(field) {
     return el('div', { className: 'field__autocomplete' }, [display, list, hidden]);
 }
 
+// Valori fissi dal manifest ('options'): si sceglie, non si scrive - niente
+// "Ricorrente" e "ricorrente" come due cose diverse.
+function buildSelectControl(field) {
+    const control = el('select', {
+        className: 'field__input field__input--select',
+        id: 'field-' + field.key,
+        name: field.key,
+        required: field.required ? 'required' : null,
+    });
+    if (!field.required || field.value == null || field.value === '') {
+        control.appendChild(el('option', { value: '' }, ['—']));
+    }
+    // Opzioni come testo (il valore e' anche l'etichetta) o come {value, label} (es. un id e un nome).
+    (field.options || []).forEach((option) => {
+        const value = typeof option === 'object' ? String(option.value) : option;
+        const label = typeof option === 'object' ? option.label : option.charAt(0).toUpperCase() + option.slice(1);
+        const node = el('option', { value }, [label]);
+        if (String(field.value ?? '') === value) node.selected = true;
+        control.appendChild(node);
+    });
+    return control;
+}
+
+// Si/no: il campo nascosto manda "0" quando l'interruttore e' spento (un
+// checkbox spento non viaggia nel FormData), il checkbox acceso lo
+// sovrascrive con "1" - PHP tiene l'ultimo valore con lo stesso nome.
+function buildToggleControl(field) {
+    const checkbox = el('input', {
+        type: 'checkbox',
+        className: 'field__toggle-input',
+        id: 'field-' + field.key,
+        name: field.key,
+        value: '1',
+    });
+    checkbox.checked = String(field.value ?? '') === '1';
+    const state = el('span', { className: 'field__toggle-state' }, [checkbox.checked ? 'Si' : 'No']);
+    checkbox.addEventListener('change', () => {
+        state.textContent = checkbox.checked ? 'Si' : 'No';
+    });
+    return el('label', { className: 'field__toggle', for: 'field-' + field.key }, [
+        el('input', { type: 'hidden', name: field.key, value: '0' }),
+        checkbox,
+        el('span', { className: 'field__toggle-track' }, [el('span', { className: 'field__toggle-thumb' })]),
+        state,
+    ]);
+}
+
+// Scelta multipla (es. i colleghi che vengono): chip da accendere, il
+// valore vero e' "2,3" nel campo nascosto.
+function buildCheckboxesControl(field) {
+    const hidden = el('input', { type: 'hidden', name: field.key, value: field.value ?? '' });
+    const selected = new Set(String(field.value ?? '').split(',').map((v) => v.trim()).filter(Boolean));
+    const sync = () => {
+        hidden.value = Array.from(selected).join(',');
+    };
+    const chips = (field.choices || []).map((choice) => {
+        const chip = el('button', {
+            type: 'button',
+            className: 'field__choice' + (selected.has(choice.value) ? ' is-on' : ''),
+            'aria-pressed': selected.has(choice.value) ? 'true' : 'false',
+        }, [choice.label]);
+        chip.addEventListener('click', () => {
+            if (selected.has(choice.value)) selected.delete(choice.value); else selected.add(choice.value);
+            chip.classList.toggle('is-on', selected.has(choice.value));
+            chip.setAttribute('aria-pressed', selected.has(choice.value) ? 'true' : 'false');
+            sync();
+        });
+        return chip;
+    });
+    return el('div', { className: 'field__choices', id: 'field-' + field.key }, [...chips, hidden]);
+}
+
+function buildControl(field) {
+    switch (field.inputType) {
+        case 'checkboxes': return buildCheckboxesControl(field);
+        case 'autocomplete': return buildAutocompleteControl(field);
+        case 'textarea': return buildTextareaControl(field);
+        case 'select': return buildSelectControl(field);
+        case 'toggle': return buildToggleControl(field);
+        default: return buildPlainControl(field);
+    }
+}
+
 function buildField(field) {
-    const control = field.inputType === 'autocomplete'
-        ? buildAutocompleteControl(field)
-        : field.inputType === 'textarea' ? buildTextareaControl(field) : buildPlainControl(field);
+    const control = buildControl(field);
 
     const children = [
         el('label', { className: 'field__label', for: 'field-' + field.key }, [field.label]),
@@ -154,9 +249,37 @@ function buildField(field) {
     // "qualcosa" e' andato storto.
     if (field.error) {
         children.push(el('p', { className: 'field__help' }, [field.error]));
+    } else if (field.help) {
+        children.push(el('p', { className: 'field__hint' }, [field.help]));
     }
 
-    return el('div', { className: 'field field--' + (field.width || 'half') + (field.error ? ' field--error' : '') }, children);
+    const wrap = el('div', { className: 'field field--' + (field.width || 'half') + (field.error ? ' field--error' : '') }, children);
+    wrap.dataset.key = field.key;
+    if (field.showIf) {
+        wrap.dataset.showIfField = field.showIf.field;
+        wrap.dataset.showIfIn = JSON.stringify(field.showIf.in || []);
+    }
+    return wrap;
+}
+
+// Campi che dipendono dal valore di un altro (vedi 'showIf' nel manifest):
+// si ricalcola a ogni cambio. Un box rimasto senza campi visibili sparisce.
+function applyConditionalFields(form) {
+    const valueOf = (name) => {
+        const controls = form.querySelectorAll(`[name="${name}"]`);
+        const last = controls[controls.length - 1];
+        if (!last) return '';
+        if (last.type === 'checkbox') return last.checked ? '1' : '0';
+        return last.value;
+    };
+
+    form.querySelectorAll('[data-show-if-field]').forEach((wrap) => {
+        const allowed = JSON.parse(wrap.dataset.showIfIn || '[]');
+        wrap.hidden = !allowed.includes(valueOf(wrap.dataset.showIfField));
+    });
+    form.querySelectorAll('.form-box').forEach((box) => {
+        box.hidden = Array.from(box.querySelectorAll('.field')).every((f) => f.hidden);
+    });
 }
 
 // Tutti i campi con errore, attraversando sezioni/box - serve per il
@@ -287,6 +410,10 @@ function renderForm(data) {
     }
     children.push(sectionsEl);
 
+    (data.hiddenFields || []).forEach((f) => {
+        children.push(el('input', { type: 'hidden', name: f.key, value: f.value ?? '' }));
+    });
+
     if (data.csrfToken) {
         children.push(el('input', { type: 'hidden', name: '_csrf', value: data.csrfToken }));
     }
@@ -324,6 +451,8 @@ function renderForm(data) {
     children.push(actionsRow);
 
     const form = el('form', { method: data.method || 'POST', action: data.action }, children);
+    applyConditionalFields(form);
+    form.addEventListener('change', () => applyConditionalFields(form));
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -355,6 +484,27 @@ function renderForm(data) {
                 });
             });
     });
+
+    // Sotto una scheda di dettaglio il form parte chiuso: prima si legge,
+    // poi, se serve, si apre e si modifica.
+    if (data.collapsed) {
+        const body = el('div', { className: 'form__collapsible' }, [form]);
+        body.hidden = true;
+        const toggle = el('button', {
+            type: 'button',
+            className: 'form__expand',
+            'aria-expanded': 'false',
+            onClick: () => {
+                body.hidden = !body.hidden;
+                toggle.setAttribute('aria-expanded', body.hidden ? 'false' : 'true');
+                toggle.querySelector('.form__expand-action').textContent = body.hidden ? 'Modifica' : 'Chiudi';
+            },
+        }, [
+            el('span', { className: 'card__title form__expand-title' }, [data.title || 'Dati']),
+            el('span', { className: 'form__expand-action' }, ['Modifica']),
+        ]);
+        return el('section', { className: 'card form form--collapsible' }, [toggle, body]);
+    }
 
     return el('section', { className: 'card form' }, [
         data.title ? el('h2', { className: 'card__title' }, [data.title]) : null,

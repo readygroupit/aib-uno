@@ -53,6 +53,25 @@ final class Request
         return is_array($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK ? $file : null;
     }
 
+    /** Indirizzo da cui si sta usando l'app (per i link da mandare fuori: pagamenti, area cliente). */
+    public function baseUrl(): string
+    {
+        $https = ($_SERVER['HTTPS'] ?? '') === 'on' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+
+        return ($https ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+    }
+
+    /** Il corpo grezzo (webhook: la firma si calcola su questo, non su $_POST). */
+    public function rawBody(): string
+    {
+        return (string) file_get_contents('php://input');
+    }
+
+    public function header(string $name): ?string
+    {
+        return $_SERVER['HTTP_' . strtoupper(str_replace('-', '_', $name))] ?? null;
+    }
+
     public function isAjax(): bool
     {
         return ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest';

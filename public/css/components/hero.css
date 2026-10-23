@@ -743,9 +743,24 @@
 
 .menu-grid__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
     gap: 14px;
 }
+
+/* Titolo di sezione nella vista "Tutte": occupa la riga intera. */
+.menu-grid__heading {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 -4px;
+    font-family: var(--font-heading);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-petrol);
+}
+
+.menu-grid__heading:first-child { margin-top: 0; }
 
 .menu-grid__empty {
     text-align: center;

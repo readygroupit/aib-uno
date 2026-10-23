@@ -71,6 +71,12 @@ final class PackageManifest
         return $selection;
     }
 
+    /** Permessi propri (azione => [nome, descrizione]), o null per i quattro soliti. */
+    public function permissions(): ?array
+    {
+        return $this->data['permissions'] ?? null;
+    }
+
     public function selectableDirectly(): bool
     {
         return $this->data['selectableDirectly'] ?? true;

@@ -1,0 +1,287 @@
+/*
+ * Registro attivita' (check-in.js, worklog-week.js, work-insights.js,
+ * worklog-nudge.js).
+ */
+
+.ci-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ci-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: #fff;
+    border: var(--hairline);
+    transition: background 0.15s ease;
+}
+
+.ci-row.is-fatto { background: linear-gradient(90deg, rgba(79, 123, 92, 0.1), #fff 60%); }
+.ci-row.is-in-parte { background: linear-gradient(90deg, rgba(229, 201, 121, 0.22), #fff 60%); }
+.ci-row.is-no { opacity: 0.55; }
+
+.ci-row--extra {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ci-row__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ci-row__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.ci-row__title .icon svg {
+    width: 12px;
+    height: 12px;
+    color: var(--color-teal-dark);
+}
+
+.ci-row__meta {
+    font-size: 12px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.ci-states {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 11px;
+    background: rgba(18, 51, 63, 0.06);
+}
+
+.ci-state {
+    padding: 6px 11px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(18, 51, 63, 0.6);
+    cursor: pointer;
+}
+
+.ci-state.is-on {
+    background: #fff;
+    color: var(--color-petrol);
+    box-shadow: 0 1px 3px rgba(18, 51, 63, 0.14);
+}
+
+.ci-minutes {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ci-minutes__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: var(--hairline);
+    background: #fff;
+    color: var(--color-petrol);
+    cursor: pointer;
+}
+
+.ci-minutes__btn .icon svg {
+    width: 10px;
+    height: 10px;
+}
+
+.ci-minutes__value {
+    min-width: 62px;
+    text-align: center;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.ci-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.ci-actions .acc-muted {
+    font-size: 12.5px;
+}
+
+/* --- Registro della settimana --- */
+.wl-today {
+    background:
+        radial-gradient(120% 90% at 100% 0%, rgba(229, 201, 121, 0.16), transparent 50%),
+        var(--color-panel);
+}
+
+/* --- Tempi per tipo di lavoro --- */
+.wl-report {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wl-report__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) auto;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: #fff;
+    border: var(--hairline);
+}
+
+.wl-report__name {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 14px;
+}
+
+.wl-report__numbers {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.65);
+}
+
+.wl-report__numbers strong {
+    color: var(--color-petrol);
+}
+
+.wl-report__people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.wl-report__row > .btn {
+    justify-self: end;
+}
+
+.wl-privacy {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: rgba(18, 51, 63, 0.04);
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: rgba(18, 51, 63, 0.7);
+}
+
+.wl-privacy .icon svg {
+    width: 13px;
+    height: 13px;
+    margin-top: 2px;
+}
+
+/* --- Avviso discreto --- */
+.wl-nudge {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 460px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #fff;
+    border: var(--hairline);
+    box-shadow: 0 22px 46px -18px rgba(11, 36, 48, 0.45);
+    transform: translateY(16px);
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.wl-nudge.is-visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.wl-nudge__icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    background: rgba(229, 201, 121, 0.35);
+    color: #6b5212;
+}
+
+.wl-nudge__icon .icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+.wl-nudge .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.wl-nudge__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+}
+
+.wl-nudge__text span {
+    font-size: 12px;
+    color: rgba(18, 51, 63, 0.6);
+}
+
+@media (max-width: 720px) {
+    .ci-row {
+        grid-template-columns: 1fr;
+    }
+
+    .wl-report__row {
+        grid-template-columns: 1fr;
+    }
+
+    .wl-nudge {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        flex-wrap: wrap;
+    }
+}
+
+/* Testate con piu' pulsanti: vanno a capo come gruppo, mai dentro un pulsante. */
+.pl .claim-table__header {
+    flex-wrap: wrap;
+}
+
+.pl .claim-table__actions {
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.pl .claim-table__actions .btn,
+.pl .cal-nav__today {
+    white-space: nowrap;
+}

@@ -1,0 +1,949 @@
+/*
+ * Clienti, scheda cliente, servizi venduti, scadenzario (customer-list.js,
+ * customer-profile.js, service-summary.js, due-board.js, accounts-ui.js).
+ * Struttura di lista e pannello presa da claim-table.css; qui solo cio'
+ * che e' proprio di queste schermate. Stati con tinte tenui di sfondo e
+ * testo, mai bordini colorati; sfumature solo nei colori del tema.
+ */
+
+/* --- Lista clienti: colonne --- */
+.acc-list__grid {
+    display: grid;
+    grid-template-columns: minmax(170px, 2fr) minmax(120px, 1.6fr) minmax(84px, 0.8fr) minmax(130px, 1.5fr);
+    gap: 14px;
+    align-items: center;
+}
+
+.acc-ellipsis {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.acc-when__main--wrap {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.acc-list__grid--simple {
+    display: grid;
+    grid-template-columns: minmax(200px, 3fr) minmax(120px, 1fr);
+    gap: 14px;
+    align-items: center;
+}
+
+.acc-muted {
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.45);
+}
+
+/* --- Avatar: stesso linguaggio di claim-avatar, colore per tipo di rapporto --- */
+.acc-avatar {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 55%);
+}
+
+.acc-avatar--client { background-color: var(--color-teal-dark); }
+.acc-avatar--partner { background-color: var(--color-brass); }
+.acc-avatar--supplier { background-color: var(--color-lilac); }
+.acc-avatar--person { background-color: var(--color-teal); }
+
+.acc-avatar--sm { width: 30px; height: 30px; border-radius: var(--radius-sm); font-size: 11px; }
+.acc-avatar--md { width: 36px; height: 36px; border-radius: var(--radius-md); font-size: 12px; }
+.acc-avatar--lg { width: 44px; height: 44px; border-radius: 13px; font-size: 14px; }
+.acc-avatar--xl { width: 60px; height: 60px; border-radius: 17px; font-size: 19px; }
+
+.acc-key {
+    display: inline-flex;
+    color: var(--color-brass);
+}
+
+.acc-key .icon svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* --- Chip dei servizi --- */
+.acc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 0;
+}
+
+.acc-chip {
+    max-width: 100%;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(18, 51, 63, 0.05);
+    color: rgba(18, 51, 63, 0.78);
+    font-size: 11.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-decoration: none;
+}
+
+.acc-chip--recurring {
+    background: rgba(95, 138, 134, 0.14);
+    color: #2f5552;
+}
+
+.acc-chip--more {
+    background: none;
+    color: rgba(18, 51, 63, 0.5);
+    padding-left: 2px;
+}
+
+a.acc-chip:hover {
+    background: rgba(18, 51, 63, 0.09);
+}
+
+/* --- Data / stato in due righe (rinnovo, pagamenti) --- */
+.acc-when {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.acc-when__main {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-petrol);
+    white-space: nowrap;
+}
+
+.acc-when__main .icon svg,
+.acc-when__auto .icon svg {
+    width: 12px;
+    height: 12px;
+}
+
+.acc-when__auto {
+    display: inline-flex;
+    color: var(--color-teal);
+}
+
+.acc-when__sub {
+    font-size: 11.5px;
+    color: rgba(18, 51, 63, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.acc-when--danger .acc-when__main { color: #8a2f22; }
+.acc-when--danger .acc-when__sub { color: rgba(138, 47, 34, 0.75); }
+.acc-when--warning .acc-when__main { color: #6b5212; }
+.acc-when--success .acc-when__main { color: #3d6b4f; }
+
+.acc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.acc-badge .icon svg {
+    width: 11px;
+    height: 11px;
+}
+
+/* --- Pannello laterale --- */
+.acc-detail {
+    width: 320px;
+}
+
+.acc-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 8px;
+}
+
+.acc-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 11px;
+    border-radius: var(--radius-md);
+    background: rgba(18, 51, 63, 0.04);
+}
+
+.acc-kpi__label {
+    font-size: 11px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.acc-kpi__value {
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+}
+
+.acc-kpi--strong {
+    color: #fff;
+    background:
+        radial-gradient(120% 100% at 100% 100%, rgba(229, 201, 121, 0.35), transparent 60%),
+        linear-gradient(150deg, #12333f, #0b2430);
+}
+
+.acc-kpi--strong .acc-kpi__label { color: rgba(255, 255, 255, 0.7); }
+.acc-kpi--danger { background: var(--color-danger-bg); color: #8a2f22; }
+
+.acc-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: -6px;
+}
+
+.acc-line {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(18, 51, 63, 0.03);
+    color: inherit;
+    text-decoration: none;
+}
+
+a.acc-line:hover {
+    background: rgba(18, 51, 63, 0.07);
+}
+
+.acc-line__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.acc-line__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12px;
+    color: rgba(18, 51, 63, 0.6);
+    margin: 0;
+}
+
+.acc-line__meta strong {
+    margin-left: auto;
+    color: var(--color-petrol);
+}
+
+.acc-line__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(18, 51, 63, 0.06);
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(18, 51, 63, 0.7);
+}
+
+.acc-line__tag .icon svg {
+    width: 10px;
+    height: 10px;
+}
+
+.acc-line__tag--warning { background: #f6f0df; color: #6b5212; }
+.acc-line__tag--danger { background: var(--color-danger-bg); color: #8a2f22; }
+
+.acc-note {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.7);
+}
+
+.acc-note .icon svg {
+    width: 14px;
+    height: 14px;
+    color: var(--color-brass);
+}
+
+/* --- "Cosa fare adesso": tinta tenue per tono, nessun bordo colorato --- */
+.acc-suggestion {
+    display: flex;
+    gap: 11px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.1) 60%),
+        linear-gradient(120deg, #e7e4f0, #f3f1f6);
+}
+
+.acc-suggestion--danger {
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.1) 60%),
+        linear-gradient(120deg, #f4e1dc, #f8ecE8);
+}
+
+.acc-suggestion--warning {
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.1) 60%),
+        linear-gradient(120deg, #f3e9cc, #f8f2e2);
+}
+
+.acc-suggestion__icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.75);
+    color: var(--color-lilac);
+}
+
+.acc-suggestion--danger .acc-suggestion__icon { color: var(--color-danger); }
+.acc-suggestion--warning .acc-suggestion__icon { color: var(--color-brass); }
+
+.acc-suggestion__icon .icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+.acc-suggestion__title {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-petrol);
+}
+
+.acc-suggestion__text {
+    margin: 3px 0 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: rgba(18, 51, 63, 0.78);
+}
+
+/* --- Scheda cliente / servizio --- */
+.acc-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.acc-profile__head {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.acc-profile__identity {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.acc-profile__titles {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.acc-profile__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.acc-profile__name {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.7px;
+    line-height: 1.15;
+}
+
+.acc-profile__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+}
+
+.acc-fact {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.7);
+    text-decoration: none;
+}
+
+.acc-fact a {
+    color: var(--color-teal-dark);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+a.acc-fact:hover,
+.acc-fact a:hover {
+    color: var(--color-petrol);
+    text-decoration: underline;
+}
+
+.acc-fact .icon svg {
+    width: 13px;
+    height: 13px;
+    color: rgba(18, 51, 63, 0.45);
+}
+
+.acc-profile__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-self: flex-start;
+}
+
+.acc-profile__kpis {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.acc-profile__feature {
+    margin: 0;
+}
+
+.acc-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background:
+        radial-gradient(120% 90% at 0% 0%, rgba(18, 51, 63, 0.06), transparent 45%),
+        radial-gradient(120% 90% at 100% 100%, rgba(229, 201, 121, 0.18), transparent 50%),
+        var(--color-panel);
+}
+
+.acc-mini__label {
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.6);
+}
+
+.acc-mini__value {
+    font-family: var(--font-heading);
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.6px;
+}
+
+.acc-mini__sub {
+    font-size: 12px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.acc-mini--danger .acc-mini__value { color: #8a2f22; }
+.acc-mini--warning .acc-mini__value { color: #6b5212; }
+
+.acc-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.acc-section__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.acc-section__head .card__title {
+    margin: 0;
+}
+
+.acc-section .btn .icon svg,
+.acc-profile .btn .icon svg,
+.acc-board .btn .icon svg {
+    width: 12px;
+    height: 12px;
+}
+
+.acc-section .btn,
+.acc-board .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.acc-empty {
+    margin: 0;
+    font-size: 13.5px;
+    color: rgba(18, 51, 63, 0.6);
+}
+
+.acc-empty a {
+    color: var(--color-teal-dark);
+    font-weight: 600;
+}
+
+/* --- Card dei servizi --- */
+.acc-services {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.acc-service {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 14px 15px;
+    border-radius: var(--radius-lg);
+    background: #fff;
+    border: var(--hairline);
+}
+
+.acc-service--inactive {
+    background: rgba(18, 51, 63, 0.025);
+    opacity: 0.8;
+}
+
+.acc-service__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.acc-service__title {
+    font-family: var(--font-heading);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: var(--color-petrol);
+    text-decoration: none;
+}
+
+.acc-service__title:hover {
+    text-decoration: underline;
+}
+
+.acc-service__price {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-top: 2px;
+}
+
+.acc-service__meta {
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.6);
+}
+
+.acc-service__renewal {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(18, 51, 63, 0.04);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.acc-service__renewal .icon svg {
+    width: 12px;
+    height: 12px;
+}
+
+.acc-service__renewal--warning { background: #f6f0df; color: #6b5212; }
+.acc-service__renewal--danger { background: var(--color-danger-bg); color: #8a2f22; }
+
+.acc-service__when {
+    margin-left: auto;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.acc-service__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 6px;
+    min-height: 30px;
+}
+
+.acc-profile__head > .acc-service__renewal {
+    align-self: flex-start;
+    margin-top: 0;
+}
+
+/* --- Righe di scadenzario --- */
+.acc-due-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    container-type: inline-size;
+}
+
+
+.acc-due {
+    display: grid;
+    grid-template-columns: 62px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 10px;
+    border-radius: var(--radius-md);
+    background: #fff;
+    border: var(--hairline);
+}
+
+.acc-due--paid {
+    background: rgba(18, 51, 63, 0.02);
+}
+
+.acc-due__date {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    background: rgba(18, 51, 63, 0.05);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--color-petrol);
+    text-align: center;
+    line-height: 1.1;
+}
+
+.acc-due__date--danger { background: var(--color-danger-bg); color: #8a2f22; }
+.acc-due__date--warning { background: #f6f0df; color: #6b5212; }
+.acc-due__date--success { background: #eaf1ea; color: #3d6b4f; }
+
+.acc-due__text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.acc-due__customer {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--color-teal-dark);
+    text-decoration: none;
+}
+
+.acc-due__desc {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--color-petrol);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.acc-due__customer:hover,
+.acc-due__desc:hover {
+    text-decoration: underline;
+}
+
+.acc-due__meta {
+    font-size: 12px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.acc-due--danger .acc-due__meta {
+    color: rgba(138, 47, 34, 0.8);
+}
+
+.acc-due__amount {
+    font-size: 14.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.acc-due__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.acc-due__actions .btn,
+.acc-due__actions .badge {
+    white-space: nowrap;
+}
+
+.acc-due__actions .btn .icon svg {
+    width: 11px;
+    height: 11px;
+}
+
+.acc-due__actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Lista stretta (colonna dello scadenzario, schermo piccolo): azioni sotto
+   il testo invece che accanto, cosi' la descrizione resta leggibile. */
+@container (max-width: 620px) {
+    .acc-due {
+        grid-template-columns: 56px minmax(0, 1fr) auto;
+    }
+
+    .acc-due__actions {
+        grid-column: 2 / -1;
+        justify-content: flex-start;
+    }
+}
+
+/* --- Referenti --- */
+.acc-contacts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 8px;
+}
+
+.acc-contact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 11px;
+    border-radius: var(--radius-md);
+    background: rgba(18, 51, 63, 0.03);
+    color: inherit;
+    text-decoration: none;
+}
+
+.acc-contact:hover {
+    background: rgba(18, 51, 63, 0.07);
+}
+
+.acc-contact__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.acc-contact__name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.acc-contact__meta {
+    font-size: 12px;
+    color: rgba(18, 51, 63, 0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- Scadenzario --- */
+.acc-board__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(280px, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+    align-items: start;
+}
+
+.acc-board__main,
+.acc-board__side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+.acc-group__total {
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.6);
+}
+
+.acc-group__total strong {
+    color: var(--color-petrol);
+    font-size: 14px;
+}
+
+.acc-group--danger .card__title {
+    color: #8a2f22;
+}
+
+.acc-due-list .acc-due--renewal {
+    grid-template-columns: 56px minmax(0, 1fr);
+}
+
+.acc-due--renewal .acc-due__actions {
+    grid-column: 2 / -1;
+    justify-content: flex-start;
+}
+
+.acc-due__status {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(18, 51, 63, 0.7);
+}
+
+.acc-due__status--warning { color: #6b5212; }
+.acc-due__status--danger { color: #8a2f22; }
+
+/* --- Esiti --- */
+.acc-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 16px;
+    border-radius: 12px;
+    background: var(--color-petrol);
+    color: #fff;
+    font-size: 13.5px;
+    box-shadow: 0 18px 40px rgba(11, 36, 48, 0.3);
+    transform: translate(-50%, 16px);
+    opacity: 0;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.acc-toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.acc-toast .icon svg {
+    width: 15px;
+    height: 15px;
+    color: var(--color-accent);
+}
+
+.acc-toast--error {
+    background: #7a2a1f;
+}
+
+.acc-notice {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 11px 15px;
+    border-radius: var(--radius-md);
+    font-size: 13.5px;
+    background: rgba(79, 123, 92, 0.14);
+    color: #2f5a3e;
+}
+
+.acc-notice .icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+.acc-notice--error,
+.acc-notice--warning {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.acc-notice--info {
+    background: rgba(95, 138, 134, 0.14);
+    color: #2f5552;
+}
+
+@media (max-width: 1180px) {
+    .acc-list__grid {
+        grid-template-columns: minmax(160px, 2fr) minmax(84px, 0.8fr) minmax(130px, 1.5fr);
+    }
+
+    .acc-list__grid > :nth-child(2) {
+        display: none;
+    }
+}
+
+@media (max-width: 960px) {
+    .acc-detail {
+        width: 100%;
+    }
+
+    .acc-board__layout {
+        grid-template-columns: 1fr;
+    }
+
+    .acc-profile__kpis {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .acc-list__grid {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .acc-list__grid > :nth-child(2),
+    .acc-list__grid > :nth-child(3),
+    .acc-list__grid > :nth-child(4) {
+        display: none;
+    }
+
+    .acc-profile__identity {
+        flex-wrap: wrap;
+    }
+
+    .acc-profile__kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .acc-due {
+        grid-template-columns: 54px minmax(0, 1fr) auto;
+    }
+
+    .acc-due__actions {
+        grid-column: 2 / -1;
+        justify-content: flex-start;
+    }
+}
+
+/* Riga senza la casella della data (righe dei preventivi, richieste, ferie, spese). */
+.acc-due.acc-due--nodate {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+/* Nella colonna stretta: testo sopra, importo e azioni sotto. */
+.acc-board__side .acc-due.acc-due--nodate {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+}
+
+.acc-board__side .acc-due--nodate .acc-due__actions {
+    justify-content: flex-start;
+}

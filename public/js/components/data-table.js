@@ -25,7 +25,7 @@ const CATEGORY_VARIANTS = { view: 'info', create: 'success', edit: 'warning', de
 // mappata sulle 6 varianti .badge--* gia' esistenti invece di 5 colori
 // nuovi da aggiungere al CSS: gli abbinamenti sono gia' vicini per tono
 // (moss/success entrambi verdi, brass/warning entrambi ambra, ecc.).
-const SECTION_LABELS = { sistema: 'Sistema', crm: 'CRM', operativita: 'Operativita', vendite: 'Vendite', contenuti: 'Contenuti' };
+const SECTION_LABELS = { sistema: 'Impostazioni', crm: 'Clienti', operativita: 'Lavoro', vendite: 'Amministrazione', contenuti: 'Contenuti' };
 const SECTION_VARIANTS = { sistema: 'neutral', crm: 'success', operativita: 'accent', vendite: 'warning', contenuti: 'info' };
 
 const STAGE_DANGER_WORDS = ['annullat', 'pers', 'rifiutat', 'scadut', 'eliminat', 'esaurit'];

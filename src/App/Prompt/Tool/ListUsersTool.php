@@ -6,6 +6,7 @@ namespace App\Prompt\Tool;
 
 use App\Core\Container;
 use App\Prompt\PromptToolInterface;
+use App\Repository\ProfileRepository;
 use App\Repository\UserRepository;
 use App\View\Component\DataTableComponent;
 use App\View\Component\StatBoxComponent;
@@ -21,8 +22,11 @@ final class ListUsersTool implements PromptToolInterface
     private StatBoxComponent $statBox;
     private DataTableComponent $dataTable;
 
+    private Container $container;
+
     public function __construct(Container $container)
     {
+        $this->container = $container;
         $this->users = $container->get(UserRepository::class);
         $this->statBox = $container->get(StatBoxComponent::class);
         $this->dataTable = $container->get(DataTableComponent::class);
@@ -76,8 +80,12 @@ final class ListUsersTool implements PromptToolInterface
     public function execute(array $input): array
     {
         $page = max(1, (int) ($input['page'] ?? 1));
-        $result = $this->users->paginate($page, 10, [], 'id DESC');
-        $rows = array_map(static fn ($user) => $user->toDisplayArray(), $result['items']);
+        $result = $this->users->paginate($page, 25, [], 'first_name, last_name');
+        $profiles = [];
+        foreach ($this->container->get(ProfileRepository::class)->findAll() as $profile) {
+            $profiles[(int) $profile->id] = (string) $profile->name;
+        }
+        $rows = array_map(static fn ($user) => $user->toDisplayArray() + ['profile' => $profiles[(int) $user->profileId] ?? ''], $result['items']);
 
         $stats = $this->statBox->toData([
             'label' => 'Totale utenti',
@@ -91,10 +99,13 @@ final class ListUsersTool implements PromptToolInterface
             'entity' => 'user',
             'url' => '/utenti',
             'title' => 'Utenti',
+            'createHref' => '/utenti/nuovo',
+            'createLabel' => 'Nuovo utente',
             'columns' => [
-                ['key' => 'username', 'label' => 'Username'],
                 ['key' => 'firstName', 'label' => 'Nome'],
                 ['key' => 'lastName', 'label' => 'Cognome'],
+                ['key' => 'profile', 'label' => 'Profilo'],
+                ['key' => 'username', 'label' => 'Username'],
                 ['key' => 'email', 'label' => 'Email'],
             ],
             'rows' => $rows,

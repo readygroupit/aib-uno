@@ -14,7 +14,7 @@ final class CustomerRepository extends AbstractRepository
     /**
      * Ogni cliente con la sua pratica PIU' RECENTE (se ne ha una) e i dati
      * collegati: volo/vettore/disservizio dal lead di origine, importo dal
-     * rimborso, completezza documenti aggregata - vedi ListCustomersTool,
+     * rimborso, completezza documenti aggregata - vedi ListCustomerClaimsTool,
      * l'unico chiamante. Un cliente puo' avere piu' pratiche nel tempo, qui
      * se ne mostra una sola (la piu' recente) per riga: e' la vista
      * "situazione attuale del cliente", non uno storico completo (quello
@@ -72,5 +72,15 @@ final class CustomerRepository extends AbstractRepository
         }
 
         return $rows;
+    }
+
+    public function findByPortalToken(string $token): ?Customer
+    {
+        if (strlen($token) < 32) {
+            return null;
+        }
+        $row = $this->db->fetchRow('SELECT * FROM customers WHERE status != 0 AND portal_token = :t LIMIT 1', ['t' => $token]);
+
+        return $row !== null ? Customer::fromArray($row) : null;
     }
 }

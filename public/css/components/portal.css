@@ -1,0 +1,200 @@
+/*
+ * Area del cliente (module/Index/view/portal): pagina pubblica, una
+ * colonna leggibile anche dal telefono. In cima cio' che aspetta il
+ * cliente; stati con tinte tenui di sfondo, mai bordini colorati.
+ */
+body.portal {
+    margin: 0;
+    background: var(--color-canvas);
+    font-family: var(--font-body);
+    color: var(--color-petrol);
+}
+
+.portal__main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 28px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.portal-card {
+    background: var(--color-panel);
+    border: var(--hairline);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    padding: 22px 24px;
+}
+
+.portal-card--hero {
+    background: linear-gradient(150deg, var(--color-petrol), var(--color-teal-dark));
+    color: #fff;
+    border: 0;
+    padding: 28px 26px;
+}
+
+.portal__agency {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.portal__title {
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 600;
+    margin: 6px 0 8px;
+}
+
+.portal__lead {
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.5;
+}
+
+.portal-card--hero .portal__lead { opacity: 0.9; }
+.portal__lead--small { font-size: 14.5px; margin-bottom: 12px; }
+
+.portal__section {
+    font-family: var(--font-heading);
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0 0 6px;
+}
+
+.portal__hint {
+    margin: 4px 0 14px;
+    font-size: 13.5px;
+    color: rgba(18, 51, 63, 0.6);
+}
+
+.portal-flash {
+    border-radius: var(--radius-lg);
+    padding: 13px 18px;
+    font-size: 14.5px;
+    font-weight: 500;
+}
+
+.portal-flash--success { background: rgba(79, 123, 92, 0.14); color: var(--color-moss); }
+.portal-flash--info { background: rgba(31, 85, 102, 0.1); color: var(--color-teal-dark); }
+.portal-flash--error { background: var(--color-danger-bg); color: var(--color-danger); }
+
+.portal-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(18, 51, 63, 0.07);
+    white-space: nowrap;
+}
+
+.portal-chip--success { background: rgba(79, 123, 92, 0.14); color: var(--color-moss); }
+.portal-chip--info { background: rgba(31, 85, 102, 0.1); color: var(--color-teal-dark); }
+
+/* --- Contenuti da approvare --- */
+.portal-posts { display: flex; flex-direction: column; gap: 14px; }
+.portal-approve-all { margin: 0 0 14px; }
+
+.portal-post {
+    background: #fff;
+    border: var(--hairline);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+}
+
+.portal-post__head { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+.portal-post__when { font-size: 13px; color: rgba(18, 51, 63, 0.6); }
+.portal-post__title { font-size: 16px; font-weight: 600; margin: 10px 0 6px; }
+.portal-post__caption { margin: 0 0 8px; font-size: 14.5px; line-height: 1.55; white-space: normal; }
+.portal-post__media { margin: 0 0 10px; font-size: 13px; color: rgba(18, 51, 63, 0.6); }
+.portal-post__actions { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; margin-top: 10px; }
+.portal-post__changes { flex: 1 1 240px; }
+.portal-post__changes summary { list-style: none; display: inline-flex; cursor: pointer; }
+.portal-post__changes summary::-webkit-details-marker { display: none; }
+.portal-post__changes[open] summary { display: none; }
+
+.portal-form { display: flex; flex-direction: column; gap: 8px; }
+.portal-form__label { font-size: 13px; font-weight: 500; }
+
+.portal-form textarea {
+    font: inherit;
+    font-size: 14.5px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    border: var(--hairline);
+    background: #fff;
+    resize: vertical;
+}
+
+.portal-form .btn { align-self: flex-start; }
+
+/* --- Righe (pagamenti, servizi, fatture) --- */
+.portal-list { display: flex; flex-direction: column; }
+
+.portal-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-top: var(--hairline);
+}
+
+.portal-row:first-child { border-top: 0; }
+.portal-row--late { background: var(--color-danger-bg); border-radius: var(--radius-md); padding: 12px; border-top-color: transparent; }
+.portal-row__text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.portal-row__title { font-weight: 600; font-size: 14.5px; }
+.portal-row__meta { font-size: 13px; color: rgba(18, 51, 63, 0.6); }
+.portal-row--late .portal-row__meta { color: var(--color-danger); }
+.portal-row__amount { font-family: var(--font-heading); font-weight: 600; white-space: nowrap; }
+
+/* --- Come paghi --- */
+.portal-methods { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0 4px; }
+
+.portal-method {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    border-radius: var(--radius-md);
+    border: var(--hairline);
+    background: #fff;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.portal-method.is-selected,
+.portal-method:has(input:checked) { background: rgba(31, 85, 102, 0.1); }
+.portal-method input { accent-color: var(--color-teal-dark); }
+
+.portal-autopay {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    background: rgba(185, 147, 51, 0.12);
+}
+
+.portal-autopay > div { display: flex; flex-direction: column; gap: 3px; }
+.portal-inline { margin: 0; }
+
+.portal__footer {
+    text-align: center;
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.55);
+    line-height: 1.7;
+}
+
+.portal__footer a { color: inherit; }
+
+@media (max-width: 560px) {
+    .portal-card { padding: 18px 16px; }
+    .portal-row { flex-wrap: wrap; }
+    .portal-autopay { flex-direction: column; align-items: flex-start; }
+}

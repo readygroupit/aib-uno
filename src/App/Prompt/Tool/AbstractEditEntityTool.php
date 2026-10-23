@@ -33,8 +33,11 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
     protected DataTableComponent $dataTable;
     protected AuthService $auth;
 
+    private Container $toolContainer;
+
     public function __construct(Container $container)
     {
+        $this->toolContainer = $container;
         $this->repository = $container->get($this->repositoryClass());
         $this->form = $container->get(FormComponent::class);
         $this->dataTable = $container->get(DataTableComponent::class);
@@ -177,7 +180,42 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
             return [$this->emptyResult((string) $id)];
         }
 
-        return [$this->buildForm($model)];
+        return $this->buildPage($model);
+    }
+
+    /**
+     * La pagina di un elemento esistente: prima cio' che serve sapere
+     * (detailComponents(), es. la scheda del cliente con servizi e
+     * scadenze), poi il form per modificarlo. Un elemento nuovo ha solo
+     * il form.
+     *
+     * @param array<string,string> $fieldErrors
+     */
+    public function buildPage(AbstractModel $model, ?string $message = null, ?string $messageType = null, array $fieldErrors = []): array
+    {
+        $detail = $model->id !== null ? $this->detailComponents($model) : [];
+
+        // Con una scheda sopra, l'esito va in cima (si legge subito) e il
+        // form resta chiuso; con errori sui campi resta aperto sul form.
+        if ($detail !== [] && $message !== null && $fieldErrors === []) {
+            $notice = ['type' => 'notice', 'tone' => $messageType === 'error' ? 'error' : 'success', 'text' => $message];
+
+            return [$notice, ...$detail, $this->buildForm($model)];
+        }
+
+        return [...$detail, $this->buildForm($model, $message, $messageType, $fieldErrors)];
+    }
+
+    /** Componenti mostrati sopra il form di un elemento esistente - nessuno di default. */
+    protected function detailComponents(AbstractModel $model): array
+    {
+        return [];
+    }
+
+    /** Titolo del form sotto una scheda di dettaglio (es. "Dati anagrafici" invece di "Modifica cliente"). */
+    protected function formTitleBelowDetail(): ?string
+    {
+        return null;
     }
 
     /**
@@ -187,9 +225,16 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
     {
         $isNew = $model->id === null;
 
+        $title = $this->formTitle($isNew);
+        if (!$isNew && $this->formTitleBelowDetail() !== null) {
+            $title = $this->formTitleBelowDetail();
+        }
+
         return $this->form->toData([
             'entity' => $this->entityTag(),
-            'title' => $this->formTitle($isNew),
+            'title' => $title,
+            // Sotto una scheda il form parte chiuso: si apre per modificare.
+            'collapsed' => !$isNew && $this->formTitleBelowDetail() !== null && $fieldErrors === [] && $message === null,
             'action' => $isNew ? $this->baseUrl() . '/nuovo' : $this->baseUrl() . '/' . $model->id,
             'submitLabel' => $isNew ? 'Crea' : 'Salva',
             'fields' => $this->fieldsFromManifest($model, $fieldErrors),
@@ -221,17 +266,40 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
             $fields[] = [
                 'key' => $key,
                 'label' => $definition['label'],
-                'value' => $this->fieldValue($model, $key),
-                'type' => $format === 'email' ? 'email' : ($format === 'integer' ? 'number' : 'text'),
+                // "2026-10-21 14:30:00" dal database, "2026-10-21T14:30" per il campo data e ora del browser.
+                'value' => $format === 'datetime' && is_string($this->fieldValue($model, $key))
+                    ? str_replace(' ', 'T', substr((string) $this->fieldValue($model, $key), 0, 16))
+                    : $this->fieldValue($model, $key),
+                'type' => match ($format) {
+                    'email' => 'email',
+                    'integer' => 'number',
+                    'date' => 'date',
+                    'datetime' => 'datetime-local',
+                    'time' => 'time',
+                    default => 'text',
+                },
                 // Un campo con 'autocomplete' nel manifest si digita/
                 // cerca invece di scrivere l'id a mano - vedi
                 // Index\Controller\GeoController per l'unico endpoint di
                 // ricerca costruito finora (comuni), lo stesso schema
                 // vale per qualunque altro riferimento futuro.
-                'inputType' => isset($definition['autocomplete'])
-                    ? 'autocomplete'
-                    : (($definition['input'] ?? null) === 'textarea' ? 'textarea' : null),
+                'inputType' => match (true) {
+                    in_array($key, $this->hiddenFields(), true) => 'hidden',
+                    isset($definition['optionsSource']) => 'checkboxes',
+                    isset($definition['autocomplete']) => 'autocomplete',
+                    isset($definition['options']) => 'select',
+                    $format === 'boolean' => 'toggle',
+                    ($definition['input'] ?? null) === 'textarea' => 'textarea',
+                    default => null,
+                },
                 'autocompleteSource' => $definition['autocomplete']['source'] ?? null,
+                'options' => $definition['options'] ?? null,
+                'choices' => isset($definition['optionsSource']) ? $this->choices((string) $definition['optionsSource']) : null,
+                // Il campo compare solo quando un altro ha uno di quei
+                // valori (es. "ogni quanto" solo per un servizio
+                // ricorrente): meno campi davanti, meno dubbi.
+                'showIf' => $definition['showIf'] ?? null,
+                'help' => $definition['help'] ?? null,
                 // 'base' da solo non basta: un campo 'base' + 'nullable'
                 // (es. tasks.entity_id, sempre colonna ma non sempre
                 // valorizzato - vedi App\Package\PackageInstaller) e'
@@ -249,8 +317,38 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
     private function fieldValue(AbstractModel $model, string $key): mixed
     {
         $property = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $key))));
-
         return $model->$property ?? null;
+    }
+
+    /**
+     * Scelte per un campo a scelta multipla ('optionsSource' nel manifest,
+     * valore salvato come "2,3"). 'staff' = i colleghi.
+     *
+     * @return list<array{value:string, label:string}>
+     */
+    protected function choices(string $source): array
+    {
+        if ($source === 'weekdays') {
+            return array_map(
+                static fn (int $d, string $label) => ['value' => (string) $d, 'label' => $label],
+                range(1, 7),
+                ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
+            );
+        }
+        if ($source !== 'staff') {
+            return [];
+        }
+
+        return array_map(
+            static fn ($user) => ['value' => (string) $user->id, 'label' => trim("{$user->firstName} {$user->lastName}") ?: (string) $user->username],
+            $this->toolContainer->get(\App\Repository\UserRepository::class)->findAll([], 'first_name')
+        );
+    }
+
+    /** Campi che viaggiano col form ma non si vedono (es. a cosa e' collegata un'attivita'). */
+    protected function hiddenFields(): array
+    {
+        return [];
     }
 
     /**
@@ -273,7 +371,16 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
         }
 
         $format = $definition['format'] ?? null;
+        if (isset($definition['options'])) {
+            return 'third';
+        }
+        if (isset($definition['optionsSource'])) {
+            return 'full';
+        }
+
         $byFormat = [
+            'time' => 'quarter',
+            'boolean' => 'third',
             'email' => 'half',
             'phone' => 'third',
             'datetime' => 'half',

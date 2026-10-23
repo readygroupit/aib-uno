@@ -34,7 +34,9 @@ final class FormComponent extends AbstractComponent
 
     public function toData(array $config): array
     {
-        $fields = $config['fields'] ?? [];
+        // I campi nascosti non stanno in nessun box: viaggiano a parte.
+        $hidden = array_values(array_filter($config['fields'] ?? [], static fn (array $f) => ($f['inputType'] ?? null) === 'hidden'));
+        $fields = array_values(array_filter($config['fields'] ?? [], static fn (array $f) => ($f['inputType'] ?? null) !== 'hidden'));
         $fieldsByKey = [];
         foreach ($fields as $field) {
             $field['width'] = in_array($field['width'] ?? null, self::WIDTHS, true) ? $field['width'] : 'half';
@@ -55,6 +57,8 @@ final class FormComponent extends AbstractComponent
             'action' => $config['action'],
             'method' => $config['method'] ?? 'POST',
             'sections' => $sections,
+            'hiddenFields' => array_map(static fn (array $f) => ['key' => $f['key'], 'value' => $f['value']], $hidden),
+            'collapsed' => (bool) ($config['collapsed'] ?? false),
             'submitLabel' => $config['submitLabel'] ?? 'Salva',
             'secondaryActions' => $config['secondaryActions'] ?? [],
             'message' => $config['message'] ?? null,

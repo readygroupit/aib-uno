@@ -69,6 +69,34 @@ regole di `AnalysisService::COMPOSE_RULES` sia a `PageComposer`. Durante lo
 sviluppo provare con piani/composizioni scritti a mano (nessuna chiamata
 all'IA), l'IA vera solo per la verifica finale.
 
+## Pacchetti su un progetto esistente
+
+`bin/install-packages.php` installa pacchetti anche dopo la creazione
+(Uno compreso). In produzione le migrazioni arrivano da git gia' in
+`applied`: ogni volta va preparato e provato (su un database usa-e-getta)
+lo script SQL in `public/tmp/AAAA_MM_GG_HHMM_...sql` con le stesse tabelle e
+i permessi (un manifest puo' dichiarare permessi propri con
+`'permissions'`, come `planner`). Campi del manifest per i form (`options`, `boolean`, `showIf`,
+`help`, `fill`): README -> "Campi del manifest per i form".
+
+## Pagine pubbliche
+
+Le uniche raggiungibili senza login: `/area/:token` (area cliente, il token
+e' la chiave: ogni azione deve ricontrollare che la riga sia di quel
+cliente, compresa l'accettazione dei preventivi) e le conferme dei
+pagamenti (`/pagamenti/...`). Anteprime e file dell'archivio
+(`/materiali/:id/anteprima`, `/file`) solo da collegati. Il webhook Stripe
+ha `'csrf' => false` nella rotta: lo protegge la firma. Nessun'altra rotta
+deve togliere il CSRF. Il token della demo non va mai esportato in
+`demo.sql` (override a NULL in `generate-demo.php`).
+
+## Chi vede cosa
+
+Ferie, spese: chi non ha il permesso `.approve` vede e modifica solo le
+proprie (controllo nel controller, non solo nel menu). Le approvazioni
+(contenuti, preventivi, ferie, spese) sono permessi a parte da "modificare":
+un manifest li dichiara in `'permissions'`.
+
 ## Dove sono le cose
 
 Vedi `README.md` -> sezione "Architettura" per la mappa completa. In breve:

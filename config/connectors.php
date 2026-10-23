@@ -2,9 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Connector\ArubaInvoiceConnector;
 use App\Connector\ConnectorRegistry;
+use App\Connector\FattureInCloudConnector;
+use App\Connector\GoogleCalendarConnector;
+use App\Connector\GoogleDriveConnector;
 use App\Connector\GoogleSheetsConnector;
 use App\Connector\JotformConnector;
+use App\Connector\PayPalConnector;
+use App\Connector\StripeConnector;
 use App\Connector\WhatsAppConnector;
 
 /**
@@ -17,4 +23,10 @@ return static function (ConnectorRegistry $registry): void {
     $registry->register(JotformConnector::class);
     $registry->register(GoogleSheetsConnector::class);
     $registry->register(WhatsAppConnector::class);
+    $registry->register(GoogleCalendarConnector::class);
+    $registry->register(GoogleDriveConnector::class);
+    $registry->register(StripeConnector::class);
+    $registry->register(PayPalConnector::class);
+    $registry->register(FattureInCloudConnector::class);
+    $registry->register(ArubaInvoiceConnector::class);
 };

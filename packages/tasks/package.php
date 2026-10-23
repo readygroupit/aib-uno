@@ -43,17 +43,79 @@ return [
                 ],
                 'stage' => [
                     'sql' => 'VARCHAR(50)',
-                    'label' => 'Stato attivita',
+                    'label' => 'Stato',
                     'base' => true,
-                    'help' => "Vocabolario libero: valori tipici sono 'da fare', 'in corso', 'fatta', 'annullata'.",
+                    'options' => ['da fare', 'in corso', 'fatta', 'annullata'],
                 ],
                 'assigned_user_id' => [
                     'sql' => 'INT UNSIGNED',
-                    'label' => 'Operatore assegnato',
+                    'label' => 'Chi la fa',
                     'defaultRequired' => true,
                     'format' => 'integer',
                     'references' => ['table' => 'users', 'column' => 'id'],
-                    'autocomplete' => ['source' => '/riferimenti/users/cerca'],
+                    'autocomplete' => ['source' => '/riferimenti/staff/cerca'],
+                ],
+                'planned_date' => [
+                    'sql' => 'DATE',
+                    'label' => 'Da fare il',
+                    'defaultRequired' => true,
+                    'format' => 'date',
+                    'help' => "Il giorno in cui farla. La scadenza e' l'ultimo giorno utile.",
+                ],
+                'priority' => [
+                    'sql' => 'VARCHAR(10)',
+                    'label' => 'Priorita',
+                    'defaultRequired' => true,
+                    'options' => ['alta', 'normale', 'bassa'],
+                ],
+                'estimated_minutes' => [
+                    'sql' => 'SMALLINT UNSIGNED',
+                    'label' => 'Tempo previsto (minuti)',
+                    'defaultRequired' => true,
+                    'format' => 'integer',
+                ],
+                'actual_minutes' => [
+                    'sql' => 'SMALLINT UNSIGNED',
+                    'label' => 'Tempo impiegato (minuti)',
+                    'defaultRequired' => true,
+                    'format' => 'integer',
+                ],
+                'position' => [
+                    'sql' => 'SMALLINT UNSIGNED',
+                    'label' => 'Ordine',
+                    'defaultRequired' => true,
+                    'format' => 'integer',
+                    'help' => "Per le fasi di una commessa: la sequenza in cui si fanno.",
+                ],
+                'waits_for_client' => [
+                    'sql' => 'TINYINT(1)',
+                    'label' => 'Aspetta il cliente',
+                    'defaultRequired' => true,
+                    'format' => 'boolean',
+                    'help' => "Es. testi, foto, un'approvazione: finche' non arriva, il lavoro e' fermo dal cliente.",
+                ],
+                'checklist' => [
+                    'sql' => 'TEXT',
+                    'label' => 'Checklist',
+                    'defaultRequired' => true,
+                    'input' => 'textarea',
+                    'help' => "Un punto per riga; '[x]' davanti a quelli fatti.",
+                ],
+                // La fase del modello da cui nasce (tipi di commessa): serve a
+                // confrontare i tempi dello stesso lavoro tra commesse diverse.
+                // Niente FK: 'tasks' non dipende dalle commesse.
+                'source_step_id' => [
+                    'sql' => 'INT UNSIGNED',
+                    'label' => 'Fase del modello',
+                    'defaultRequired' => true,
+                    'format' => 'integer',
+                ],
+                'recurrence' => [
+                    'sql' => 'VARCHAR(20)',
+                    'label' => 'Si ripete',
+                    'defaultRequired' => true,
+                    'options' => ['ogni giorno', 'ogni settimana', 'ogni mese'],
+                    'help' => 'Fatta questa, si crea da sola la prossima.',
                 ],
                 'completed_at' => [
                     'sql' => 'DATETIME',
@@ -86,12 +148,22 @@ return [
                             [
                                 'title' => 'Attivita',
                                 'area' => 'main',
-                                'fields' => ['title', 'description', 'due_at', 'stage'],
+                                'fields' => ['title', 'description', 'checklist'],
                             ],
                             [
-                                'title' => 'Assegnazione',
+                                'title' => 'Quando',
+                                'area' => 'main',
+                                'fields' => ['planned_date', 'due_at', 'recurrence', 'position'],
+                            ],
+                            [
+                                'title' => 'Chi e come',
                                 'area' => 'sidebar',
-                                'fields' => ['assigned_user_id', 'completed_at'],
+                                'fields' => ['assigned_user_id', 'stage', 'priority', 'waits_for_client'],
+                            ],
+                            [
+                                'title' => 'Tempo',
+                                'area' => 'sidebar',
+                                'fields' => ['estimated_minutes', 'actual_minutes', 'completed_at'],
                             ],
                             [
                                 'title' => 'Collegamento',

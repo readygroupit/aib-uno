@@ -1,0 +1,26 @@
+CREATE TABLE `expenses` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `status` TINYINT NOT NULL DEFAULT 1,
+  `user_id` INT UNSIGNED NOT NULL,
+  `expense_date` DATE NOT NULL,
+  `kind` VARCHAR(20) NOT NULL,
+  `amount` DECIMAL(10,2) NOT NULL,
+  `description` VARCHAR(255) NULL,
+  `customer_id` INT UNSIGNED NULL,
+  `work_order_id` INT UNSIGNED NULL,
+  `paid_by` VARCHAR(20) NULL,
+  `rebill` TINYINT(1) NULL,
+  `receipt_link` VARCHAR(500) NULL,
+  `stage` VARCHAR(20) NOT NULL,
+  `decided_by` INT UNSIGNED NULL,
+  `decided_at` DATETIME NULL,
+  `reimbursed_at` DATE NULL,
+  `created_at` DATETIME NOT NULL,
+  `created_by` INT UNSIGNED NULL,
+  `updated_at` DATETIME NULL,
+  `updated_by` INT UNSIGNED NULL,
+  CONSTRAINT `fk_expenses_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `fk_expenses_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`),
+  CONSTRAINT `fk_expenses_decided_by` FOREIGN KEY (`decided_by`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

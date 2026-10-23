@@ -30,6 +30,9 @@ final class Router
                     'controller' => $route['controller'],
                     'action' => $route['action'],
                     'params' => $params,
+                    // false solo per i webhook dei servizi esterni (es. Stripe),
+                    // che si verificano con la loro firma, non con il token CSRF.
+                    'csrf' => $route['csrf'] ?? true,
                 ];
             }
         }

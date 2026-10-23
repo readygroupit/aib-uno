@@ -13,4 +13,8 @@ final class Service extends AbstractModel
     public ?string $price = null;
     public ?string $taxRatePercent = null;
     public ?int $durationMinutes = null;
+    public ?string $billingType = null;
+    public ?string $recurrence = null;
+    public ?string $costPrice = null;
+    public ?int $supplierCustomerId = null;
 }

@@ -34,12 +34,12 @@ final class PromptController extends AuthController
         // o non ha credito - vedi PromptToolInterface::triggers()).
         // Una voce del menu dice gia' quale capacita' aprire.
         $requested = is_string($body['tool'] ?? null) ? $body['tool'] : '';
-        $localTool = $requested !== '' && $registry->has($requested)
-            ? $registry->get($requested)
+        $localMatch = $requested !== '' && $registry->has($requested)
+            ? ['tool' => $registry->get($requested), 'input' => []]
             : $this->matchLocalTool($registry, $message);
 
-        if ($localTool !== null) {
-            $this->respondWithTool($localTool, [], $message, $history);
+        if ($localMatch !== null) {
+            $this->respondWithTool($localMatch['tool'], $localMatch['input'], $message, $history);
             return;
         }
 
@@ -109,20 +109,28 @@ final class PromptController extends AuthController
         $this->json(['reply' => $reply, 'components' => $components, 'suggestions' => $suggestions, 'history' => $history]);
     }
 
-    private function matchLocalTool(PromptToolRegistry $registry, string $message): ?PromptToolInterface
+    /**
+     * Solo la frase intera (al massimo con "pagina N" in fondo). Prima
+     * bastava che il messaggio COMINCIASSE con una frase scorciatoia, e
+     * richieste piu' lunghe finivano nella schermata sbagliata senza mai
+     * arrivare all'IA: "cosa devo fare domani" apriva oggi, "oggi Fabrizio
+     * ha un appuntamento?" la propria giornata, "clienti a rischio" la
+     * lista clienti. Tutto cio' che dice qualcosa in piu' lo capisce l'IA.
+     *
+     * @return array{tool: PromptToolInterface, input: array}|null
+     */
+    private function matchLocalTool(PromptToolRegistry $registry, string $message): ?array
     {
-        $normalized = mb_strtolower(trim($message));
+        $normalized = rtrim(mb_strtolower(trim($message)), " ?!.");
+        $input = [];
+        if (preg_match('/^(.+?)\s+pagina\s+(\d+)$/u', $normalized, $m) === 1) {
+            $normalized = $m[1];
+            $input = ['page' => (int) $m[2]];
+        }
 
         foreach ($registry->all() as $tool) {
-            foreach ($tool->triggers() as $trigger) {
-                // Solo frase intera o frase-guida seguita da uno spazio
-                // (es. "lista utenti pagina 2") - MAI una sottostringa
-                // ovunque nel messaggio: "modifica users.manage" non deve
-                // attivare il trigger 'users' di ListUsersTool solo
-                // perche' compare dentro il codice di un permesso.
-                if ($normalized === $trigger || str_starts_with($normalized, $trigger . ' ')) {
-                    return $tool;
-                }
+            if (in_array($normalized, $tool->triggers(), true)) {
+                return ['tool' => $tool, 'input' => $input];
             }
         }
 

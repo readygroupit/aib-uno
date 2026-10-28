@@ -545,7 +545,7 @@
 }
 
 /* Pulsanti a destra (il principale per ultimo), "Elimina" a sinistra; in
-   mezzo cosa manca, in rosso dopo un invio incompleto. */
+   mezzo il promemoria "* obbligatorio". */
 .form__actions {
     display: flex;
     flex-wrap: wrap;
@@ -561,15 +561,6 @@
     text-align: right;
     font-size: 12.5px;
     color: rgba(18, 51, 63, 0.5);
-}
-
-.form__hint--error {
-    color: var(--color-danger);
-    font-weight: 600;
-}
-
-.form__hint .icon {
-    margin-right: 2px;
 }
 
 .btn--error,

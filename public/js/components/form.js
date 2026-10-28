@@ -538,19 +538,15 @@ function validateForm(form) {
 
 /**
  * Errore evidente dove si e' cliccato: il pulsante diventa rosso con
- * l'icona e una frase breve per un paio di secondi, la riga dei pulsanti
- * dice cosa manca, e il primo campo da sistemare viene portato in vista.
+ * l'icona e una frase breve per un paio di secondi, e il primo campo da
+ * sistemare viene portato in vista (il messaggio resta sotto il campo).
  */
-function showErrors(form, errors, submitButton, hintEl, showSectionOf) {
+function showErrors(form, errors, submitButton, showSectionOf) {
     if (!errors.length) return;
     const first = errors[0];
     const summary = errors.length === 1
         ? `${first.label}: ${first.message.replace(/\.$/, '').toLowerCase()}`
         : `${errors.length} campi da sistemare`;
-
-    hintEl.textContent = '';
-    hintEl.classList.add('form__hint--error');
-    hintEl.append(icon('circle-exclamation'), ' ', errors.length === 1 ? summary : `${summary}: ${errors.map((e) => e.label).join(', ')}`);
 
     if (!submitButton.dataset.label) submitButton.dataset.label = submitButton.textContent;
     clearTimeout(submitButton._errorTimer);
@@ -569,11 +565,6 @@ function showErrors(form, errors, submitButton, hintEl, showSectionOf) {
     first.wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const focusable = first.wrap.querySelector('input:not([type=hidden]), select, textarea, button');
     if (focusable) setTimeout(() => focusable.focus({ preventScroll: true }), 250);
-}
-
-function resetHint(hintEl, hasRequired) {
-    hintEl.classList.remove('form__hint--error');
-    hintEl.textContent = hasRequired ? '* obbligatorio' : '';
 }
 
 // Per chi si sta compilando il form (es. "Per il cliente Rossi Srl"): in
@@ -630,13 +621,12 @@ function renderForm(data) {
     }
 
     // Pulsanti a destra, il principale per ultimo; "Elimina" a sinistra,
-    // lontano da "Salva". In mezzo la riga che dice cosa manca.
+    // lontano da "Salva". In mezzo il promemoria "* obbligatorio".
     const actionsRow = el('div', { className: 'form__actions' });
     const submitButton = el('button', { type: 'submit', className: 'btn btn--primary' }, [
         data.submitLabel || 'Salva',
     ]);
-    const hintEl = el('p', { className: 'form__hint', 'aria-live': 'polite' });
-    resetHint(hintEl, hasRequired);
+    const hintEl = el('p', { className: 'form__hint' }, [hasRequired ? '* obbligatorio' : '']);
 
     // Pulsanti in piu' verso un URL diverso dal submit principale (es.
     // "Converti in cliente"), stesso form/stessi campi: formaction e'
@@ -676,10 +666,7 @@ function renderForm(data) {
     // Si corregge un campo: il suo errore sparisce.
     const clearOnEdit = (e) => {
         const wrap = e.target.closest && e.target.closest('.field--error');
-        if (wrap) {
-            clearFieldError(wrap);
-            if (!form.querySelector('.field--error')) resetHint(hintEl, hasRequired);
-        }
+        if (wrap) clearFieldError(wrap);
     };
     form.addEventListener('input', clearOnEdit);
     form.addEventListener('change', clearOnEdit);
@@ -695,10 +682,9 @@ function renderForm(data) {
             const errors = validateForm(form);
             if (errors.length) {
                 errors.forEach((err) => setFieldError(err.wrap, err.message));
-                showErrors(form, errors, submitButton, hintEl, showSectionOf);
+                showErrors(form, errors, submitButton, showSectionOf);
                 return;
             }
-            resetHint(hintEl, hasRequired);
         }
 
         const confirmMessage = submitter.getAttribute('data-confirm');
@@ -735,7 +721,7 @@ function renderForm(data) {
             const errors = fieldErrors
                 .map((f) => ({ wrap: form.querySelector(`.field[data-key="${f.key}"]`), label: f.label, message: f.error }))
                 .filter((err) => err.wrap);
-            showErrors(form, errors, submitButton, hintEl, showSectionOf);
+            showErrors(form, errors, submitButton, showSectionOf);
         }, 200);
     }
 

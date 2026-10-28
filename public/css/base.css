@@ -44,6 +44,20 @@ a {
     color: inherit;
 }
 
+/* Icona (icons.js) senza una misura propria: grande quanto il testo che ha
+   accanto, non quanto il riquadro dell'SVG (era enorme, es. "Niente." nelle
+   attivita'). :where() = specificita' zero, ogni regola dei componenti vince. */
+:where(.icon) {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: -0.125em;
+}
+
+:where(.icon) > svg {
+    width: 1em;
+    height: 1em;
+}
+
 /*
  * page-stack: chrome della pagina (larghezza massima, margini). Non fa lo
  * stack verticale lui stesso, perche' a volte contiene un solo .card

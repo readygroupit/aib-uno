@@ -14,7 +14,9 @@ function buildCard(item) {
         {
             type: 'button',
             className: 'menu-grid__item',
-            onClick: () => window.unoSubmitPrompt && window.unoSubmitPrompt(item.prompt),
+            // Il nome della capacita' viaggia con la frase: la voce si apre
+            // subito, senza chiedere all'IA cosa vuol dire "Orari di lavoro".
+            onClick: () => window.unoSubmitPrompt && window.unoSubmitPrompt(item.prompt, item.name),
         },
         [
             el('div', { className: 'menu-grid__item-top' }, [
@@ -81,7 +83,8 @@ function render(data) {
             }
             grid.appendChild(visible[i]);
         });
-        staggerReveal(visible, 35);
+        // Cascata breve: con 30 voci a 35ms l'ultima compariva dopo un secondo.
+        staggerReveal(visible, Math.min(12, 300 / Math.max(1, visible.length)));
         emptyState.hidden = visible.length > 0;
     }
 

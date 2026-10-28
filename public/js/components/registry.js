@@ -56,5 +56,7 @@ export function mountComponents(root, components, staggerMs = 150) {
     });
 
     topLevelNodes.forEach((node) => root.appendChild(node));
-    staggerReveal(staggerNodes, staggerMs);
+    // Una schermata con tanti riquadri non deve metterci piu' di mezzo
+    // secondo a comparire tutta (scheda cliente, cruscotto: sembrava lenta).
+    staggerReveal(staggerNodes, Math.min(staggerMs, 500 / Math.max(1, staggerNodes.length)));
 }

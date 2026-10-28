@@ -47,6 +47,11 @@ let homeGreetingText = null;
 // (history.state.unoEntry = id della voce): il tasto indietro del browser
 // torna alla schermata precedente, non alla pagina caricata prima.
 let nextEntryId = 1;
+// Sale a ogni salvataggio (form, azioni con un clic): una schermata dello
+// storico mostrata prima di un salvataggio puo' essere vecchia (es. la
+// lista clienti vuota, poi si crea un cliente e si torna indietro) - quando
+// ci si torna si ricarica dal suo indirizzo.
+let dataVersion = 0;
 
 // Tipi di entita' (es. 'user') presenti nei componenti appena mostrati -
 // non le righe, solo il tipo: serve a dire a Claude "l'operatore ha
@@ -206,15 +211,39 @@ function goToIndex(index) {
     if (index < 0 || index >= resultsHistory.length) return;
     resultsHistoryIndex = index;
     const entry = resultsHistory[index];
-    renderResultsEntry(resultsPanel, entry);
+    showEntry(entry);
     renderTranscript(messagesEl);
     window.history.pushState({ unoEntry: entry.id }, '', entry.url || window.location.pathname);
+}
+
+// Una schermata gia' vista: subito la copia in memoria, poi, se nel
+// frattempo si e' salvato qualcosa, quella aggiornata dal server.
+function showEntry(entry) {
+    renderResultsEntry(resultsPanel, entry);
+    if (!entry.url || (entry.version ?? 0) >= dataVersion) return;
+
+    const version = dataVersion;
+    fetch(entry.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then((res) => ((res.headers.get('content-type') || '').includes('json') ? res.json() : null))
+        .then((data) => {
+            if (!data || !data.components || !data.components.length) return;
+            entry.components = data.components;
+            entry.entities = extractEntities(data.components);
+            entry.version = version;
+            if (resultsHistory[resultsHistoryIndex] === entry) {
+                const scroll = resultsPanel.scrollTop;
+                renderResultsEntry(resultsPanel, entry);
+                resultsPanel.scrollTop = scroll;
+            }
+        })
+        .catch(() => {});
 }
 
 // Nuova schermata nello storico (risposta del prompt o link aperto dentro
 // i risultati): la mostra e la aggiunge alla cronologia del browser.
 function pushEntry(entry) {
     entry.id = nextEntryId++;
+    entry.version = dataVersion;
     resultsHistory = resultsHistory.slice(0, resultsHistoryIndex + 1);
     resultsHistory.push(entry);
     if (resultsHistory.length > MAX_RESULTS_HISTORY) {
@@ -230,8 +259,13 @@ function pushEntry(entry) {
 // della pagina, il dettaglio si apre nel pannello come una nuova schermata.
 // Se la pagina non risponde a componenti (form classici, login...), si va
 // li' normalmente.
-/** Apre un indirizzo nel pannello dei risultati, come un link (es. dopo "Prepara fattura"). */
-export function openInPanel(href) {
+/**
+ * Apre un indirizzo nel pannello dei risultati, come un link (es. dopo
+ * "Prepara fattura"). Con exchange (prompt, reply, suggestions, notice) la
+ * schermata e' la risposta a una richiesta in chat (es. "nuovo
+ * appuntamento per Fabrizio": il form di inserimento gia' compilato).
+ */
+export function openInPanel(href, exchange = {}) {
     resultsPanel.classList.add('is-loading');
     fetch(href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then((res) => {
@@ -244,11 +278,12 @@ export function openInPanel(href) {
                 window.location.assign(href);
                 return;
             }
+            const notice = exchange.notice ? [{ type: 'notice', tone: 'warning', text: exchange.notice }] : [];
             pushEntry({
-                prompt: null,
-                reply: '',
-                suggestions: [],
-                components: data.components,
+                prompt: exchange.prompt || null,
+                reply: exchange.reply || '',
+                suggestions: exchange.suggestions || [],
+                components: [...notice, ...data.components],
                 entities: extractEntities(data.components),
                 url: extractUrl(data.components) || href,
             });
@@ -282,12 +317,14 @@ function interceptResultLinks(panel) {
  */
 export function refreshCurrentEntry(components) {
     if (resultsHistoryIndex < 0 || !resultsHistory[resultsHistoryIndex]) return;
+    dataVersion++;
     const url = extractUrl(components) || resultsHistory[resultsHistoryIndex].url;
     resultsHistory[resultsHistoryIndex] = {
         ...resultsHistory[resultsHistoryIndex],
         components,
         entities: extractEntities(components),
         url,
+        version: dataVersion,
     };
     // Stessa schermata aggiornata (es. contatto appena creato su un url
     // nuovo): si sostituisce la voce di cronologia, non se ne aggiunge una.
@@ -328,7 +365,8 @@ function startWaiting(bubbleRow) {
     return () => { clearTimeout(timeout); clearInterval(interval); };
 }
 
-function submitPrompt(wrapEl, text) {
+/** tool: nome di una capacita' da eseguire direttamente (le voci del menu), senza passare dall'IA. */
+function submitPrompt(wrapEl, text, tool = null) {
     if (!text || !text.trim()) return;
 
     wrapEl.classList.add('hero-wrap--top');
@@ -363,11 +401,19 @@ function submitPrompt(wrapEl, text) {
             // layout.phtml e Request::csrfHeader() lato server).
             'X-CSRF-Token': window.UNO_CSRF || '',
         },
-        body: JSON.stringify({ message: text, history: conversationHistory, context }),
+        body: JSON.stringify({ message: text, history: conversationHistory, context, tool }),
     })
         .then((res) => { stopWaiting(); return res.json(); })
         .then((data) => {
             conversationHistory = data.history || conversationHistory;
+
+            // La risposta e' una pagina vera (es. il form di inserimento
+            // gia' compilato): la si apre come un link.
+            const open = (data.components || []).find((c) => c && c.type === 'open');
+            if (open) {
+                openInPanel(open.href, { prompt: text, reply: data.reply || '', suggestions: data.suggestions || [], notice: open.notice });
+                return;
+            }
 
             if (data.components && data.components.length) {
                 const url = extractUrl(data.components);
@@ -470,7 +516,7 @@ export function mountPromptShell(root, initialComponents) {
     let stopMic = () => {};
     let resetSpeechState = () => {};
 
-    const send = () => {
+    const send = (tool = null) => {
         const text = input.value;
 
         // Comando locale, mai mandato al server: torna al risultato
@@ -495,7 +541,7 @@ export function mountPromptShell(root, initialComponents) {
 
         stopMic();
         resetSpeechState();
-        submitPrompt(wrap, text);
+        submitPrompt(wrap, text, tool);
         input.value = '';
         attachedFiles = [];
         renderAttachments();
@@ -603,7 +649,7 @@ export function mountPromptShell(root, initialComponents) {
     // farlo ricomparire, senza dover rimettere in piedi questo pezzo.
     const executeButton = el(
         'button',
-        { type: 'button', className: 'btn btn--primary hero__toolbar-execute', onClick: send },
+        { type: 'button', className: 'btn btn--primary hero__toolbar-execute', onClick: () => send() },
         ['Esegui']
     );
 
@@ -677,9 +723,9 @@ export function mountPromptShell(root, initialComponents) {
         }
     });
 
-    window.unoSubmitPrompt = (text) => {
+    window.unoSubmitPrompt = (text, tool = null) => {
         input.value = text;
-        send();
+        send(tool);
     };
 
     // Ordine in DOM importante: wrap PRIMA di resultsPanel. In modalita'
@@ -704,7 +750,7 @@ export function mountPromptShell(root, initialComponents) {
                 prompt: null,
                 components: initialComponents,
                 entities: extractEntities(initialComponents),
-                url: window.location.pathname,
+                url: window.location.pathname + window.location.search,
             },
         ];
         resultsHistoryIndex = 0;
@@ -737,17 +783,17 @@ export function mountPromptShell(root, initialComponents) {
         const byId = entryId === undefined ? -1 : resultsHistory.findIndex((entry) => entry.id === entryId);
         if (byId !== -1) {
             resultsHistoryIndex = byId;
-            renderResultsEntry(resultsPanel, resultsHistory[byId]);
+            showEntry(resultsHistory[byId]);
             renderTranscript(messagesEl);
             return;
         }
 
-        const path = window.location.pathname;
+        const path = window.location.pathname + window.location.search;
         const cachedIndex = resultsHistory.findIndex((entry) => entry.url === path);
 
         if (cachedIndex !== -1) {
             resultsHistoryIndex = cachedIndex;
-            renderResultsEntry(resultsPanel, resultsHistory[cachedIndex]);
+            showEntry(resultsHistory[cachedIndex]);
             renderTranscript(messagesEl);
             return;
         }

@@ -2,6 +2,7 @@ import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
 import { actionButton } from '../accounts-ui.js';
+import { dateJump } from '../date-jump.js';
 
 // Il team in un colpo d'occhio: chi e' pieno, chi e' libero, cosa sta
 // facendo adesso; le proposte per riequilibrare; la settimana a colori.
@@ -72,6 +73,7 @@ function renderTeam(data) {
                 el('div', { className: 'cal-nav' }, [
                     el('a', { className: 'cal-nav__btn', href: data.prevWeek, 'aria-label': 'Settimana prima' }, [icon('chevron-left')]),
                     el('a', { className: 'cal-nav__btn', href: data.nextWeek, 'aria-label': 'Settimana dopo' }, [icon('chevron-right')]),
+                    dateJump((date) => `/team?settimana=${date}`, { title: 'Vai alla settimana di un giorno' }),
                 ]),
             ]),
             el('div', { className: 'pl-week__wrap' }, [table]),

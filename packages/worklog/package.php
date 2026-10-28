@@ -53,11 +53,13 @@ return [
                     'label' => 'Minuti',
                     'base' => true,
                     'format' => 'integer',
+                    'help' => "Quanto ci hai messo: 90 = un'ora e mezza.",
                 ],
                 'title' => [
                     'sql' => 'VARCHAR(200)',
                     'label' => 'Cosa',
                     'base' => true,
+                    'help' => "In breve, come lo diresti a un collega (es. 'Grafiche post Instagram Rossi').",
                 ],
                 'task_id' => [
                     'sql' => 'INT UNSIGNED',
@@ -74,7 +76,9 @@ return [
                     'format' => 'integer',
                     'references' => ['package' => 'customers', 'table' => 'customers', 'column' => 'id'],
                     'autocomplete' => ['source' => '/riferimenti/customers/cerca'],
+                    'help' => 'Facoltativo: serve a sapere quanto tempo va a ogni cliente.',
                 ],
+                // Scritto dal sistema (check-in o voce aggiunta a mano), non si sceglie nel form.
                 'source' => [
                     'sql' => 'VARCHAR(20)',
                     'label' => 'Come',

@@ -1,5 +1,6 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
+import { icon } from '../icons.js';
 import { refreshCurrentEntry } from './hero.js';
 import { openModal } from '../modal.js';
 
@@ -46,43 +47,65 @@ function buildTextareaControl(field) {
 // nascosto con l'id vero che finisce nel FormData all'invio - il server
 // vede sempre e solo un id (vedi 'format' del campo nel manifest,
 // invariato), l'autocomplete e' solo il modo in cui lo si sceglie.
+// Con autocompleteFreeText (es. il CAP) il valore e' il testo stesso: i
+// suggerimenti aiutano a scriverlo e compilano i campi collegati.
 function buildAutocompleteControl(field) {
-    const hidden = el('input', { type: 'hidden', name: field.key, value: field.value ?? '' });
+    const freeText = Boolean(field.autocompleteFreeText);
+    const hidden = freeText ? null : el('input', { type: 'hidden', name: field.key, value: field.value ?? '' });
     const display = el('input', {
         className: 'field__input',
         type: 'text',
         id: 'field-' + field.key,
+        name: freeText ? field.key : null,
+        value: freeText ? field.value ?? '' : null,
         autocomplete: 'off',
-        placeholder: 'Digita per cercare...',
+        placeholder: freeText ? null : 'Digita per cercare...',
     });
     const list = el('div', { className: 'field__autocomplete-list' });
     list.hidden = true;
 
     let debounceTimer = null;
+    let items = [];
+    let activeIndex = -1;
 
     function closeList() {
         list.hidden = true;
         list.textContent = '';
+        items = [];
+        activeIndex = -1;
     }
 
     function selectItem(item) {
-        hidden.value = item.value;
-        display.value = item.label;
+        if (hidden) {
+            hidden.value = item.value;
+            display.value = item.label;
+        } else {
+            display.value = item.value;
+        }
         closeList();
+        const form = display.form;
         // Es. un servizio del listino: prezzo e rinnovo arrivano da li'.
         // I campi di testo solo se vuoti: quello che l'operatore ha gia' scritto resta.
-        if (item.fill && hidden.form) {
+        if (item.fill && form) {
             Object.entries(item.fill).forEach(([name, value]) => {
-                const controls = hidden.form.querySelectorAll(`[name="${name}"]`);
+                const controls = form.querySelectorAll(`[name="${name}"]`);
                 const control = controls[controls.length - 1];
                 // Un menu a tendina ha sempre un valore di partenza: lo si
-                // allinea comunque al listino.
-                if (control && (!control.value || control.tagName === 'SELECT')) {
+                // allinea comunque al listino. Un campo a scelta (id
+                // nascosto) segue sempre: e' la scelta appena fatta.
+                if (control && (!control.value || control.tagName === 'SELECT' || control.type === 'hidden')) {
                     control.value = value;
                     control.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             });
         }
+        display.dispatchEvent(new CustomEvent('autocomplete:select', { bubbles: true, detail: { key: field.key, value: item.value, label: item.label } }));
+    }
+
+    function highlight(index) {
+        activeIndex = index;
+        Array.from(list.children).forEach((node, i) => node.classList.toggle('is-active', i === index));
+        list.children[index]?.scrollIntoView({ block: 'nearest' });
     }
 
     function search(query) {
@@ -95,13 +118,15 @@ function buildAutocompleteControl(field) {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
         })
             .then((res) => res.json())
-            .then((items) => {
+            .then((found) => {
                 list.textContent = '';
-                if (!items || !items.length) {
+                if (!found || !found.length || document.activeElement !== display) {
                     closeList();
                     return;
                 }
-                items.forEach((item) => {
+                items = found;
+                activeIndex = -1;
+                found.forEach((item) => {
                     list.appendChild(
                         el(
                             'button',
@@ -129,16 +154,33 @@ function buildAutocompleteControl(field) {
         // Finche' non si sceglie di nuovo un suggerimento, il valore vero
         // resta vuoto: un testo digitato a mano senza selezionare nulla
         // dalla lista non e' un id valido, meglio niente che un id sbagliato.
-        hidden.value = '';
+        if (hidden) hidden.value = '';
         clearTimeout(debounceTimer);
         const query = display.value.trim();
         debounceTimer = setTimeout(() => search(query), 250);
     });
 
+    // Frecce e Invio sui suggerimenti; Invio con la lista aperta sceglie,
+    // non manda il form.
+    display.addEventListener('keydown', (e) => {
+        if (list.hidden || !items.length) return;
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const step = e.key === 'ArrowDown' ? 1 : -1;
+            highlight((activeIndex + step + items.length) % items.length);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            selectItem(items[Math.max(0, activeIndex)]);
+        } else if (e.key === 'Escape') {
+            closeList();
+        }
+    });
+
     display.addEventListener('blur', () => closeList());
 
-    if (field.value) {
-        fetch(field.autocompleteSource + '?id=' + encodeURIComponent(field.value), {
+    function showLabelOf(id) {
+        if (!id) return;
+        fetch(field.autocompleteSource + '?id=' + encodeURIComponent(id), {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
         })
             .then((res) => res.json())
@@ -146,6 +188,12 @@ function buildAutocompleteControl(field) {
                 if (item && item.label) display.value = item.label;
             })
             .catch(() => {});
+    }
+
+    if (hidden) {
+        // Compilato da un altro campo (es. il comune scelto dal CAP): l'etichetta segue.
+        hidden.addEventListener('change', () => showLabelOf(hidden.value));
+        showLabelOf(field.value);
     }
 
     return el('div', { className: 'field__autocomplete' }, [display, list, hidden]);
@@ -205,6 +253,7 @@ function buildCheckboxesControl(field) {
     const selected = new Set(String(field.value ?? '').split(',').map((v) => v.trim()).filter(Boolean));
     const sync = () => {
         hidden.value = Array.from(selected).join(',');
+        hidden.dispatchEvent(new Event('change', { bubbles: true }));
     };
     const chips = (field.choices || []).map((choice) => {
         const chip = el('button', {
@@ -234,32 +283,91 @@ function buildControl(field) {
     }
 }
 
+// Colonne (su 12) di partenza per larghezza: nella colonna laterale, stretta,
+// solo i campi piccolissimi (orari) stanno in due per riga.
+const SPANS = { quarter: 3, third: 4, half: 6, full: 12 };
+
+function baseSpan(width, inSidebar) {
+    const span = SPANS[width] || 6;
+    if (!inSidebar) return span;
+    return span <= 3 ? 6 : 12;
+}
+
+// Etichetta sul bordo dell'input (form piu' compatto) per i campi "a
+// scatola"; interruttori e chip la tengono sopra.
+function isFloating(field) {
+    return !['checkboxes', 'toggle'].includes(field.inputType);
+}
+
 function buildField(field) {
     const control = buildControl(field);
 
-    const children = [
-        el('label', { className: 'field__label', for: 'field-' + field.key }, [field.label]),
-        control,
-    ];
+    const label = el('label', { className: 'field__label', for: 'field-' + field.key }, [
+        field.label,
+        field.required ? el('span', { className: 'field__required', 'aria-hidden': 'true' }, ['*']) : null,
+    ]);
+    const children = [label, control];
 
     // Errore specifico di QUESTO campo (vedi App\Controller\
-    // AbstractEntityController::collectAndValidate()) - oltre a un
-    // eventuale avviso generale (vedi il modale in renderForm), cosi'
-    // l'operatore vede subito QUALE campo correggere, non solo che
-    // "qualcosa" e' andato storto.
+    // AbstractEntityController::collectAndValidate()), cosi' l'operatore
+    // vede subito QUALE campo correggere, non solo che "qualcosa" e'
+    // andato storto.
     if (field.error) {
-        children.push(el('p', { className: 'field__help' }, [field.error]));
+        children.push(el('p', { className: 'field__help field__error' }, [field.error]));
     } else if (field.help) {
         children.push(el('p', { className: 'field__hint' }, [field.help]));
     }
 
-    const wrap = el('div', { className: 'field field--' + (field.width || 'half') + (field.error ? ' field--error' : '') }, children);
+    const classes = ['field', 'field--' + (field.width || 'half')];
+    if (isFloating(field)) classes.push('field--floating');
+    if (field.error) classes.push('field--error');
+    const wrap = el('div', { className: classes.join(' ') }, children);
     wrap.dataset.key = field.key;
+    wrap.dataset.width = field.width || 'half';
+    if (field.required) wrap.dataset.required = '1';
+    wrap.dataset.label = field.label;
     if (field.showIf) {
         wrap.dataset.showIfField = field.showIf.field;
         wrap.dataset.showIfIn = JSON.stringify(field.showIf.in || []);
     }
     return wrap;
+}
+
+/**
+ * Riempie le righe della griglia: i campi visibili si mettono in fila
+ * (12 colonne per riga) e lo spazio avanzato in fondo a una riga si
+ * divide tra i campi di quella riga - niente "Cliente" a meta' riga con
+ * il vuoto accanto. Rifatto quando un campo compare o sparisce (showIf).
+ */
+function packGrid(grid) {
+    const inSidebar = Boolean(grid.closest('.form-section__sidebar'));
+    const fields = Array.from(grid.children).filter((f) => f.classList.contains('field') && !f.hidden);
+    let row = [];
+    let used = 0;
+
+    const flush = () => {
+        const extra = 12 - used;
+        if (row.length && extra > 0) {
+            let given = 0;
+            row.forEach((item) => {
+                const share = Math.floor((extra * item.span) / used);
+                item.span += share;
+                given += share;
+            });
+            row[0].span += extra - given;
+        }
+        row.forEach((item) => item.node.style.setProperty('--span', String(item.span)));
+        row = [];
+        used = 0;
+    };
+
+    fields.forEach((node) => {
+        const span = baseSpan(node.dataset.width, inSidebar);
+        if (used + span > 12) flush();
+        row.push({ node, span });
+        used += span;
+    });
+    flush();
 }
 
 // Campi che dipendono dal valore di un altro (vedi 'showIf' nel manifest):
@@ -280,11 +388,12 @@ function applyConditionalFields(form) {
     form.querySelectorAll('.form-box').forEach((box) => {
         box.hidden = Array.from(box.querySelectorAll('.field')).every((f) => f.hidden);
     });
+    form.querySelectorAll('.form-box__grid').forEach(packGrid);
 }
 
-// Tutti i campi con errore, attraversando sezioni/box - serve per il
-// modale riassuntivo (vedi renderForm) e per riportare la tab giusta in
-// vista se l'errore e' su un campo nascosto in una tab non attiva.
+// Tutti i campi con errore, attraversando sezioni/box - serve per
+// riportare la tab giusta in vista se l'errore e' su un campo nascosto in
+// una tab non attiva.
 function collectFieldErrors(sections) {
     const errors = [];
     (sections || []).forEach((section) => {
@@ -346,54 +455,156 @@ function buildSections(sections) {
     });
 
     if (sections.length <= 1) {
-        return { sectionsEl: wrap, tabsEl: null };
+        return { sectionsEl: wrap, tabsEl: null, showSectionOf: () => {} };
     }
 
-    const tabsEl = el(
-        'div',
-        { className: 'tabs form-tabs' },
-        sections.map((section, i) =>
-            el(
-                'button',
-                {
-                    type: 'button',
-                    className: 'tabs__item' + (i === initialIndex ? ' is-active' : ''),
-                    onClick: (e) => {
-                        tabsEl.querySelectorAll('.tabs__item').forEach((btn) => btn.classList.remove('is-active'));
-                        e.currentTarget.classList.add('is-active');
-                        contents.forEach((content, j) => {
-                            content.style.display = j === i ? '' : 'none';
-                        });
-                    },
-                },
-                [section.label || `Sezione ${i + 1}`]
-            )
+    const tabButtons = sections.map((section, i) =>
+        el(
+            'button',
+            {
+                type: 'button',
+                className: 'tabs__item' + (i === initialIndex ? ' is-active' : ''),
+                onClick: () => showSection(i),
+            },
+            [section.label || `Sezione ${i + 1}`]
         )
     );
+    const tabsEl = el('div', { className: 'tabs form-tabs' }, tabButtons);
 
-    return { sectionsEl: wrap, tabsEl };
+    function showSection(index) {
+        tabButtons.forEach((btn, j) => btn.classList.toggle('is-active', j === index));
+        contents.forEach((content, j) => {
+            content.style.display = j === index ? '' : 'none';
+        });
+    }
+
+    // La tab che contiene un campo (es. il primo campo da correggere).
+    const showSectionOf = (node) => {
+        const index = contents.findIndex((content) => content.contains(node));
+        if (index !== -1) showSection(index);
+    };
+
+    return { sectionsEl: wrap, tabsEl, showSectionOf };
+}
+
+// --- Controllo prima dell'invio ---------------------------------------
+
+function isFilled(wrap) {
+    const controls = Array.from(wrap.querySelectorAll('[name]'));
+    if (!controls.length) return true;
+    // Autocomplete: conta l'id scelto (nascosto), non il testo digitato.
+    return controls.some((c) => c.type !== 'checkbox' && String(c.value || '').trim() !== '');
+}
+
+function setFieldError(wrap, message) {
+    wrap.classList.add('field--error');
+    let help = wrap.querySelector('.field__error');
+    if (!help) {
+        help = el('p', { className: 'field__help field__error' });
+        const hint = wrap.querySelector('.field__hint');
+        if (hint) hint.hidden = true;
+        wrap.appendChild(help);
+    }
+    help.textContent = message;
+}
+
+function clearFieldError(wrap) {
+    wrap.classList.remove('field--error');
+    wrap.querySelector('.field__error')?.remove();
+    const hint = wrap.querySelector('.field__hint');
+    if (hint) hint.hidden = false;
+}
+
+/** @return {{wrap: HTMLElement, label: string, message: string}[]} */
+function validateForm(form) {
+    const errors = [];
+    form.querySelectorAll('.field').forEach((wrap) => {
+        if (wrap.hidden || wrap.closest('.form-box[hidden]')) return;
+        const label = wrap.dataset.label || '';
+        if (wrap.dataset.required && !isFilled(wrap)) {
+            const typed = wrap.querySelector('.field__autocomplete .field__input');
+            const message = typed && typed.value.trim() !== '' ? "Scegli una voce dall'elenco." : 'Campo obbligatorio.';
+            errors.push({ wrap, label, message });
+            return;
+        }
+        const input = wrap.querySelector('input.field__input');
+        if (input && input.value !== '' && !input.checkValidity()) {
+            const message = input.type === 'email' ? 'Indirizzo email non valido.' : 'Valore non valido.';
+            errors.push({ wrap, label, message });
+        }
+    });
+    return errors;
+}
+
+/**
+ * Errore evidente dove si e' cliccato: il pulsante diventa rosso con
+ * l'icona e una frase breve per un paio di secondi, la riga dei pulsanti
+ * dice cosa manca, e il primo campo da sistemare viene portato in vista.
+ */
+function showErrors(form, errors, submitButton, hintEl, showSectionOf) {
+    if (!errors.length) return;
+    const first = errors[0];
+    const summary = errors.length === 1
+        ? `${first.label}: ${first.message.replace(/\.$/, '').toLowerCase()}`
+        : `${errors.length} campi da sistemare`;
+
+    hintEl.textContent = '';
+    hintEl.classList.add('form__hint--error');
+    hintEl.append(icon('circle-exclamation'), ' ', errors.length === 1 ? summary : `${summary}: ${errors.map((e) => e.label).join(', ')}`);
+
+    if (!submitButton.dataset.label) submitButton.dataset.label = submitButton.textContent;
+    clearTimeout(submitButton._errorTimer);
+    submitButton.classList.remove('btn--error');
+    // Riflusso: l'animazione riparte anche a un secondo clic.
+    void submitButton.offsetWidth;
+    submitButton.classList.add('btn--error');
+    submitButton.textContent = '';
+    submitButton.append(icon('circle-exclamation'), errors.length === 1 ? `Manca: ${first.label}` : summary);
+    submitButton._errorTimer = setTimeout(() => {
+        submitButton.classList.remove('btn--error');
+        submitButton.textContent = submitButton.dataset.label;
+    }, 2600);
+
+    showSectionOf(first.wrap);
+    first.wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const focusable = first.wrap.querySelector('input:not([type=hidden]), select, textarea, button');
+    if (focusable) setTimeout(() => focusable.focus({ preventScroll: true }), 250);
+}
+
+function resetHint(hintEl, hasRequired) {
+    hintEl.classList.remove('form__hint--error');
+    hintEl.textContent = hasRequired ? '* obbligatorio' : '';
+}
+
+// Per chi si sta compilando il form (es. "Per il cliente Rossi Srl"): in
+// testa, cosi' si capisce subito su cosa si sta lavorando; segue il campo
+// collegato se lo si cambia.
+function buildContext(context, form) {
+    const name = el('a', { className: 'form__context-name' }, [context.name || '']);
+    const setTarget = (id, label) => {
+        name.textContent = label || '';
+        if (context.hrefPattern && id) name.setAttribute('href', context.hrefPattern.replace('{id}', id));
+        else name.removeAttribute('href');
+        box.hidden = !label;
+    };
+    const box = el('div', { className: 'form__context' }, [
+        icon('user'),
+        el('span', { className: 'form__context-label' }, [context.label]),
+        name,
+    ]);
+    setTarget(context.id, context.name);
+    if (context.key) {
+        form.addEventListener('autocomplete:select', (e) => {
+            if (e.detail.key === context.key) setTarget(e.detail.value, e.detail.label);
+        });
+    }
+    return box;
 }
 
 function renderForm(data) {
-    const { sectionsEl, tabsEl } = buildSections(data.sections || []);
-
-    // Avviso generale in un mini modale, oltre all'evidenziazione dei
-    // singoli campi qui sopra - lo stesso errore si vede in due punti
-    // apposta: il modale attira l'attenzione subito (soprattutto se il
-    // campo sbagliato e' su una tab non visibile), l'evidenziazione sul
-    // campo resta li' come riferimento mentre si corregge.
+    const { sectionsEl, tabsEl, showSectionOf } = buildSections(data.sections || []);
     const fieldErrors = collectFieldErrors(data.sections || []);
-    if (fieldErrors.length > 0) {
-        openModal({
-            title: fieldErrors.length === 1 ? "C'e' un errore" : `Ci sono ${fieldErrors.length} errori`,
-            tone: 'error',
-            body: el(
-                'ul',
-                {},
-                fieldErrors.map((f) => el('li', {}, [`${f.label}: ${f.error}`]))
-            ),
-        });
-    }
+    const hasRequired = (data.sections || []).some((s) => (s.boxes || []).some((b) => (b.fields || []).some((f) => f.required)));
 
     const children = [];
 
@@ -418,46 +629,78 @@ function renderForm(data) {
         children.push(el('input', { type: 'hidden', name: '_csrf', value: data.csrfToken }));
     }
 
+    // Pulsanti a destra, il principale per ultimo; "Elimina" a sinistra,
+    // lontano da "Salva". In mezzo la riga che dice cosa manca.
     const actionsRow = el('div', { className: 'form__actions' });
     const submitButton = el('button', { type: 'submit', className: 'btn btn--primary' }, [
         data.submitLabel || 'Salva',
     ]);
-    actionsRow.appendChild(submitButton);
+    const hintEl = el('p', { className: 'form__hint', 'aria-live': 'polite' });
+    resetHint(hintEl, hasRequired);
 
     // Pulsanti in piu' verso un URL diverso dal submit principale (es.
     // "Converti in cliente"), stesso form/stessi campi: formaction e'
     // l'attributo HTML nativo che dice al browser (e a e.submitter qui
     // sotto) quale action usare per QUESTO pulsante invece di quella del
     // <form> - non serve un secondo <form> annidato.
-    (data.secondaryActions || []).forEach((secondary) => {
-        actionsRow.appendChild(
-            el(
-                'button',
-                {
-                    type: 'submit',
-                    // variant e' opzionale (es. 'delete' per "Elimina",
-                    // vedi AbstractEditEntityTool::allSecondaryActions) -
-                    // di default resta il neutro di sempre, cosi' le
-                    // azioni custom gia' esistenti (es. "Converti in
-                    // cliente") non cambiano aspetto senza dirlo.
-                    className: `btn btn--${secondary.variant || 'secondary'}`,
-                    formaction: secondary.action,
-                    'data-confirm': secondary.confirm || null,
-                },
-                [secondary.label]
-            )
-        );
-    });
+    const secondaryButtons = (data.secondaryActions || []).map((secondary) =>
+        el(
+            'button',
+            {
+                type: 'submit',
+                // variant e' opzionale (es. 'delete' per "Elimina",
+                // vedi AbstractEditEntityTool::allSecondaryActions) -
+                // di default resta il neutro di sempre, cosi' le
+                // azioni custom gia' esistenti (es. "Converti in
+                // cliente") non cambiano aspetto senza dirlo.
+                className: `btn btn--${secondary.variant || 'secondary'}`,
+                formaction: secondary.action,
+                'data-confirm': secondary.confirm || null,
+                'data-variant': secondary.variant || null,
+            },
+            [secondary.label]
+        )
+    );
+    secondaryButtons.filter((b) => b.dataset.variant === 'delete').forEach((b) => actionsRow.appendChild(b));
+    actionsRow.appendChild(hintEl);
+    secondaryButtons.filter((b) => b.dataset.variant !== 'delete').forEach((b) => actionsRow.appendChild(b));
+    actionsRow.appendChild(submitButton);
     children.push(actionsRow);
 
-    const form = el('form', { method: data.method || 'POST', action: data.action }, children);
+    // novalidate: niente fumetti del browser che spariscono da soli, il
+    // controllo lo fa validateForm() e l'errore resta in vista.
+    const form = el('form', { method: data.method || 'POST', action: data.action, novalidate: '' }, children);
     applyConditionalFields(form);
     form.addEventListener('change', () => applyConditionalFields(form));
+
+    // Si corregge un campo: il suo errore sparisce.
+    const clearOnEdit = (e) => {
+        const wrap = e.target.closest && e.target.closest('.field--error');
+        if (wrap) {
+            clearFieldError(wrap);
+            if (!form.querySelector('.field--error')) resetHint(hintEl, hasRequired);
+        }
+    };
+    form.addEventListener('input', clearOnEdit);
+    form.addEventListener('change', clearOnEdit);
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
         const submitter = e.submitter || submitButton;
+        // "Elimina" e le altre azioni verso un altro indirizzo non
+        // chiedono che il form sia completo.
+        if (submitter === submitButton) {
+            form.querySelectorAll('.field--error').forEach(clearFieldError);
+            const errors = validateForm(form);
+            if (errors.length) {
+                errors.forEach((err) => setFieldError(err.wrap, err.message));
+                showErrors(form, errors, submitButton, hintEl, showSectionOf);
+                return;
+            }
+            resetHint(hintEl, hasRequired);
+        }
+
         const confirmMessage = submitter.getAttribute('data-confirm');
         if (confirmMessage && !window.confirm(confirmMessage)) {
             return;
@@ -485,6 +728,19 @@ function renderForm(data) {
             });
     });
 
+    // Errori arrivati dal server (es. formato non valido): stessa
+    // evidenza del controllo prima dell'invio, appena il form e' in pagina.
+    if (fieldErrors.length > 0) {
+        setTimeout(() => {
+            const errors = fieldErrors
+                .map((f) => ({ wrap: form.querySelector(`.field[data-key="${f.key}"]`), label: f.label, message: f.error }))
+                .filter((err) => err.wrap);
+            showErrors(form, errors, submitButton, hintEl, showSectionOf);
+        }, 200);
+    }
+
+    const contextEl = data.context ? buildContext(data.context, form) : null;
+
     // Sotto una scheda di dettaglio il form parte chiuso: prima si legge,
     // poi, se serve, si apre e si modifica.
     if (data.collapsed) {
@@ -507,7 +763,12 @@ function renderForm(data) {
     }
 
     return el('section', { className: 'card form' }, [
-        data.title ? el('h2', { className: 'card__title' }, [data.title]) : null,
+        data.title || contextEl
+            ? el('div', { className: 'form__header' }, [
+                  data.title ? el('h2', { className: 'card__title' }, [data.title]) : null,
+                  contextEl,
+              ])
+            : null,
         form,
     ]);
 }

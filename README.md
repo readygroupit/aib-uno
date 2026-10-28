@@ -239,7 +239,20 @@ Oltre a `format`/`help`/`autocomplete`/`input`:
 - `'optionsSource' => 'staff'`: scelta multipla a chip dei colleghi, salvata
   come "2,3";
 - `crossFieldErrors()` nel controller: controlli tra piu' campi (es. la fine
-  dopo l'inizio); `afterDelete()` dopo un'eliminazione.
+  dopo l'inizio); `afterDelete()` dopo un'eliminazione;
+- `'autocomplete' => ['source' => ..., 'freeText' => true]`: il valore e' il
+  testo (es. il CAP, `/geo/cap/cerca`), i suggerimenti compilano i campi
+  collegati con `fill`;
+- form.js: etichetta sul bordo dell'input, righe riempite fino in fondo
+  (`packGrid()`), controllo prima dell'invio (obbligatori con `*`, errore
+  sul pulsante e sul campo), "Per il cliente X" in testa ai form con
+  `customer_id` (`formContext()`).
+
+Dalla chat "nuovo X" (`new` + `values` di `AbstractEditEntityTool`) apre
+`{baseUrl}/nuovo?campo=valore`: componente `open`, che hero.js apre come un
+link; i nomi (colleghi, clienti) diventano id con `App\Support\ReferenceResolver`.
+Il prompt di sistema ha la data di oggi e chi scrive. Le schermate dello
+storico gia' viste si ricaricano dopo un salvataggio (`dataVersion` in hero.js).
 
 Pagina di un elemento: `AbstractEditEntityTool::buildPage()` mette prima la
 scheda (`detailComponents()`, es. la scheda cliente) e sotto il form chiuso

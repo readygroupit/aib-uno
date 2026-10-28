@@ -1,6 +1,7 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
+import { dateJump } from '../date-jump.js';
 
 // Il proprio registro: la settimana giorno per giorno, con il totale.
 function renderWeek(data) {
@@ -14,6 +15,7 @@ function renderWeek(data) {
                 el('a', { className: 'cal-nav__btn', href: data.prev, 'aria-label': 'Settimana prima' }, [icon('chevron-left')]),
                 el('a', { className: 'cal-nav__today', href: '/registro' }, ['Oggi']),
                 el('a', { className: 'cal-nav__btn', href: data.next, 'aria-label': 'Settimana dopo' }, [icon('chevron-right')]),
+                dateJump((date) => `/registro?settimana=${date}`, { title: 'Vai alla settimana di un giorno', value: data.monday || '' }),
             ]),
             data.insightsHref ? el('a', { className: 'btn btn--secondary', href: data.insightsHref }, ['Tempi e andamento']) : null,
             el('a', { className: 'btn btn--secondary', href: data.addHref }, [icon('plus'), 'Aggiungi a mano']),

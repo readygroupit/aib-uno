@@ -77,6 +77,7 @@ final class ShowWorklogTool implements PromptToolInterface
         return [$this->component->toData($week + [
             'url' => '/registro' . ($monday !== date('Y-m-d', strtotime('monday this week')) ? '?settimana=' . $monday : ''),
             'title' => 'Il mio registro',
+            'monday' => $monday,
             'weekLabel' => 'Settimana dal ' . (int) date('j', strtotime($monday)) . ' ' . \App\Support\ItalianFormat::monthName((int) date('n', strtotime($monday))),
             'prev' => '/registro?settimana=' . date('Y-m-d', strtotime("{$monday} -7 days")),
             'next' => '/registro?settimana=' . date('Y-m-d', strtotime("{$monday} +7 days")),

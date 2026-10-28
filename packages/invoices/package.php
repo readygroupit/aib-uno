@@ -191,7 +191,8 @@ return [
                     'help' => 'RF01 ordinario, RF19 forfettario.',
                 ],
                 'address' => ['sql' => 'VARCHAR(190)', 'label' => 'Indirizzo', 'base' => true],
-                'postal_code' => ['sql' => 'VARCHAR(10)', 'label' => 'CAP', 'base' => true],
+                // I suggerimenti del CAP compilano comune e provincia.
+                'postal_code' => ['sql' => 'VARCHAR(10)', 'label' => 'CAP', 'base' => true, 'autocomplete' => ['source' => '/geo/cap/cerca', 'freeText' => true], 'width' => 'quarter'],
                 'city' => ['sql' => 'VARCHAR(100)', 'label' => 'Comune', 'base' => true],
                 'province' => ['sql' => 'VARCHAR(2)', 'label' => 'Provincia (sigla)', 'base' => true],
                 'country' => ['sql' => 'VARCHAR(2)', 'label' => 'Nazione', 'defaultRequired' => true, 'help' => 'IT'],

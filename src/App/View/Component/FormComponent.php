@@ -19,6 +19,8 @@ use App\Core\Csrf;
  *    assente, tutti i campi finiscono in un'unica sezione/box implicita
  *    (stesso comportamento di prima - Utenti/Permessi non ne hanno una).
  *  - submitLabel, secondaryActions, message/messageType
+ *  - context: opzionale, {label, name, key, hrefPattern} - per chi si
+ *    sta compilando il form (es. "Cliente: Rossi Srl")
  *
  * Il lavoro di incrocio fatto qui (non nel Tool, non nel client): un box
  * che nel manifest elenca 4 campi ma per questo progetto ne ha solo 3
@@ -63,6 +65,9 @@ final class FormComponent extends AbstractComponent
             'secondaryActions' => $config['secondaryActions'] ?? [],
             'message' => $config['message'] ?? null,
             'messageType' => $config['messageType'] ?? null,
+            // Per chi si sta lavorando (es. il cliente): in testa al form,
+            // segue il campo 'key' se lo si cambia.
+            'context' => $config['context'] ?? null,
             'csrfToken' => Csrf::token(),
         ];
     }

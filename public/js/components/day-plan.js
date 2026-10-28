@@ -2,6 +2,7 @@ import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
 import { runAction, actionButton } from '../accounts-ui.js';
+import { dateJump } from '../date-jump.js';
 
 // La giornata messa in ordine: si legge dall'alto in basso come una
 // scaletta. Si spunta quello che si fa, il piano si ricalcola da solo.
@@ -25,7 +26,8 @@ function chips(row) {
     ].filter(Boolean));
 }
 
-function timelineRow(row) {
+/** Una riga della scaletta (usata anche dalla settimana di una persona, week-plan.js). */
+export function timelineRow(row) {
     const time = el('span', { className: 'pl-row__time' }, [row.time.split('-')[0], el('small', {}, [row.time.split('-')[1]])]);
 
     if (row.type === 'appointment') {
@@ -86,6 +88,8 @@ function renderDayPlan(data) {
         el('a', { className: 'cal-nav__btn', href: data.nav.prev, title: 'Giorno prima', 'aria-label': 'Giorno prima' }, [icon('chevron-left')]),
         el('a', { className: 'cal-nav__today' + (plan.isToday ? ' is-current' : ''), href: data.nav.today }, ['Oggi']),
         el('a', { className: 'cal-nav__btn', href: data.nav.next, title: 'Prossimo giorno di lavoro', 'aria-label': 'Prossimo giorno di lavoro' }, [icon('chevron-right')]),
+        dateJump((date) => `/oggi?${data.isMe ? '' : `persona=${data.personId}&`}giorno=${date}`, { title: 'Vai a un giorno', value: plan.date }),
+        el('a', { className: 'cal-nav__today', href: `/oggi?${data.isMe ? '' : `persona=${data.personId}&`}settimana=${plan.date}`, title: 'La settimana intera' }, ['Settimana']),
     ]);
 
     let personPicker = null;

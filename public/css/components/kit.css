@@ -197,6 +197,7 @@
 }
 
 .field__input {
+    width: 100%;
     height: 42px;
     border-radius: var(--radius-md);
     border: 1px solid rgba(18, 51, 63, 0.16);
@@ -206,6 +207,47 @@
     background: #fff;
     color: var(--color-petrol);
     outline: none;
+}
+
+.field__required {
+    margin-left: 3px;
+    color: var(--color-danger);
+}
+
+/*
+ * Etichetta sul bordo in alto a sinistra dell'input invece che sopra (form
+ * piu' compatto, chiesto dall'utente). La meta' bassa dell'etichetta e'
+ * bianca come l'input e copre il bordo; quella alta resta trasparente sullo
+ * sfondo del box. 12.5px: sotto i 12 non si legge bene (vedi sopra).
+ */
+.field--floating {
+    position: relative;
+}
+
+.field--floating > .field__label {
+    position: absolute;
+    top: 0;
+    left: 9px;
+    z-index: 1;
+    transform: translateY(-52%);
+    max-width: calc(100% - 18px);
+    padding: 0 5px;
+    font-size: 12.5px;
+    line-height: 1.25;
+    color: rgba(18, 51, 63, 0.66);
+    background: linear-gradient(to bottom, transparent 48%, #fff 48%);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+
+.field--floating:focus-within > .field__label {
+    color: var(--color-petrol);
+}
+
+.field--error.field--floating > .field__label {
+    color: var(--color-danger);
 }
 
 .field__input--area {
@@ -360,10 +402,17 @@
 
 .field--error .field__input {
     border-color: rgba(162, 59, 44, 0.6);
+    box-shadow: 0 0 0 3px rgba(162, 59, 44, 0.1);
 }
 
 .field--error .field__help {
+    margin: 0;
     color: var(--color-danger);
+}
+
+.field--error .field__choices {
+    border-radius: var(--radius-md);
+    box-shadow: 0 0 0 3px rgba(162, 59, 44, 0.12);
 }
 
 /* Campo autocomplete (vedi public/js/components/form.js,
@@ -409,7 +458,8 @@
     cursor: pointer;
 }
 
-.field__autocomplete-item:hover {
+.field__autocomplete-item:hover,
+.field__autocomplete-item.is-active {
     background: rgba(18, 51, 63, 0.06);
 }
 
@@ -466,8 +516,13 @@
 
 .form-box__grid {
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 14px 16px;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 18px 14px;
+}
+
+/* --span lo calcola form.js (packGrid): le righe si riempiono fino in fondo. */
+.form-box__grid > .field {
+    grid-column: span var(--span, 6);
 }
 
 /* Sezione = contenuto di una tab (o l'unica, se il form non ne ha piu'
@@ -481,11 +536,6 @@
     align-items: start;
 }
 
-/* La colonna laterale e' stretta: un campo per riga, a tutta larghezza. */
-.form-section__sidebar .field {
-    grid-column: span 12;
-}
-
 .form-section__sidebar .form-box {
     background: rgba(18, 51, 63, 0.035);
 }
@@ -494,10 +544,97 @@
     margin-bottom: 18px;
 }
 
+/* Pulsanti a destra (il principale per ultimo), "Elimina" a sinistra; in
+   mezzo cosa manca, in rosso dopo un invio incompleto. */
 .form__actions {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
     gap: 10px;
     margin-top: 18px;
+}
+
+.form__hint {
+    flex: 1 1 200px;
+    margin: 0;
+    text-align: right;
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.5);
+}
+
+.form__hint--error {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+.form__hint .icon {
+    margin-right: 2px;
+}
+
+.btn--error,
+.btn--error:disabled {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: #fff;
+    animation: btn-shake 0.4s ease;
+}
+
+@keyframes btn-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn--error { animation: none; }
+}
+
+/* Titolo del form e, accanto, per chi lo si compila (es. il cliente). */
+.form__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 14px;
+    margin-bottom: 16px;
+}
+
+.form__header .card__title {
+    margin-bottom: 0;
+}
+
+.form__context {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 100%;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(229, 201, 121, 0.28);
+    border: 1px solid rgba(185, 147, 51, 0.3);
+    font-size: 13.5px;
+}
+
+.form__context[hidden] {
+    display: none;
+}
+
+.form__context-label {
+    color: rgba(18, 51, 63, 0.66);
+}
+
+.form__context-name {
+    font-weight: 700;
+    color: var(--color-petrol);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.form__context-name[href]:hover {
+    text-decoration: underline;
 }
 
 @media (max-width: 720px) {
@@ -505,10 +642,21 @@
         grid-template-columns: 1fr;
     }
 
-    .field--quarter,
-    .field--third,
-    .field--half {
+    .form-box__grid > .field {
         grid-column: span 12;
+    }
+
+    .form-box {
+        padding: 16px 12px;
+    }
+
+    .form__actions .btn {
+        flex: 1 1 auto;
+    }
+
+    .form__hint {
+        flex-basis: 100%;
+        text-align: left;
     }
 }
 

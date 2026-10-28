@@ -35,6 +35,17 @@ final class AuthService
         return $_SESSION['user']['id'] ?? null;
     }
 
+    /** Nome e cognome di chi e' collegato (dalla sessione), o il nome utente. */
+    public function currentUserName(): ?string
+    {
+        $user = $_SESSION['user'] ?? null;
+        if ($user === null) {
+            return null;
+        }
+
+        return trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['username'] ?? null);
+    }
+
     public function isAuthenticated(): bool
     {
         return isset($_SESSION['user']['id']);

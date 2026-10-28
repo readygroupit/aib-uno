@@ -31,7 +31,8 @@ final class ShowTeamPlanTool implements PromptToolInterface, PromptConversationa
     {
         return "Il lavoro del team: per ognuno il carico di oggi, cosa sta facendo, chi e' libero, le proposte per "
             . "riequilibrare, e la settimana giorno per giorno. Usalo per 'il team', 'chi e' libero', 'cosa stanno facendo', "
-            . "'carico di lavoro', 'chi e' sovraccarico'.";
+            . "'carico di lavoro', 'chi e' sovraccarico'. Solo per tutto il team: se la richiesta nomina una persona "
+            . "(anche per una settimana) usa show_my_day con person.";
     }
 
     public function inputSchema(): array

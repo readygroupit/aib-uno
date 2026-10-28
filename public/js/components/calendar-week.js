@@ -2,6 +2,7 @@ import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
 import { runAction } from '../accounts-ui.js';
+import { dateJump } from '../date-jump.js';
 
 // Calendario della settimana. Gli appuntamenti stanno all'altezza della
 // loro ora; se si sovrappongono si affiancano; prima e dopo un'uscita c'e'
@@ -146,6 +147,7 @@ function renderCalendar(data) {
         el('a', { className: 'cal-nav__btn', href: `/appuntamenti?settimana=${week.prevWeek}`, title: 'Settimana prima', 'aria-label': 'Settimana prima' }, [icon('chevron-left')]),
         el('a', { className: 'cal-nav__today' + (week.isCurrentWeek ? ' is-current' : ''), href: '/appuntamenti' }, ['Oggi']),
         el('a', { className: 'cal-nav__btn', href: `/appuntamenti?settimana=${week.nextWeek}`, title: 'Settimana dopo', 'aria-label': 'Settimana dopo' }, [icon('chevron-right')]),
+        dateJump((date) => `/appuntamenti?settimana=${date}`, { title: 'Vai alla settimana di un giorno' }),
     ]);
 
     const header = el('div', { className: 'claim-table__header cal-header' }, [

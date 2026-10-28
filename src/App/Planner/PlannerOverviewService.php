@@ -88,6 +88,52 @@ final class PlannerOverviewService
         ];
     }
 
+    /**
+     * La settimana di una persona, giorno per giorno: la scaletta di ogni
+     * giorno (appuntamenti e lavoro con l'orario), senza pause e spazi
+     * liberi. I giorni di riposo compaiono solo se c'e' un appuntamento.
+     */
+    public function personWeek(int $userId, string $monday): array
+    {
+        $user = $this->users->find($userId);
+        $name = $user instanceof User ? (trim((string) $user->firstName) ?: (string) $user->username) : '';
+
+        $days = [];
+        $appointments = 0;
+        $minutes = 0;
+        for ($i = 0; $i < 7; $i++) {
+            $date = date('Y-m-d', strtotime("{$monday} +{$i} days"));
+            // I giorni futuri per intero, non da "adesso".
+            $plan = $this->planner->plan($userId, $date, $date === $this->today ? null : 0);
+            $rows = array_values(array_filter($plan['timeline'], static fn (array $r) => in_array($r['type'], ['appointment', 'task', 'reminder', 'travel'], true)));
+            if (!$plan['working'] && $rows === []) {
+                continue;
+            }
+            $appointments += $plan['appointments'];
+            $minutes += $plan['plannedMinutes'] + $plan['appointmentMinutes'];
+            $days[] = [
+                'date' => $date,
+                'label' => ucfirst($this->planner->dayName($date)),
+                'isToday' => $date === $this->today,
+                'isPast' => $date < $this->today,
+                'working' => $plan['working'],
+                'absence' => $plan['absence'],
+                'load' => $plan['loadPercent'],
+                'loadTone' => $plan['loadPercent'] > 105 ? 'danger' : ($plan['loadPercent'] >= 80 ? 'warning' : 'success'),
+                'overflowLabel' => $plan['overflowMinutes'] > 0 ? WorkOrderOverviewService::duration($plan['overflowMinutes']) . ' non ci stanno' : null,
+                'rows' => $rows,
+                'href' => '/oggi?persona=' . $userId . '&giorno=' . $date,
+            ];
+        }
+
+        return [
+            'name' => $name,
+            'days' => $days,
+            'appointments' => $appointments,
+            'plannedLabel' => WorkOrderOverviewService::duration($minutes),
+        ];
+    }
+
     /** Il team oggi: una riga per persona e le proposte per riequilibrare. */
     public function team(string $date): array
     {

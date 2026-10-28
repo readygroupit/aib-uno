@@ -88,6 +88,7 @@ return [
                     'sql' => 'VARCHAR(190)',
                     'label' => 'Indirizzo',
                     'defaultRequired' => true,
+                    'width' => 'full',
                 ],
                 'municipality_id' => [
                     'sql' => 'INT UNSIGNED',
@@ -107,6 +108,10 @@ return [
                     'sql' => 'VARCHAR(10)',
                     'label' => 'CAP',
                     'defaultRequired' => true,
+                    // Si scrive il CAP, i suggerimenti compilano il comune
+                    // (e scegliendo il comune si compila il CAP, se e' uno).
+                    'autocomplete' => ['source' => '/geo/cap/cerca', 'freeText' => true],
+                    'width' => 'quarter',
                 ],
 
                 // --- dati fiscali ---
@@ -256,7 +261,7 @@ return [
                             [
                                 'title' => 'Indirizzo',
                                 'area' => 'main',
-                                'fields' => ['address', 'municipality_id', 'postal_code'],
+                                'fields' => ['address', 'postal_code', 'municipality_id'],
                             ],
                             [
                                 'title' => 'Contatto',

@@ -38,9 +38,13 @@ final class EditWorkEntryTool extends AbstractEditEntityTool
         return $isNew ? 'Aggiungi al registro' : 'Voce del registro';
     }
 
+    /**
+     * 'source' (check-in o a mano) lo scrive il sistema: nel form era un
+     * menu "Come: check-in / manuale" che non si capiva a cosa servisse.
+     */
     protected function hiddenFields(): array
     {
-        return ['task_id', 'user_id'];
+        return ['task_id', 'user_id', 'source'];
     }
 
     protected function searchColumns(): array

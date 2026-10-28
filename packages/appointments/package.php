@@ -161,10 +161,12 @@ return [
                     [
                         'label' => null,
                         'boxes' => [
+                            // Il cliente in testa, non in mezzo ai colleghi nella
+                            // colonna laterale: si deve vedere per chi e'.
                             [
                                 'title' => 'Appuntamento',
                                 'area' => 'main',
-                                'fields' => ['title', 'kind', 'stage', 'start_at', 'end_at'],
+                                'fields' => ['customer_id', 'title', 'kind', 'stage', 'start_at', 'end_at'],
                             ],
                             [
                                 'title' => 'Dove',
@@ -179,7 +181,7 @@ return [
                             [
                                 'title' => 'Chi',
                                 'area' => 'sidebar',
-                                'fields' => ['assigned_user_id', 'attendee_user_ids', 'customer_id'],
+                                'fields' => ['assigned_user_id', 'attendee_user_ids'],
                             ],
                             [
                                 'title' => 'Promemoria',

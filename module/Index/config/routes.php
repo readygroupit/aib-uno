@@ -384,6 +384,12 @@ return [
         'action' => 'searchMunicipalities',
     ],
 
+    'geo-search-postal-codes' => [
+        'path' => '/geo/cap/cerca',
+        'controller' => GeoController::class,
+        'action' => 'searchPostalCodes',
+    ],
+
     'entity-ref-search' => [
         'path' => '/riferimenti/:source/cerca',
         'controller' => EntityReferenceController::class,

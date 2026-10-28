@@ -26,9 +26,11 @@ final class ListTasksTool implements PromptToolInterface, PromptConversationalIn
     private StatBoxComponent $statBox;
     private TaskBoardComponent $board;
     private AuthService $auth;
+    private Container $container;
 
     public function __construct(Container $container)
     {
+        $this->container = $container;
         $this->overview = $container->get(WorkOrderOverviewService::class);
         $this->tasks = $container->get(TaskRepository::class);
         $this->statBox = $container->get(StatBoxComponent::class);
@@ -85,11 +87,49 @@ final class ListTasksTool implements PromptToolInterface, PromptConversationalIn
         return ['attivita', 'le mie attivita', 'promemoria', 'lista attivita'];
     }
 
+    /**
+     * Gli appuntamenti di oggi e dei prossimi 7 giorni (di chi guarda, o di
+     * tutti): contano anche loro, anche di sabato o domenica - prima la
+     * pagina diceva "settimana libera" con un appuntamento domani.
+     *
+     * @return array{today: int, week: int, items: list<array>}
+     */
+    private function upcomingAppointments(?int $userId): array
+    {
+        if (!in_array('appointments', \App\Package\PackageCatalogService::installedNames(), true)) {
+            return ['today' => 0, 'week' => 0, 'items' => []];
+        }
+        $today = date('Y-m-d');
+        $found = $this->container->get(\App\Repository\AppointmentRepository::class)
+            ->findBetween(date('Y-m-d H:i:s'), date('Y-m-d', strtotime($today . ' +8 days')) . ' 00:00:00');
+        $mine = array_values(array_filter($found, static fn ($a) => $a->isActive() && ($userId === null || in_array($userId, $a->peopleIds(), true))));
+        $onToday = count(array_filter($mine, static fn ($a) => substr((string) $a->startAt, 0, 10) <= $today));
+
+        return [
+            'today' => $onToday,
+            'week' => count($mine) - $onToday,
+            'items' => $this->container->get(\App\Calendar\CalendarOverviewService::class)->shortList($mine),
+        ];
+    }
+
+    private static function countLabel(int $tasks, int $appointments): string
+    {
+        $parts = array_filter([
+            $tasks > 0 ? F::plural($tasks, "attivita'", "attivita'") : null,
+            $appointments > 0 ? F::plural($appointments, 'appuntamento', 'appuntamenti') : null,
+        ]);
+
+        return implode(' e ', $parts);
+    }
+
     public function execute(array $input): array
     {
         $all = ($input['scope'] ?? 'mie') === 'tutte';
         $board = $this->overview->taskBoard($all ? null : $this->auth->currentUserId());
         $t = $board['totals'];
+        $appointments = $this->upcomingAppointments($all ? null : $this->auth->currentUserId());
+        $todayCount = $t['today'] + $appointments['today'];
+        $weekCount = $t['week'] + $appointments['week'];
 
         return [$this->board->toData([
             'title' => $all ? "Attivita' di tutti" : "Le mie attivita'",
@@ -99,8 +139,9 @@ final class ListTasksTool implements PromptToolInterface, PromptConversationalIn
             'stats' => [
                 $this->statBox->toData([
                     'label' => 'Oggi',
-                    'value' => (string) $t['today'],
-                    'comparison' => $t['todayMinutes'] > 0 ? 'circa ' . WorkOrderOverviewService::duration($t['todayMinutes']) . ' di lavoro previsto' : 'niente di previsto',
+                    'value' => (string) $todayCount,
+                    'comparison' => $todayCount === 0 ? 'niente di previsto'
+                        : self::countLabel($t['today'], $appointments['today']) . ($t['todayMinutes'] > 0 ? ', circa ' . WorkOrderOverviewService::duration($t['todayMinutes']) . ' di lavoro' : ''),
                     'feature' => true,
                     'badge' => ucfirst(F::longDate(date('Y-m-d'))),
                 ]),
@@ -112,8 +153,9 @@ final class ListTasksTool implements PromptToolInterface, PromptConversationalIn
                 ]),
                 $this->statBox->toData([
                     'label' => 'Prossimi 7 giorni',
-                    'value' => (string) $t['week'],
-                    'comparison' => $t['weekMinutes'] > 0 ? 'circa ' . WorkOrderOverviewService::duration($t['weekMinutes']) : 'settimana libera',
+                    'value' => (string) $weekCount,
+                    'comparison' => $weekCount === 0 ? 'settimana libera'
+                        : self::countLabel($t['week'], $appointments['week']) . ($t['weekMinutes'] > 0 ? ', circa ' . WorkOrderOverviewService::duration($t['weekMinutes']) : ''),
                     'dotColor' => 'teal',
                 ]),
                 $this->statBox->toData([
@@ -124,6 +166,7 @@ final class ListTasksTool implements PromptToolInterface, PromptConversationalIn
                 ]),
             ],
             'groups' => $board['groups'],
+            'appointments' => $appointments['items'],
         ])];
     }
 

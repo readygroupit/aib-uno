@@ -32,7 +32,11 @@ final class PromptController extends AuthController
         // se trovata, esegue subito senza spendere una chiamata a Claude
         // (piu' veloce, gratis, utile anche quando l'API non e' configurata
         // o non ha credito - vedi PromptToolInterface::triggers()).
-        $localTool = $this->matchLocalTool($registry, $message);
+        // Una voce del menu dice gia' quale capacita' aprire.
+        $requested = is_string($body['tool'] ?? null) ? $body['tool'] : '';
+        $localTool = $requested !== '' && $registry->has($requested)
+            ? $registry->get($requested)
+            : $this->matchLocalTool($registry, $message);
 
         if ($localTool !== null) {
             $this->respondWithTool($localTool, [], $message, $history);

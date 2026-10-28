@@ -241,6 +241,16 @@ abstract class AbstractEntityController extends AuthController
         return $prefill;
     }
 
+    /**
+     * Il valore di un campo come arriva dal form (null se il form non lo
+     * manda). Un controller puo' leggerlo a modo suo, es. gli orari: piu'
+     * persone scelte insieme nello stesso campo.
+     */
+    protected function requestValue(string $key): mixed
+    {
+        return $this->request->get($key, null);
+    }
+
     protected function repository(): AbstractRepository
     {
         return $this->container->get($this->repositoryClass());
@@ -265,7 +275,7 @@ abstract class AbstractEntityController extends AuthController
         $data = [];
         $fieldErrors = [];
         foreach ($fields as $key => $definition) {
-            $raw = $this->request->get($key, null);
+            $raw = $this->requestValue($key);
             if ($raw === null) {
                 continue;
             }

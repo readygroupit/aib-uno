@@ -32,6 +32,7 @@ import './components/type-steps.js';
 import './components/calendar-week.js';
 import './components/appointment-summary.js';
 import './components/day-plan.js';
+import './components/week-plan.js';
 import './components/team-plan.js';
 import './components/check-in.js';
 import './components/worklog-week.js';

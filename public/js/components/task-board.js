@@ -31,11 +31,31 @@ function renderTaskBoard(data) {
             : el('p', { className: 'acc-empty' }, [icon('circle-check'), g.key === 'today' ? ' Niente di previsto per oggi.' : ' Niente.']),
     ]));
 
+    // Gli appuntamenti dei prossimi giorni: non sono attivita', ma la
+    // settimana non e' libera se ce n'e' uno (anche di domenica).
+    const appointments = (data.appointments || []).length
+        ? el('section', { className: 'card acc-section' }, [
+              el('div', { className: 'acc-section__head' }, [
+                  el('h2', { className: 'card__title' }, ['Appuntamenti in arrivo']),
+                  el('a', { className: 'btn btn--ghost btn--small', href: '/appuntamenti' }, [icon('calendar'), 'Calendario']),
+              ]),
+              el('div', { className: 'acc-due-list' }, data.appointments.map((a) => el('a', { className: 'cal-row', href: a.href }, [
+                  el('span', { className: `cal-row__dot cal-dot--${a.color}` }),
+                  el('span', { className: 'cal-row__time' }, [a.dayLabel]),
+                  el('span', { className: 'cal-row__body' }, [
+                      el('span', { className: 'cal-row__title' }, [a.title]),
+                      el('span', { className: 'cal-row__meta' }, [[a.time, a.kindLabel, a.location].filter(Boolean).join(' · ')]),
+                  ]),
+              ]))),
+          ])
+        : null;
+
     return el('div', { className: 'wk' }, [
         header,
         el('div', { className: 'stat-grid' }, (data.stats || []).map(renderComponent).filter(Boolean)),
+        appointments,
         el('div', { className: 'wk-groups' }, groups),
-    ]);
+    ].filter(Boolean));
 }
 
 registerComponent('task-board', renderTaskBoard);

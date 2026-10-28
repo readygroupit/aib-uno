@@ -22,11 +22,13 @@ final class AiService
 {
     private Config $config;
     private PromptToolRegistry $registry;
+    private AuthService $auth;
 
     public function __construct(Container $container)
     {
         $this->config = $container->get(Config::class);
         $this->registry = $container->get(PromptToolRegistry::class);
+        $this->auth = $container->get(AuthService::class);
     }
 
     /**
@@ -57,7 +59,13 @@ final class AiService
         }
 
         $system = "Sei l'assistente conversazionale di " . APP_NAME . '. Rispondi in italiano. '
-            . 'Ogni risposta passa da uno strumento. Se uno strumento risponde esattamente alla richiesta '
+            . $this->todayNote()
+            . 'Ogni risposta passa da uno strumento. Per inserire, aggiungere, creare o segnare qualcosa di nuovo '
+            . "(un cliente, un appuntamento, un'attivita', un contatto) usa lo strumento edit_ di quel tipo con "
+            . 'new=true e in values quello che l\'operatore ha detto (persone e clienti per nome, date nel formato '
+            . 'richiesto): si apre il form gia\' compilato, non serve chiedere i dati mancanti. Per la giornata o la '
+            . 'settimana di una persona usa show_my_day con person (e week per una settimana intera). '
+            . 'Se uno strumento risponde esattamente alla richiesta '
             . 'usalo subito, senza chiedere dettagli che non prevede (paginazione, formato). Se invece la '
             . 'richiesta chiede sui dati qualcosa che nessuno strumento copre esattamente (confronti tra '
             . 'periodi o anni, classifiche, incroci, raggruppamenti, statistiche particolari) usa '
@@ -72,6 +80,20 @@ final class AiService
         return $this->provider() === 'openai'
             ? $this->converseOpenAi($system, $messages)
             : $this->converseClaude($system, $messages);
+    }
+
+    /**
+     * Oggi e chi scrive: senza, "lunedi'", "domani" o "la prossima
+     * settimana" diventavano date a caso, e "le mie" non sapeva di chi.
+     */
+    private function todayNote(): string
+    {
+        $days = ['domenica', 'lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato'];
+        $user = $this->auth->currentUserName();
+
+        return 'Oggi e\' ' . $days[(int) date('w')] . ' ' . date('Y-m-d') . ', ore ' . date('H:i')
+            . '; la settimana va da lunedi a domenica (lunedi prossimo: ' . date('Y-m-d', strtotime('next monday')) . '). '
+            . ($user !== null && $user !== '' ? "Scrive {$user}. " : '');
     }
 
     /**

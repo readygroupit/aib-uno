@@ -30,11 +30,12 @@ final class PlannerController extends AuthController
         };
     }
 
-    /** /oggi?giorno=AAAA-MM-GG&persona=ID */
+    /** /oggi?giorno=AAAA-MM-GG&persona=ID, o ?settimana=AAAA-MM-GG per la settimana intera */
     public function todayAction(): ?string
     {
         $components = $this->container->get(ShowDayPlanTool::class)->execute([
             'day' => (string) $this->request->get('giorno', ''),
+            'week' => (string) $this->request->get('settimana', ''),
             'person' => (string) $this->request->get('persona', ''),
         ]);
 

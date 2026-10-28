@@ -6,10 +6,13 @@ namespace App\Prompt\Tool;
 
 use App\Core\Container;
 use App\Model\AbstractModel;
+use App\Package\PackageCatalogService;
 use App\Package\PackageManifest;
 use App\Prompt\PromptToolInterface;
 use App\Repository\AbstractRepository;
+use App\Repository\CustomerRepository;
 use App\Service\AuthService;
+use App\Support\ReferenceResolver;
 use App\View\Component\DataTableComponent;
 use App\View\Component\FormComponent;
 
@@ -142,21 +145,56 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
         return [];
     }
 
+    /**
+     * Oltre ad aprire un elemento esistente, apre il form per inserirne
+     * uno nuovo ('new'), gia' compilato con quello che l'operatore ha
+     * detto ('values': "nuovo appuntamento per Fabrizio lunedi' alle 10").
+     */
     public function inputSchema(): array
     {
+        // Una riga sola con i campi (non uno schema per campo): sono
+        // decine di strumenti, ogni token in piu' rallenta ogni risposta.
+        $hints = [];
+        foreach ($this->creatableFields() as $key => $definition) {
+            $hints[] = $key . ' (' . $this->valueHint($definition) . ')';
+        }
+
         return [
             'type' => 'object',
             'properties' => [
                 'id' => ['type' => 'integer', 'description' => "Id, se gia' noto"],
                 'query' => ['type' => 'string', 'description' => "Testo libero da cercare, se l'id non e' noto"],
+                'new' => ['type' => 'boolean', 'description' => "true per aprire il form di inserimento di un elemento nuovo (es. 'nuovo', 'inserisci', 'aggiungi', 'crea')"],
+                'values' => [
+                    'type' => 'object',
+                    'description' => "Con new: solo i valori detti dall'operatore, per precompilare il form. Campi: " . implode('; ', $hints),
+                ],
             ],
         ];
+    }
+
+    /**
+     * Permesso per il form di un elemento nuovo: "{pacchetto}.create" dove
+     * c'e' la solita quaterna; dove lo strumento chiede un permesso suo
+     * (orari: planner.team, registro: worklog.view) vale quello.
+     */
+    protected function createPermission(): string
+    {
+        $permission = (string) $this->requiredPermission();
+
+        return str_ends_with($permission, '.edit') ? substr($permission, 0, -5) . '.create' : $permission;
     }
 
     public function execute(array $input): array
     {
         $id = isset($input['id']) ? (int) $input['id'] : null;
         $query = trim((string) ($input['query'] ?? ''));
+
+        // Niente da cercare: chi chiede vuole inserirne uno nuovo (prima
+        // rispondeva "Specifica un id o un testo da cercare", senza form).
+        if (!empty($input['new']) || ($id === null && $query === '')) {
+            return [$this->newFormLink(is_array($input['values'] ?? null) ? $input['values'] : [])];
+        }
 
         if ($id === null && $query !== '') {
             $matches = $this->repository->searchFreeText($this->searchColumns(), $query, 10, $this->phoneticColumns());
@@ -181,6 +219,132 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
         }
 
         return $this->buildPage($model);
+    }
+
+    /**
+     * Il form di inserimento come pagina vera ('{baseUrl}/nuovo', con i
+     * default del controller e ?campo=valore per precompilare): hero.js
+     * lo apre come un link. I nomi detti a parole (un collega, un cliente)
+     * diventano l'id; quelli non trovati si scelgono nel form.
+     */
+    protected function newFormLink(array $values): array
+    {
+        if (!$this->auth->hasPermission($this->createPermission())) {
+            return $this->dataTable->toData([
+                'title' => $this->formTitle(true),
+                'columns' => [],
+                'rows' => [],
+                'emptyMessage' => 'Non hai il permesso di inserirne di nuovi.',
+            ]);
+        }
+
+        $fields = $this->creatableFields();
+        $resolver = $this->toolContainer->get(ReferenceResolver::class);
+        $query = [];
+        $missing = [];
+        foreach ($values as $key => $value) {
+            if (!isset($fields[$key]) || !is_scalar($value) || trim((string) $value) === '') {
+                continue;
+            }
+            $definition = $fields[$key];
+            $value = trim((string) $value);
+
+            if (isset($definition['autocomplete']) && empty($definition['autocomplete']['freeText'])) {
+                $id = $resolver->resolve((string) $definition['autocomplete']['source'], $value);
+                if ($id === null) {
+                    $missing[] = "{$definition['label']} \u{ab}{$value}\u{bb}";
+                    continue;
+                }
+                $value = (string) $id;
+            } elseif (($definition['optionsSource'] ?? null) === 'staff') {
+                $ids = [];
+                foreach (preg_split('/\s*(?:,|\be\b)\s*/u', $value, -1, PREG_SPLIT_NO_EMPTY) as $name) {
+                    $id = $resolver->resolve('/riferimenti/staff/cerca', $name);
+                    if ($id === null) {
+                        $missing[] = "{$definition['label']} \u{ab}{$name}\u{bb}";
+                    } else {
+                        $ids[] = $id;
+                    }
+                }
+                if ($ids === []) {
+                    continue;
+                }
+                $value = implode(',', $ids);
+            } elseif (isset($definition['options'])) {
+                $match = null;
+                foreach ($definition['options'] as $option) {
+                    if (strcasecmp((string) $option, $value) === 0) {
+                        $match = (string) $option;
+                    }
+                }
+                if ($match === null) {
+                    continue;
+                }
+                $value = $match;
+            } else {
+                $value = self::normalizeValue($definition['format'] ?? null, $value);
+                if ($value === null) {
+                    continue;
+                }
+            }
+
+            $query[$key] = $value;
+        }
+
+        return [
+            'type' => 'open',
+            'href' => $this->baseUrl() . '/nuovo' . ($query !== [] ? '?' . http_build_query($query) : ''),
+            'notice' => $missing !== [] ? 'Non ho trovato ' . implode(', ', $missing) . ': sceglilo nel form.' : null,
+        ];
+    }
+
+    /** Date e ore dette a parole o in formati diversi, nel formato del campo; null se non si capisce. */
+    private static function normalizeValue(?string $format, string $value): ?string
+    {
+        if (!in_array($format, ['date', 'datetime', 'time'], true)) {
+            return $value;
+        }
+        $time = strtotime(str_replace('T', ' ', $value));
+        if ($time === false) {
+            return null;
+        }
+
+        return match ($format) {
+            'date' => date('Y-m-d', $time),
+            // Solo il giorno: si parte dalle 9.
+            'datetime' => preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 ? date('Y-m-d', $time) . ' 09:00:00' : date('Y-m-d H:i:00', $time),
+            'time' => date('H:i', $time),
+        };
+    }
+
+    /** I campi che l'operatore compila in un form nuovo (non quelli di sistema o nascosti). */
+    private function creatableFields(): array
+    {
+        $definitions = (new PackageManifest($this->packageName()))->entities()[$this->manifestEntityKey()]['fields'];
+        $excluded = [...$this->systemManagedFields(), ...$this->hiddenFields()];
+
+        return array_filter($definitions, static fn (string $key) => !in_array($key, $excluded, true), ARRAY_FILTER_USE_KEY);
+    }
+
+    private function valueHint(array $definition): string
+    {
+        $hint = (string) $definition['label'];
+        if (isset($definition['options'])) {
+            return $hint . ': ' . implode('/', $definition['options']);
+        }
+        if (isset($definition['autocomplete']) && empty($definition['autocomplete']['freeText'])) {
+            return $hint . ', nome';
+        }
+        if (($definition['optionsSource'] ?? null) === 'staff') {
+            return $hint . ', nomi separati da virgola';
+        }
+
+        return $hint . match ($definition['format'] ?? null) {
+            'date' => ', AAAA-MM-GG',
+            'datetime' => ', AAAA-MM-GG HH:MM',
+            'time' => ', HH:MM',
+            default => '',
+        };
     }
 
     /**
@@ -230,6 +394,8 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
             $title = $this->formTitleBelowDetail();
         }
 
+        $fields = $this->fieldsFromManifest($model, $fieldErrors);
+
         return $this->form->toData([
             'entity' => $this->entityTag(),
             'title' => $title,
@@ -237,12 +403,37 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
             'collapsed' => !$isNew && $this->formTitleBelowDetail() !== null && $fieldErrors === [] && $message === null,
             'action' => $isNew ? $this->baseUrl() . '/nuovo' : $this->baseUrl() . '/' . $model->id,
             'submitLabel' => $isNew ? 'Crea' : 'Salva',
-            'fields' => $this->fieldsFromManifest($model, $fieldErrors),
+            'fields' => $fields,
             'layout' => (new PackageManifest($this->packageName()))->layout($this->manifestEntityKey()),
             'secondaryActions' => $isNew ? [] : $this->allSecondaryActions($model),
             'message' => $message,
             'messageType' => $messageType,
+            'context' => $this->formContext($model, $fields),
         ]);
+    }
+
+    /**
+     * Per chi si compila il form, in testa: il cliente, se l'elemento ne
+     * ha uno (un contatto, un appuntamento, una richiesta...) - si deve
+     * capire subito che si sta lavorando su quel cliente, non solo
+     * dal campo in mezzo agli altri.
+     */
+    protected function formContext(AbstractModel $model, array $fields): ?array
+    {
+        if ($this->manifestEntityKey() === 'customers' || !in_array('customer_id', array_column($fields, 'key'), true)
+            || !in_array('customers', PackageCatalogService::installedNames(), true)) {
+            return null;
+        }
+        $id = $this->fieldValue($model, 'customer_id');
+        $customer = $id ? $this->toolContainer->get(CustomerRepository::class)->find((int) $id) : null;
+
+        return [
+            'label' => 'Per il cliente',
+            'id' => $customer?->id,
+            'name' => $customer?->displayName(),
+            'key' => 'customer_id',
+            'hrefPattern' => '/clienti/{id}',
+        ];
     }
 
     /**
@@ -293,6 +484,8 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
                     default => null,
                 },
                 'autocompleteSource' => $definition['autocomplete']['source'] ?? null,
+                // Il valore e' il testo (es. il CAP): i suggerimenti aiutano a scriverlo.
+                'autocompleteFreeText' => (bool) ($definition['autocomplete']['freeText'] ?? false),
                 'options' => $definition['options'] ?? null,
                 'choices' => isset($definition['optionsSource']) ? $this->choices((string) $definition['optionsSource']) : null,
                 // Il campo compare solo quando un altro ha uno di quei

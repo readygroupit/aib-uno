@@ -12,9 +12,11 @@
     flex-direction: column;
     gap: 14px;
     padding: 18px;
-    background: rgba(251, 250, 248, 0.42);
-    backdrop-filter: blur(22px) saturate(160%);
-    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    /* Niente backdrop-filter qui: il pannello e' quello che scorre, e la
+       sfocatura ricalcolata a ogni frame rendeva lento lo scroll delle
+       schermate lunghe (scheda cliente). Dietro c'e' solo lo sfondo a
+       sfumature, che sfocato non cambia: basta un velo un po' piu' pieno. */
+    background: rgba(251, 250, 248, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.55);
     border-radius: var(--radius-xl);
     box-shadow: 0 1px 1px rgba(255, 255, 255, 0.6) inset, var(--shadow-card);

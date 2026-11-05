@@ -98,7 +98,7 @@ final class UsersController extends AuthController
             return;
         }
         try {
-            $this->container->get(AuthService::class)->requestPasswordReset((string) $user->email);
+            $this->container->get(AuthService::class)->requestPasswordReset((string) $user->email, $this->request->baseUrl());
         } catch (\Throwable $e) {
             $this->json(['ok' => false, 'message' => 'Email non partita: controlla la configurazione della posta.'], 500);
 

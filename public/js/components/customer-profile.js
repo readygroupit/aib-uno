@@ -74,7 +74,7 @@ function kpiRow(c) {
     ]);
 }
 
-function serviceCard(s) {
+function serviceCard(s, canRenew = true) {
     return el('article', { className: 'acc-service' + (s.stage !== 'attivo' ? ' acc-service--inactive' : '') }, [
         el('div', { className: 'acc-service__top' }, [
             el('a', { className: 'acc-service__title', href: s.href }, [s.title]),
@@ -90,7 +90,7 @@ function serviceCard(s) {
         ]) : null,
         el('div', { className: 'acc-service__foot' }, [
             s.margin ? el('span', { className: 'acc-muted' }, [s.margin]) : el('span'),
-            s.canRenew && s.renewal && s.renewal.tone !== 'neutral'
+            canRenew && s.canRenew && s.renewal && s.renewal.tone !== 'neutral'
                 ? actionButton('Rinnova ora', `/servizi-clienti/${s.id}/rinnova`, { confirm: 'Rinnovare adesso per un altro periodo?', iconName: 'arrows-rotate' })
                 : null,
         ]),
@@ -106,6 +106,8 @@ function section(title, children, extra = null) {
 
 function renderCustomerProfile(data) {
     const c = data.customer;
+    // Senza data.can (vecchi dati) tutto come prima; con, solo i pulsanti permessi.
+    const can = (key) => !data.can || data.can[key] !== false;
     const blocks = [headerCard(c, data)];
 
     if (data.showBilling) {
@@ -129,7 +131,7 @@ function renderCustomerProfile(data) {
             data.health.touchpoints.length
                 ? el('div', { className: 'ch-touches' }, data.health.touchpoints.map(touchpointRow))
                 : el('p', { className: 'acc-empty' }, ['Nessun contatto registrato.']),
-        ], el('a', { className: 'btn btn--ghost btn--small', href: data.health.logHref }, [icon('phone'), "Com'e' andata"])));
+        ], can('logTouchpoint') ? el('a', { className: 'btn btn--ghost btn--small', href: data.health.logHref }, [icon('phone'), "Com'e' andata"]) : null));
     }
 
     // Commesse (se il pacchetto c'e'): prima quelle che aspettano o sono in corso.
@@ -143,8 +145,8 @@ function renderCustomerProfile(data) {
                     w.due ? el('span', { className: `acc-line__tag acc-line__tag--${w.due.tone}` }, [w.active ? `consegna ${w.due.date}` : w.due.when]) : null,
                 ]),
             ])))]
-            : [el('p', { className: 'acc-empty' }, ['Nessuna commessa. ', el('a', { href: data.newWorkOrderHref }, ['Apri la prima'])])],
-        el('a', { className: 'btn btn--ghost btn--small', href: data.newWorkOrderHref }, [icon('plus'), 'Commessa'])));
+            : [el('p', { className: 'acc-empty' }, ['Nessuna commessa.', can('newWorkOrder') ? ' ' : null, can('newWorkOrder') ? el('a', { href: data.newWorkOrderHref }, ['Apri la prima']) : null])],
+        can('newWorkOrder') ? el('a', { className: 'btn btn--ghost btn--small', href: data.newWorkOrderHref }, [icon('plus'), 'Commessa']) : null));
     }
 
     if (data.appointments) {
@@ -158,20 +160,20 @@ function renderCustomerProfile(data) {
                 ]),
             ])))]
             : [el('p', { className: 'acc-empty' }, ['Nessun appuntamento in programma.'])],
-        el('a', { className: 'btn btn--ghost btn--small', href: data.newAppointmentHref }, [icon('plus'), 'Appuntamento'])));
+        can('newAppointment') ? el('a', { className: 'btn btn--ghost btn--small', href: data.newAppointmentHref }, [icon('plus'), 'Appuntamento']) : null));
     }
 
     if (data.showBilling) {
         const newServiceHref = `/servizi-clienti/nuovo?customer_id=${c.id}`;
         blocks.push(section('Servizi', data.services.length
-            ? [el('div', { className: 'acc-services' }, data.services.map(serviceCard))]
-            : [el('p', { className: 'acc-empty' }, ['Nessun servizio ancora. ', el('a', { href: newServiceHref }, ['Aggiungi il primo'])])],
-        el('a', { className: 'btn btn--ghost btn--small', href: newServiceHref }, [icon('plus'), 'Nuovo servizio'])));
+            ? [el('div', { className: 'acc-services' }, data.services.map((s) => serviceCard(s, can('renewService'))))]
+            : [el('p', { className: 'acc-empty' }, ['Nessun servizio ancora.', can('newService') ? ' ' : null, can('newService') ? el('a', { href: newServiceHref }, ['Aggiungi il primo']) : null])],
+        can('newService') ? el('a', { className: 'btn btn--ghost btn--small', href: newServiceHref }, [icon('plus'), 'Nuovo servizio']) : null));
 
         blocks.push(section('Pagamenti', data.installments.length
             ? [el('div', { className: 'acc-due-list' }, data.installments.map((i) => installmentRow(i, { showCustomer: false })))]
             : [el('p', { className: 'acc-empty' }, ['Nessun pagamento in programma.'])],
-        el('a', { className: 'btn btn--ghost btn--small', href: `/scadenzario/nuovo?customer_id=${c.id}` }, [icon('plus'), 'Incasso a parte'])));
+        can('newInstallment') ? el('a', { className: 'btn btn--ghost btn--small', href: `/scadenzario/nuovo?customer_id=${c.id}` }, [icon('plus'), 'Incasso a parte']) : null));
     }
 
     // La squadra interna: chi segue il cliente e per cosa (propone a chi assegnare contenuti e richieste).
@@ -180,8 +182,10 @@ function renderCustomerProfile(data) {
         ? [el('div', { className: 'acc-chips' }, data.team.map((m) => el('a', { className: 'acc-chip', href: m.href, title: m.notes || '' }, [
             el('strong', {}, [m.name]), ` · ${m.role}`,
         ])))]
-        : [el('p', { className: 'acc-empty' }, ['Chi segue questo cliente? ', el('a', { href: teamHref }, ['Indica la squadra']), ': contenuti e richieste si assegnano da soli.'])],
-    el('a', { className: 'btn btn--ghost btn--small', href: teamHref }, [icon('plus'), 'Persona'])));
+        : [el('p', { className: 'acc-empty' }, can('newTeamMember')
+            ? ['Chi segue questo cliente? ', el('a', { href: teamHref }, ['Indica la squadra']), ': contenuti e richieste si assegnano da soli.']
+            : ['Nessuna squadra indicata.'])],
+    can('newTeamMember') ? el('a', { className: 'btn btn--ghost btn--small', href: teamHref }, [icon('plus'), 'Persona']) : null));
 
     const contactsHref = `/clienti/referenti/nuovo?customer_id=${c.id}`;
     blocks.push(section('Referenti', data.contacts.length
@@ -192,8 +196,10 @@ function renderCustomerProfile(data) {
                 el('span', { className: 'acc-contact__meta' }, [[p.role, p.phone, p.email].filter(Boolean).join(' · ')]),
             ]),
         ])))]
-        : [el('p', { className: 'acc-empty' }, ['Nessun referente. Chi decide per questo cliente? ', el('a', { href: contactsHref }, ['Aggiungilo'])])],
-    el('a', { className: 'btn btn--ghost btn--small', href: contactsHref }, [icon('plus'), 'Referente'])));
+        : [el('p', { className: 'acc-empty' }, can('newContact')
+            ? ['Nessun referente. Chi decide per questo cliente? ', el('a', { href: contactsHref }, ['Aggiungilo'])]
+            : ['Nessun referente.'])],
+    can('newContact') ? el('a', { className: 'btn btn--ghost btn--small', href: contactsHref }, [icon('plus'), 'Referente']) : null));
 
     if (data.brought.length) {
         blocks.push(section(`Clienti portati (${data.brought.length})`, [

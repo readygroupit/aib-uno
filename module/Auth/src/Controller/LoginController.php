@@ -88,7 +88,7 @@ final class LoginController extends AbstractController
         $sent = false;
         if ($this->request->getMethod() === 'POST') {
             $identifier = (string) $this->request->get('identifier', '');
-            $this->container->get(AuthService::class)->requestPasswordReset($identifier);
+            $this->container->get(AuthService::class)->requestPasswordReset($identifier, $this->request->baseUrl());
             $sent = true;
         }
 

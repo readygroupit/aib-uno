@@ -134,8 +134,12 @@ final class AuthService
      * Non rivela se l'identificativo esiste: chiamare sempre allo stesso
      * modo (es. "se l'account esiste, riceverai un'email") a prescindere
      * dall'esito.
+     *
+     * @param string $baseUrl l'indirizzo del sito (Request::baseUrl()): il
+     *     link nell'email deve essere completo, un percorso da solo non si
+     *     apre da una casella di posta.
      */
-    public function requestPasswordReset(string $identifier): void
+    public function requestPasswordReset(string $identifier, string $baseUrl): void
     {
         $identifier = trim($identifier);
         if ($identifier === '') {
@@ -161,7 +165,7 @@ final class AuthService
                 (string) $candidate->email,
                 'Recupero password',
                 "Ciao {$candidate->username},\n\n"
-                    . "Per reimpostare la password vai su: /password/reset/$token\n\n"
+                    . 'Per reimpostare la password vai su: ' . rtrim($baseUrl, '/') . "/password/reset/{$token}\n\n"
                     . "Il link scade tra un'ora. Se non sei stato tu a richiederlo, ignora questa email."
             );
         }

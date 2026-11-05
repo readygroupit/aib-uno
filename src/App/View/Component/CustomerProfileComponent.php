@@ -25,6 +25,8 @@ final class CustomerProfileComponent extends AbstractComponent
             'brought' => $config['brought'] ?? [],
             'showBilling' => (bool) ($config['showBilling'] ?? true),
             'actions' => $config['actions'] ?? [],
+            // Pulsante => true se chi guarda puo' usarlo (vedi EditCustomerTool::BUTTON_PERMISSIONS).
+            'can' => $config['can'] ?? null,
             'workOrders' => $config['workOrders'] ?? null,
             'appointments' => $config['appointments'] ?? null,
             'newAppointmentHref' => $config['newAppointmentHref'] ?? null,

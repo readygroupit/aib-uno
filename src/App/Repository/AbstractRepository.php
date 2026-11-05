@@ -246,6 +246,21 @@ abstract class AbstractRepository
         $clauses = [];
         $params = [];
         foreach ($where as $column => $value) {
+            // Una lista di valori: IN (...), vuota = nessuna riga (es. i soli
+            // clienti che un utente puo' vedere).
+            if (is_array($value)) {
+                if ($value === []) {
+                    $clauses[] = '1 = 0';
+                    continue;
+                }
+                $names = [];
+                foreach (array_values($value) as $i => $item) {
+                    $names[] = ":{$column}_{$i}";
+                    $params["{$column}_{$i}"] = $item;
+                }
+                $clauses[] = "$column IN (" . implode(', ', $names) . ')';
+                continue;
+            }
             $clauses[] = "$column = :$column";
             $params[$column] = $value;
         }

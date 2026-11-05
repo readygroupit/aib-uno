@@ -19,6 +19,20 @@ use App\View\Component\CustomerProfileComponent;
  */
 final class EditCustomerTool extends AbstractEditEntityTool
 {
+    /** Pulsante della scheda => permesso che serve (lo stesso che chiede la pagina che apre). */
+    private const BUTTON_PERMISSIONS = [
+        'newService' => 'customer_services.create',
+        'renewService' => 'customer_services.edit',
+        'newContact' => 'customers.create',
+        'newTeamMember' => 'customers.create',
+        'newRequest' => 'client_requests.create',
+        'portal' => 'customers.edit',
+        'newWorkOrder' => 'work_orders.create',
+        'newAppointment' => 'appointments.create',
+        'newInstallment' => 'installments.create',
+        'logTouchpoint' => 'client_health.create',
+    ];
+
     private AccountOverviewService $overview;
     private CustomerProfileComponent $profile;
     private \App\Work\WorkOrderOverviewService $workOrders;
@@ -43,6 +57,8 @@ final class EditCustomerTool extends AbstractEditEntityTool
 
         $data = $this->overview->customerProfile($model);
         $billing = $this->overview->hasBilling();
+        // I pulsanti si vedono solo a chi puo' usarli (prima davano "Accesso negato").
+        $can = array_map(fn (string $permission) => $this->auth->hasPermission($permission), self::BUTTON_PERMISSIONS);
 
         return [$this->profile->toData([
             'url' => '/clienti/' . $model->id,
@@ -68,11 +84,12 @@ final class EditCustomerTool extends AbstractEditEntityTool
             'newAppointmentHref' => '/appuntamenti/nuovo?customer_id=' . $model->id,
             'newWorkOrderHref' => $this->workOrders->hasWorkOrders() ? '/commesse/nuovo?customer_id=' . $model->id : null,
             'health' => \App\ClientHealth\HealthScore::isAvailable() ? $this->container->get(\App\ClientHealth\HealthOverviewService::class)->forCustomer((int) $model->id) : null,
+            'can' => $can,
             'actions' => array_values(array_filter([
-                $billing ? ['label' => 'Nuovo servizio', 'href' => '/servizi-clienti/nuovo?customer_id=' . $model->id, 'variant' => 'primary'] : null,
-                ['label' => 'Aggiungi referente', 'href' => '/clienti/referenti/nuovo?customer_id=' . $model->id, 'variant' => 'secondary'],
-                in_array('client_requests', \App\Package\PackageCatalogService::installedNames(), true) ? ['label' => 'Segna una richiesta', 'href' => '/richieste/nuovo?customer_id=' . $model->id, 'variant' => 'secondary'] : null,
-                $billing ? ['label' => 'Area cliente', 'action' => '/clienti/' . $model->id . '/area-cliente', 'variant' => 'ghost', 'icon' => 'link'] : null,
+                $billing && $can['newService'] ? ['label' => 'Nuovo servizio', 'href' => '/servizi-clienti/nuovo?customer_id=' . $model->id, 'variant' => 'primary'] : null,
+                $can['newContact'] ? ['label' => 'Aggiungi referente', 'href' => '/clienti/referenti/nuovo?customer_id=' . $model->id, 'variant' => 'secondary'] : null,
+                in_array('client_requests', \App\Package\PackageCatalogService::installedNames(), true) && $can['newRequest'] ? ['label' => 'Segna una richiesta', 'href' => '/richieste/nuovo?customer_id=' . $model->id, 'variant' => 'secondary'] : null,
+                $billing && $can['portal'] ? ['label' => 'Area cliente', 'action' => '/clienti/' . $model->id . '/area-cliente', 'variant' => 'ghost', 'icon' => 'link'] : null,
             ])),
         ])];
     }

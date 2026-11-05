@@ -77,6 +77,23 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
         return $this->formTitle(false);
     }
 
+    /**
+     * Come si chiama questo elemento, per riconoscere senza IA "nuovo
+     * preventivo", "aggiungi un referente", "segna una spesa" (vedi
+     * PromptController::matchCreation()): il titolo del form nuovo intero
+     * ("Segna una spesa") e il nome dell'elemento dal titolo della scheda
+     * ("Modifica preventivo" => "preventivo"). Gratis per ogni pacchetto.
+     *
+     * @return array{title: string, noun: string}
+     */
+    public function creationNames(): array
+    {
+        return [
+            'title' => $this->formTitle(true),
+            'noun' => (string) preg_replace('/^modifica\s+/iu', '', $this->formTitle(false)),
+        ];
+    }
+
     /** Colonne DB su cui cercare in ricerca libera (LIKE). */
     abstract protected function searchColumns(): array;
 

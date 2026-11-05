@@ -40,7 +40,7 @@ final class ShowMediaLibraryTool implements PromptToolInterface, PromptConversat
 
     public function description(): string
     {
-        return "Cerca foto e video nell'archivio dell'agenzia (Google Drive) leggendo le descrizioni fatte dall'IA: cosa si vede, persone si'/no, "
+        return "Cerca foto e video nell'archivio dell'agenzia (Google Drive, pCloud) leggendo le descrizioni fatte dall'IA: cosa si vede, persone si'/no, "
             . "occasione, luogo, cliente. 'query' e' la richiesta a parole (es. 'foto per una comunione senza persone', 'video del locale di Gino', "
             . "'immagini verticali di pizza'). Usalo per 'cercami foto', 'trova un video', 'immagini di repertorio', 'archivio'.";
     }
@@ -123,7 +123,7 @@ final class ShowMediaLibraryTool implements PromptToolInterface, PromptConversat
             'status' => $status,
             'actions' => $actions,
             'empty' => $status['total'] === 0
-                ? ($status['sources'] === [] ? 'L\'archivio non e\' ancora collegato: collega Google Drive dalla Configurazione.' : 'Nessun file letto ancora: "Leggi i file nuovi".')
+                ? ($status['sources'] === [] ? 'L\'archivio non e\' ancora collegato: collega Google Drive o pCloud dalla Configurazione.' : 'Nessun file letto ancora: "Leggi i file nuovi".')
                 : ($query !== '' ? 'Nessun file adatto. Prova con altre parole, o togli un filtro.' : null),
             'setupHref' => $status['sources'] === [] ? '/configurazione' : null,
         ])];

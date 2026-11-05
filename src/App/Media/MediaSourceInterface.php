@@ -7,7 +7,7 @@ namespace App\Media;
 use App\Model\MediaAsset;
 
 /**
- * Da dove arrivano foto e video dell'archivio: Google Drive o una cartella
+ * Da dove arrivano foto e video dell'archivio: Google Drive, pCloud o una cartella
  * del server (anche un NAS montato). L'archivio tiene solo l'indice; i
  * file restano li'.
  */

@@ -6,8 +6,10 @@ namespace Index\Controller;
 
 use App\Connector\ConnectorException;
 use App\Connector\ConnectorRegistry;
+use App\Connector\GmailConnector;
 use App\Connector\GoogleCalendarConnector;
 use App\Connector\GoogleDriveConnector;
+use App\Connector\PCloudConnector;
 use App\Connector\RedirectingConnectorInterface;
 use App\Controller\AuthController;
 use App\Prompt\Tool\ShowSetupTool;
@@ -64,31 +66,63 @@ final class SetupController extends AuthController
 
     /**
      * Ritorno da Google con il codice di autorizzazione (o l'errore se
-     * l'utente ha rifiutato). Calendario e Drive usano lo stesso callback:
-     * lo "state" del Drive comincia con GoogleDriveConnector::STATE_PREFIX.
+     * l'utente ha rifiutato). Calendario, Drive e Gmail usano lo stesso
+     * callback: lo "state" di Drive e Gmail comincia con il loro prefisso
+     * (GoogleDriveConnector::STATE_PREFIX, GmailConnector::STATE_PREFIX).
      */
     public function googleCallbackAction(): ?string
     {
         $state = (string) $this->request->get('state', '');
-        $isDrive = str_starts_with($state, GoogleDriveConnector::STATE_PREFIX);
+        [$code, $label, $done] = match (true) {
+            str_starts_with($state, GoogleDriveConnector::STATE_PREFIX) => ['google_drive', 'Google Drive', 'Foto e video si leggono e si descrivono da ora.'],
+            str_starts_with($state, GmailConnector::STATE_PREFIX) => ['gmail', 'Gmail', 'Le email dei clienti arrivate da ora diventano richieste da smistare.'],
+            default => ['google_calendar', 'Google Calendar', 'Gli appuntamenti si sincronizzano da ora.'],
+        };
         $registry = $this->container->get(ConnectorRegistry::class);
-        $connector = $registry->has($isDrive ? 'google_drive' : 'google_calendar') ? $registry->get($isDrive ? 'google_drive' : 'google_calendar') : null;
-        $label = $isDrive ? 'Google Drive' : 'Google Calendar';
+        $connector = $registry->has($code) ? $registry->get($code) : null;
         $error = (string) $this->request->get('error', '');
         $flash = null;
         if ($error !== '') {
             $flash = ['tone' => 'error', 'text' => "{$label} non collegato: accesso non autorizzato su Google."];
-        } elseif ($connector instanceof GoogleCalendarConnector || $connector instanceof GoogleDriveConnector) {
+        } elseif ($connector instanceof GoogleCalendarConnector || $connector instanceof GoogleDriveConnector || $connector instanceof GmailConnector) {
             try {
                 $summary = $connector->completeAuthorization((string) $this->request->get('code', ''), $state);
-                $flash = ['tone' => 'success', 'text' => "{$label} collegato: {$summary}. " . ($isDrive ? 'Foto e video si leggono e si descrivono da ora.' : 'Gli appuntamenti si sincronizzano da ora.')];
+                $flash = ['tone' => 'success', 'text' => "{$label} collegato: {$summary}. {$done}"];
             } catch (ConnectorException $e) {
                 $flash = ['tone' => 'error', 'text' => $e->getMessage()];
             }
         }
 
-        // Esito in sessione e ritorno a /configurazione: ricaricando la
-        // pagina non si ripresenta a Google un codice gia' usato.
+        return $this->backToSetup($flash);
+    }
+
+    /** Ritorno da pCloud: codice, "state" e l'host del conto (USA o Europa). */
+    public function pcloudCallbackAction(): ?string
+    {
+        $registry = $this->container->get(ConnectorRegistry::class);
+        $connector = $registry->has('pcloud') ? $registry->get('pcloud') : null;
+        $code = (string) $this->request->get('code', '');
+        $flash = null;
+        if ($code === '') {
+            $flash = ['tone' => 'error', 'text' => 'pCloud non collegato: accesso non autorizzato.'];
+        } elseif ($connector instanceof PCloudConnector) {
+            try {
+                $summary = $connector->completeAuthorization($code, (string) $this->request->get('state', ''), (string) $this->request->get('hostname', ''));
+                $flash = ['tone' => 'success', 'text' => "pCloud collegato: {$summary}. Foto e video si leggono e si descrivono da ora."];
+            } catch (ConnectorException $e) {
+                $flash = ['tone' => 'error', 'text' => $e->getMessage()];
+            }
+        }
+
+        return $this->backToSetup($flash);
+    }
+
+    /**
+     * Esito in sessione e ritorno a /configurazione: ricaricando la
+     * pagina non si ripresenta al servizio un codice gia' usato.
+     */
+    private function backToSetup(?array $flash): ?string
+    {
         $_SESSION['setup_flash'] = $flash;
         $this->redirect('/configurazione');
 

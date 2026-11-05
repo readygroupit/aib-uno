@@ -58,7 +58,7 @@ final class GoogleCalendarConnector extends AbstractOAuthConnector implements Re
             'intro' => 'Gli appuntamenti finiscono sul Google Calendar dell\'agenzia, i colleghi ricevono l\'invito e le videochiamate hanno il link Meet. Si collega una volta, con l\'account Google aziendale.',
             'steps' => [
                 'Apri console.cloud.google.com, crea (o scegli) un progetto e in "API e servizi", "Libreria" attiva "Google Calendar API".',
-                'In "Schermata consenso OAuth" scegli "Interno" (solo per gli account della vostra azienda) e compila nome app ed email.',
+                'In "Schermata consenso OAuth" compila nome app ed email. Con un account Google Workspace scegli "Interno". Con un Gmail normale si puo\' solo "Esterno": poi in "Pubblico" premi "Pubblica app" (stato "In produzione"), altrimenti Google blocca l\'accesso ("non ha completato la procedura di verifica") o lo fa scadere dopo 7 giorni.',
                 'In "Credenziali", "Crea credenziali", "ID client OAuth", tipo "Applicazione web". In "URI di reindirizzamento autorizzati" aggiungi esattamente: ' . $redirect,
                 'Copia "ID client" e "Client secret" nei campi qui sotto e premi "Verifica e collega": si apre Google, entra con l\'account dell\'agenzia e consenti l\'accesso al calendario.',
             ],

@@ -13,7 +13,7 @@ use App\Repository\CustomerRepository;
 use App\Repository\MediaAssetRepository;
 
 /**
- * L'archivio: legge le origini (Google Drive, cartella), tiene l'indice
+ * L'archivio: legge le origini (Google Drive, pCloud, cartella), tiene l'indice
  * aggiornato e fa descrivere dall'IA i file nuovi, a gruppi (dal job e da
  * "Descrivi ora").
  *
@@ -38,9 +38,11 @@ final class MediaLibraryService
         $sources = [];
         if (in_array('connectors', PackageCatalogService::installedNames(), true)) {
             $registry = $this->container->get(ConnectorRegistry::class);
-            $drive = $registry->has('google_drive') ? $registry->get('google_drive') : null;
-            if ($drive instanceof MediaSourceInterface && $drive->isReady()) {
-                $sources[] = $drive;
+            foreach (['google_drive', 'pcloud'] as $code) {
+                $source = $registry->has($code) ? $registry->get($code) : null;
+                if ($source instanceof MediaSourceInterface && $source->isReady()) {
+                    $sources[] = $source;
+                }
             }
         }
         $local = $this->container->get(LocalFolderSource::class);

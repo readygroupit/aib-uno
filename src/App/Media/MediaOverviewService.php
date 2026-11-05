@@ -32,7 +32,7 @@ final class MediaOverviewService
             'analyzed' => $counts['analizzato'] ?? 0,
             'pending' => $counts['da analizzare'] ?? 0,
             'failed' => $counts['errore'] ?? 0,
-            'sources' => array_map(static fn (MediaSourceInterface $s) => $s->sourceCode() === 'google_drive' ? 'Google Drive' : 'cartella del server', $sources),
+            'sources' => array_map(static fn (MediaSourceInterface $s) => ['google_drive' => 'Google Drive', 'pcloud' => 'pCloud'][$s->sourceCode()] ?? 'cartella del server', $sources),
             'syncedAt' => $state['syncedAt'] !== null ? F::shortDate(substr($state['syncedAt'], 0, 10), date('Y-m-d')) . ' alle ' . substr($state['syncedAt'], 11, 5) : null,
         ];
     }

@@ -673,6 +673,16 @@ che arriva al telefono, su WhatsApp o per email si segna in pochi secondi
 - Lavoro extra: con l'importo, fatto, va nello scadenzario con un clic
   ("Nello scadenzario").
 - "Chi chiede di piu'" negli ultimi 30 giorni.
+- Email dei clienti (`GmailConnector`, sola lettura, stesso ID client e
+  callback del Calendario, state `gmail.`): `EmailRequestImporter` (job
+  `import_email_requests`, ogni 5 minuti) legge solo la posta arrivata dopo
+  il collegamento (filtro di ricerca Gmail modificabile) e crea richieste
+  "nuove", canale email, senza assegnarle: cliente dall'indirizzo esatto
+  del cliente o di un referente, o dal dominio (email aziendale o sito, mai
+  gmail.com e simili ne' quello dell'agenzia, e solo se e' di un cliente).
+  Saltate: colleghi, newsletter, risposte automatiche, sconosciuti; una
+  risposta nella stessa conversazione non crea una richiesta nuova. Il
+  punto di lettura e le ultime 500 conversazioni stanno in `extra_config`.
 
 ## Preventivi
 
@@ -703,7 +713,9 @@ Pacchetto `quotes` (`/preventivi`, `App\Quotes`): `quotes` e `quote_lines`.
 
 Pacchetto `media_library` (`/materiali`, `App\Media`): l'indice di foto e
 video che restano su Google Drive (`GoogleDriveConnector`, sola lettura,
-stesso ID client e callback del Calendario) o in una cartella del
+stesso ID client e callback del Calendario), su pCloud (`PCloudConnector`,
+OAuth di pCloud con callback `/configurazione/pcloud/callback`, host USA o
+Europa dal ritorno, token che non scade) o in una cartella del
 server/NAS (`config 'media' => ['localPath' => ...]`, `LocalFolderSource`).
 - `MediaLibraryService::sync()` (job `sync_media_library`, ogni ora): file
   nuovi, cambiati, spariti; il cliente si deduce dalla cartella.

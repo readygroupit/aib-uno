@@ -47,6 +47,11 @@ if (in_array('media_library', $installed, true)) {
     $scheduledJobs->ensureRecurring('describe_media', 10);
 }
 
+if (in_array('client_requests', $installed, true) && in_array('connectors', $installed, true)) {
+    $registry->register('import_email_requests', \App\Job\Handler\ImportEmailRequestsHandler::class);
+    $scheduledJobs->ensureRecurring('import_email_requests', 5);
+}
+
 // registrare qui gli altri handler reali del progetto, es.:
 // $registry->register('send_weekly_report', \App\Job\Handler\SendWeeklyReportHandler::class);
 

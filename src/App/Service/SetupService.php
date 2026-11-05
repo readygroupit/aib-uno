@@ -67,6 +67,8 @@ final class SetupService
             $has('leads') ? $this->connectorItem('google_sheets', 'Collega Google Sheets', 'Il foglio usato come archivio operativo.', true) : null,
             $has('appointments') ? $this->connectorItem('google_calendar', 'Collega Google Calendar', 'Appuntamenti sul calendario dell\'agenzia, inviti ai colleghi, link Meet per le videochiamate.', true) : null,
             $has('media_library', 'connectors') ? $this->connectorItem('google_drive', 'Collega Google Drive', 'L\'archivio di foto e video: Uno li fa descrivere dall\'IA e li rende ricercabili a parole.', true) : null,
+            $has('media_library', 'connectors') ? $this->connectorItem('pcloud', 'Collega pCloud', 'Se foto e video stanno (anche) su pCloud: si leggono e si cercano insieme a quelli del Drive.', false) : null,
+            $has('client_requests', 'connectors') ? $this->connectorItem('gmail', 'Collega Gmail', 'Le email dei clienti alla casella dell\'agenzia diventano richieste da smistare, con il cliente gia\' riconosciuto.', false) : null,
             $has('installments', 'connectors') ? $this->connectorItem('stripe', 'Collega Stripe', 'Il cliente paga con carta o addebito SEPA da un link; rate e rinnovi si addebitano da soli a chi attiva il pagamento automatico.', false) : null,
             $has('installments', 'connectors') ? $this->connectorItem('paypal', 'Collega PayPal', 'Per i clienti che preferiscono pagare con PayPal.', false) : null,
             $has('invoices') ? $this->companyItem() : null,

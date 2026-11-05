@@ -68,7 +68,7 @@ final class GoogleDriveConnector extends AbstractOAuthConnector implements Redir
             'intro' => 'Foto e video restano sul Drive dell\'agenzia: Uno li legge, li fa descrivere dall\'IA e li rende ricercabili a parole ("foto per una comunione senza persone"). Solo lettura: Uno non modifica ne\' cancella nulla.',
             'steps' => [
                 'Su console.cloud.google.com, nello stesso progetto del Calendario, in "API e servizi", "Libreria" attiva "Google Drive API".',
-                'Puoi usare lo stesso "ID client OAuth" del Calendario (con l\'URI di reindirizzamento ' . $redirect . ').',
+                'Puoi usare lo stesso "ID client OAuth" del Calendario (con l\'URI di reindirizzamento ' . $redirect . '). Con un Gmail normale l\'app deve essere "In produzione" (in "Schermata consenso OAuth", "Pubblico", "Pubblica app"): al collegamento Google avvisa che l\'app non e\' verificata, si prosegue da "Avanzate".',
                 'Sul Drive apri la cartella che contiene l\'archivio (ad esempio "Clienti", con una sottocartella per cliente) e copia l\'indirizzo dalla barra del browser.',
                 'Incolla ID client, segreto e indirizzo della cartella e premi "Verifica e collega": si apre Google, entra con l\'account dell\'agenzia e consenti la lettura del Drive.',
             ],

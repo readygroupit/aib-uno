@@ -20,10 +20,17 @@ use App\Service\AiService;
  * 2. Il database trova i candidati (descrizione, parole chiave, cartella).
  * 3. Con l'IA, si tengono solo quelli che vanno davvero bene, nell'ordine
  *    giusto e con il perche'.
+ *
+ * Una richiesta senza niente da cercare nelle descrizioni ("le foto di
+ * Rossano", "i video su Drive") e' un elenco: tutti i file dei filtri,
+ * senza il giro dell'IA che sceglierebbe tra file che non descrive nessuno.
  */
 final class MediaSearchService
 {
     private const STOPWORDS = ['cercami', 'cerca', 'trova', 'trovami', 'dammi', 'mostrami', 'voglio', 'delle', 'degli', 'della', 'dello', 'dei', 'del', 'per', 'una', 'uno', 'con', 'che', 'sono', 'vanno', 'bene', 'adatte', 'adatti', 'adatto', 'adatta', 'generica', 'generico', 'generiche', 'generici', 'qualche', 'alcune', 'alcuni', 'foto', 'immagini', 'immagine', 'video', 'filmati', 'senza', 'persone', 'riferimenti', 'nessuna', 'archivio', 'materiale', 'materiali'];
+
+    /** Parole che dicono dove o cosa cercare, non cosa si vede: non si cercano nelle descrizioni. */
+    private const LISTING_WORDS = ['drive', 'google', 'pcloud', 'cliente', 'clienti', 'file', 'files', 'foto', 'fotografia', 'fotografie', 'immagine', 'immagini', 'video', 'filmato', 'filmati', 'archivio', 'materiale', 'materiali', 'cartella', 'tutte', 'tutti', 'tutto', 'mostra', 'mostrami', 'trovami', 'cerca', 'cercami', 'elenco'];
 
     private Container $container;
 
@@ -43,8 +50,14 @@ final class MediaSearchService
         $plan = $query !== '' && $ai->isConfigured() ? $this->interpretWithAi($query) : null;
         $plan ??= $this->interpretSimply($query);
         $filters = array_filter($forced + $plan['filters'], static fn ($v) => $v !== null && $v !== false && $v !== '');
+        $plan['words'] = $this->descriptiveWords($plan['words'], isset($filters['customerId']) ? (int) $filters['customerId'] : null);
 
         $repo = $this->container->get(MediaAssetRepository::class);
+        if ($plan['words'] === []) {
+            $items = array_map(static fn (MediaAsset $a) => ['asset' => $a, 'reason' => null], $repo->search($filters, [], 24));
+
+            return ['items' => $items, 'filters' => $filters, 'words' => [], 'understood' => $plan['understood']];
+        }
         $candidates = $repo->search($filters, $plan['words'], 40);
         // Nessun candidato: si allentano i filtri dedotti (prima si tiene foto/video e persone, poi solo le parole).
         if ($candidates === [] && $plan['words'] !== []) {
@@ -103,10 +116,49 @@ final class MediaSearchService
         ];
     }
 
-    /** Senza IA: le parole della richiesta, e i filtri piu' ovvi. */
+    /**
+     * Senza le parole che nominano il cliente gia' filtrato o dicono solo
+     * dove cercare ("drive", "foto", "cliente"): restano quelle da trovare
+     * nelle descrizioni.
+     *
+     * @param string[] $words
+     * @return string[]
+     */
+    private function descriptiveWords(array $words, ?int $customerId): array
+    {
+        $customer = $customerId !== null ? $this->container->get(CustomerRepository::class)->find($customerId) : null;
+        $name = $customer !== null ? self::normalize($customer->displayName()) : '';
+
+        return array_values(array_filter($words, static function (string $word) use ($name): bool {
+            $key = self::normalize($word);
+            if ($key === '' || in_array($key, self::LISTING_WORDS, true)) {
+                return false;
+            }
+
+            return $name === '' || (!str_contains($name, $key) && !str_contains($key, $name));
+        }));
+    }
+
+    private static function normalize(string $text): string
+    {
+        $text = mb_strtolower(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text) ?: $text);
+
+        return (string) preg_replace('/[^a-z0-9]/', '', $text);
+    }
+
+    /** Senza IA: le parole della richiesta, e i filtri piu' ovvi (anche il cliente, se lo si nomina). */
     private function interpretSimply(string $query): array
     {
         $lower = mb_strtolower($query);
+        $customerId = null;
+        $normalized = self::normalize($query);
+        foreach ($this->container->get(CustomerRepository::class)->findAll() as $customer) {
+            $name = self::normalize($customer->displayName());
+            if (strlen($name) >= 4 && str_contains($normalized, $name)) {
+                $customerId = (int) $customer->id;
+                break;
+            }
+        }
         $words = array_values(array_filter(
             preg_split('/[^\p{L}\p{N}]+/u', $lower) ?: [],
             static fn ($w) => mb_strlen($w) >= 3 && !in_array($w, self::STOPWORDS, true)
@@ -116,6 +168,7 @@ final class MediaSearchService
             'filters' => [
                 'kind' => str_contains($lower, 'video') ? 'video' : (preg_match('/\b(foto|immagin)/u', $lower) === 1 ? 'immagine' : null),
                 'noPeople' => preg_match('/senza\s+(persone|gente|riferimenti)/u', $lower) === 1,
+                'customerId' => $customerId,
             ],
             'words' => $words,
             'understood' => $query,

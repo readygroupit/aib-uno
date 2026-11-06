@@ -67,7 +67,7 @@ final class PCloudConnector extends AbstractOAuthConnector implements Redirectin
         return [
             'intro' => 'Foto e video restano su pCloud: Uno li legge, li fa descrivere dall\'IA e li rende ricercabili a parole, accanto a quelli di Google Drive. Solo lettura: Uno non modifica ne\' cancella nulla.',
             'steps' => [
-                'Entra su docs.pcloud.com con l\'account pCloud dell\'agenzia, apri "My applications" e crea un\'applicazione (nome a piacere, es. "Gestionale").',
+                'Entra su docs.pcloud.com con l\'account pCloud dell\'agenzia (va bene sia un conto europeo sia americano), apri "My applications" e crea un\'applicazione (nome a piacere, es. "Gestionale").',
                 'Nell\'applicazione, in "Redirect URIs", aggiungi ' . self::baseUrl() . self::CALLBACK_PATH . ' e dai il permesso di lettura dei file.',
                 'Su my.pcloud.com apri la cartella che contiene l\'archivio (ad esempio "Clienti", con una sottocartella per cliente) e copia l\'indirizzo dalla barra del browser.',
                 'Incolla Client ID, Client secret e indirizzo della cartella e premi "Verifica e collega": si apre pCloud, entra e consenti l\'accesso.',
@@ -76,6 +76,21 @@ final class PCloudConnector extends AbstractOAuthConnector implements Redirectin
                 ['key' => 'client_id', 'label' => 'Client ID', 'type' => 'text', 'placeholder' => 'aBcD1234...'],
                 ['key' => 'client_secret', 'label' => 'Client secret', 'type' => 'password'],
                 ['key' => 'folder', 'label' => 'Cartella dell\'archivio', 'type' => 'text', 'placeholder' => 'https://my.pcloud.com/#page=filemanager&folder=123456', 'help' => 'L\'indirizzo della cartella, oppure il percorso (es. /Clienti). Le sottocartelle con il nome di un cliente collegano i file a quel cliente.'],
+            ],
+            'about' => [
+                'purpose' => 'Come Google Drive, per foto e video che stanno su pCloud: finiscono nello stesso archivio e nella stessa ricerca a parole.',
+                'auto' => [
+                    'Ogni ora legge i file nuovi, cambiati o cancellati della cartella (solo foto e video).',
+                    'Collega i file al cliente quando una cartella del percorso si chiama come lui.',
+                    'Ogni 10 minuti l\'IA descrive 15 file, come per il Drive.',
+                    'Non modifica, non sposta e non cancella nulla su pCloud.',
+                ],
+                'manual' => [
+                    'Organizzi le cartelle su pCloud (una per cliente).',
+                    'Cerchi a parole nell\'archivio o in chat; "Apri" porta alla cartella del file su pCloud.',
+                    'Se non vuoi aspettare: "Leggi i file nuovi" e "Descrivi ora".',
+                ],
+                'where' => 'Archivio foto e video (menu), e cercando in chat.',
             ],
             'note' => 'I file nuovi si leggono ogni ora e si descrivono a gruppi; i video piu\' grandi di 300 MB si descrivono dall\'anteprima di pCloud.',
         ];

@@ -90,6 +90,26 @@ function fieldControl(field) {
     return el('input', { ...common, type: field.type === 'password' ? 'password' : 'text' });
 }
 
+// "A cosa serve", "Cosa fa da solo", "Cosa fai tu", "Dove lo trovi": prima dei passaggi.
+function aboutBox(about) {
+    const list = (title, items) => (items && items.length
+        ? el('div', { className: 'setup__about-block' }, [
+            el('h4', { className: 'setup__about-title' }, [title]),
+            el('ul', { className: 'setup__about-list' }, items.map((text) => el('li', {}, [text]))),
+        ])
+        : null);
+
+    return el('div', { className: 'setup__about' }, [
+        el('div', { className: 'setup__about-block' }, [
+            el('h4', { className: 'setup__about-title' }, ['A cosa serve']),
+            el('p', { className: 'setup__about-text' }, [about.purpose]),
+        ]),
+        list('Cosa fa da solo', about.auto),
+        list('Cosa fai tu', about.manual),
+        about.where ? el('p', { className: 'setup__about-where' }, [el('strong', {}, ['Dove lo trovi: ']), about.where]) : null,
+    ]);
+}
+
 function connectorView(item, api) {
     const spec = item.spec;
     const errorBox = el('div', { className: 'form__message form__message--error setup__error', role: 'alert', hidden: '' });
@@ -136,7 +156,9 @@ function connectorView(item, api) {
     const children = [
         el('button', { type: 'button', className: 'setup__back', onClick: api.back }, [icon('arrow-left'), 'Torna all\'elenco']),
         el('h3', { className: 'setup__title' }, [item.label]),
-        el('p', { className: 'setup__intro' }, [spec.intro]),
+        // Con il riquadro "A cosa serve" l'introduzione direbbe la stessa cosa.
+        spec.about ? aboutBox(spec.about) : el('p', { className: 'setup__intro' }, [spec.intro]),
+        spec.about ? el('h4', { className: 'setup__about-title setup__steps-title' }, ['Come si collega']) : null,
     ];
 
     if (item.done) {

@@ -107,6 +107,16 @@ final class GoogleSheetsConnector extends AbstractOAuthConnector
                 ['key' => 'service_account_json', 'label' => 'Contenuto del file JSON', 'type' => 'textarea', 'placeholder' => '{ "type": "service_account", ... }'],
                 ['key' => 'spreadsheet', 'label' => 'Indirizzo del foglio', 'type' => 'text', 'placeholder' => 'https://docs.google.com/spreadsheets/d/...'],
             ],
+            'about' => [
+                'purpose' => 'Per portare nel gestionale i dati del foglio Google che oggi usate come archivio.',
+                'auto' => [
+                    'Verifica l\'accesso al foglio e ne legge il nome e le schede.',
+                ],
+                'manual' => [
+                    'Dalla pagina Importazione avvii il caricamento dei dati del foglio, quando serve.',
+                ],
+                'where' => 'Importazione.',
+            ],
             'note' => 'Qui si verifica solo l\'accesso al foglio e si legge il suo nome. La sincronizzazione con i contatti e le pratiche e\' il passo successivo.',
         ];
     }

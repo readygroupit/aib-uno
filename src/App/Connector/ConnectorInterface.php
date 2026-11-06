@@ -35,10 +35,14 @@ interface ConnectorInterface
     public function test(): bool;
 
     /**
+     * 'about' e' il riquadro "A cosa serve" della Configurazione: a cosa
+     * serve, cosa fa da solo, cosa fa la persona e dove si vede.
+     *
      * @return array{
      *     intro: string,
      *     steps: list<string>,
      *     fields: list<array{key: string, label: string, type: string, help?: string, placeholder?: string, options?: list<array{value: string, label: string}>}>,
+     *     about?: array{purpose: string, auto: list<string>, manual: list<string>, where: string},
      *     note: string
      * }
      */

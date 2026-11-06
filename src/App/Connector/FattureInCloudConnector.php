@@ -52,6 +52,18 @@ final class FattureInCloudConnector extends AbstractApiKeyConnector implements I
                 ['key' => 'api_key', 'label' => 'Token personale', 'type' => 'password', 'placeholder' => 'a/...'],
                 ['key' => 'company_id', 'label' => 'ID azienda', 'type' => 'text', 'placeholder' => '123456'],
             ],
+            'about' => [
+                'purpose' => 'Le fatture preparate qui partono allo SdI attraverso Fatture in Cloud, che fa anche il PDF per il cliente. Serve solo per fatturare dal gestionale (basta uno tra Fatture in Cloud e Aruba).',
+                'auto' => [
+                    'Quando invii una fattura, la crea anche su Fatture in Cloud e la manda allo SdI da li\'.',
+                    'Niente parte da solo: ogni fattura la mandi tu.',
+                ],
+                'manual' => [
+                    'Dallo Scadenzario: "Fattura" prepara la fattura della scadenza.',
+                    'In Fatture: "Emetti" (prende il numero) e poi "Invia allo SdI"; a incasso avvenuto, "Pagata".',
+                ],
+                'where' => 'Scadenzario e Fatture (menu). Servono anche i Dati dell\'azienda.',
+            ],
             'note' => 'Si verifica che il token veda l\'azienda indicata.',
         ];
     }

@@ -58,15 +58,29 @@ final class GmailConnector extends AbstractOAuthConnector implements Redirecting
         return [
             'intro' => 'Le email che i clienti mandano alla casella dell\'agenzia diventano richieste da smistare, con il cliente gia\' riconosciuto dall\'indirizzo: nessuno deve piu\' leggerle tutte per capire a chi tocca. Solo lettura: Uno non risponde, non cancella e non segna come lette le email.',
             'steps' => [
-                'Su console.cloud.google.com, nello stesso progetto del Calendario, in "API e servizi", "Libreria" attiva "Gmail API".',
-                'In "Schermata consenso OAuth" aggiungi l\'ambito ".../auth/gmail.readonly". Con un account Google Workspace scegli "Interno"; con un Gmail normale metti l\'app "In produzione" (in prova l\'accesso scade dopo 7 giorni): al collegamento Google avvisa che l\'app non e\' verificata, si prosegue da "Avanzate".',
-                'Puoi usare lo stesso "ID client OAuth" del Calendario (con l\'URI di reindirizzamento ' . $redirect . ').',
-                'Incolla ID client e segreto e premi "Verifica e collega": si apre Google, entra con l\'account della casella (es. info@...) e consenti la lettura.',
+                'Su console.cloud.google.com, nel progetto del Calendario o del Drive, in "API e servizi", "Libreria" attiva "Gmail API".',
+                'Se hai gia\' collegato Calendario o Drive usa lo stesso ID client e salta al passo 4. Altrimenti in "Google Auth Platform" (prima "Schermata consenso OAuth") compila nome app ed email; con un Gmail normale, in "Pubblico" premi "Pubblica app" (in prova l\'accesso scade dopo 7 giorni; con Google Workspace scegli invece "Interno").',
+                'In "Client" (o "Credenziali", "ID client OAuth") crea un client "Applicazione web" con l\'URI di reindirizzamento autorizzato ' . $redirect . ' e copia ID client e Client secret.',
+                'Incolla ID client e segreto e premi "Verifica e collega": si apre Google, entra con l\'account della casella (es. info@...) e consenti la lettura (se Google avvisa che l\'app non e\' verificata: "Avanzate", "Vai a ...").',
             ],
             'fields' => [
                 ['key' => 'client_id', 'label' => 'ID client', 'type' => 'text', 'placeholder' => '1234-abc.apps.googleusercontent.com'],
                 ['key' => 'client_secret', 'label' => 'Client secret', 'type' => 'password', 'placeholder' => 'GOCSPX-...'],
                 ['key' => 'query', 'label' => 'Quali email leggere (facoltativo)', 'type' => 'text', 'placeholder' => self::DEFAULT_QUERY, 'help' => 'Una ricerca di Gmail, es. "label:clienti". Vuoto: la posta in arrivo senza promozioni, social e notifiche.'],
+            ],
+            'about' => [
+                'purpose' => 'Le email che i clienti mandano alla casella dell\'agenzia non vanno piu\' lette da tutti: diventano richieste da smistare, gia\' con il cliente.',
+                'auto' => [
+                    'Ogni 5 minuti legge le email arrivate dopo il collegamento e, per ognuna di un cliente, crea una richiesta "nuova" (canale email, oggetto, testo e link per aprirla in Gmail).',
+                    'Riconosce il cliente dall\'email del cliente o di un referente, o dal dominio del suo sito o della sua email aziendale (mai gmail.com e simili).',
+                    'Salta colleghi, newsletter, risposte automatiche e sconosciuti; una risposta nella stessa conversazione non crea una richiesta nuova.',
+                    'Non risponde, non cancella e non segna come lette le email.',
+                ],
+                'manual' => [
+                    'Inserisci email e sito dei clienti e dei referenti: senza, non riconosce nessuno.',
+                    'Chi smista legge la richiesta e la assegna: diventa l\'attivita\' di quella persona.',
+                ],
+                'where' => 'Richieste dei clienti (menu), tra le nuove da smistare.',
             ],
             'note' => 'Si leggono ogni 5 minuti solo le email arrivate dopo il collegamento e solo da indirizzi di clienti o referenti (o dal dominio del loro sito). Le risposte nella stessa conversazione non creano una richiesta nuova.',
         ];

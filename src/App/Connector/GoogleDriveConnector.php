@@ -67,15 +67,31 @@ final class GoogleDriveConnector extends AbstractOAuthConnector implements Redir
         return [
             'intro' => 'Foto e video restano sul Drive dell\'agenzia: Uno li legge, li fa descrivere dall\'IA e li rende ricercabili a parole ("foto per una comunione senza persone"). Solo lettura: Uno non modifica ne\' cancella nulla.',
             'steps' => [
-                'Su console.cloud.google.com, nello stesso progetto del Calendario, in "API e servizi", "Libreria" attiva "Google Drive API".',
-                'Puoi usare lo stesso "ID client OAuth" del Calendario (con l\'URI di reindirizzamento ' . $redirect . '). Con un Gmail normale l\'app deve essere "In produzione" (in "Schermata consenso OAuth", "Pubblico", "Pubblica app"): al collegamento Google avvisa che l\'app non e\' verificata, si prosegue da "Avanzate".',
+                'Su console.cloud.google.com, nel progetto del Calendario (o in uno nuovo), in "API e servizi", "Libreria" attiva "Google Drive API".',
+                'Se hai gia\' collegato il Calendario usa lo stesso ID client e salta al passo 4. Altrimenti in "Google Auth Platform" (prima "Schermata consenso OAuth") compila nome app ed email; con un Gmail normale, in "Pubblico" premi "Pubblica app" (con Google Workspace scegli invece "Interno").',
+                'In "Client" (o "Credenziali", "ID client OAuth") crea un client "Applicazione web" con l\'URI di reindirizzamento autorizzato ' . $redirect . ' e copia ID client e Client secret.',
                 'Sul Drive apri la cartella che contiene l\'archivio (ad esempio "Clienti", con una sottocartella per cliente) e copia l\'indirizzo dalla barra del browser.',
-                'Incolla ID client, segreto e indirizzo della cartella e premi "Verifica e collega": si apre Google, entra con l\'account dell\'agenzia e consenti la lettura del Drive.',
+                'Incolla ID client, segreto e indirizzo della cartella e premi "Verifica e collega": si apre Google, entra con l\'account che vede la cartella e consenti la lettura del Drive (se Google avvisa che l\'app non e\' verificata: "Avanzate", "Vai a ...").',
             ],
             'fields' => [
                 ['key' => 'client_id', 'label' => 'ID client', 'type' => 'text', 'placeholder' => '1234-abc.apps.googleusercontent.com'],
                 ['key' => 'client_secret', 'label' => 'Client secret', 'type' => 'password', 'placeholder' => 'GOCSPX-...'],
                 ['key' => 'folder', 'label' => 'Cartella dell\'archivio', 'type' => 'text', 'placeholder' => 'https://drive.google.com/drive/folders/...', 'help' => 'Le sottocartelle con il nome di un cliente collegano i file a quel cliente.'],
+            ],
+            'about' => [
+                'purpose' => 'Foto e video restano sul Drive, ma diventano un archivio in cui si cerca a parole ("foto di pizza senza persone per Rossano"), con il cliente gia\' riconosciuto dalla cartella.',
+                'auto' => [
+                    'Ogni ora legge i file nuovi, cambiati o cancellati della cartella (solo foto e video).',
+                    'Collega i file al cliente quando una cartella del percorso si chiama come lui.',
+                    'Ogni 10 minuti l\'IA descrive 15 file: cosa si vede, persone, ambiente, occasione, orientamento e, per i video, i momenti principali.',
+                    'Non modifica, non sposta e non cancella nulla sul Drive.',
+                ],
+                'manual' => [
+                    'Organizzi le cartelle sul Drive (una per cliente).',
+                    'Cerchi a parole nell\'archivio o in chat; correggi una descrizione o la fai rifare.',
+                    'Se non vuoi aspettare: "Leggi i file nuovi" e "Descrivi ora".',
+                ],
+                'where' => 'Archivio foto e video (menu), e cercando in chat.',
             ],
             'note' => 'I file nuovi si leggono ogni ora e si descrivono a gruppi; i video piu\' grandi di 300 MB si descrivono dall\'anteprima di Google.',
         ];

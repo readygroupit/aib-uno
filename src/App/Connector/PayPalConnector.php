@@ -58,6 +58,17 @@ final class PayPalConnector extends AbstractApiKeyConnector implements PaymentGa
                 ['key' => 'api_key', 'label' => 'Secret', 'type' => 'password', 'placeholder' => 'E...'],
                 ['key' => 'mode', 'label' => 'Ambiente', 'type' => 'select', 'options' => [['value' => 'live', 'label' => 'Pagamenti reali'], ['value' => 'sandbox', 'label' => 'Prova (sandbox)']]],
             ],
+            'about' => [
+                'purpose' => 'Per i clienti che preferiscono pagare con PayPal: stesso link di pagamento, lo scadenzario si aggiorna da solo.',
+                'auto' => [
+                    'Quando il cliente torna da PayPal e l\'ordine e\' confermato, la scadenza risulta incassata.',
+                    'Con PayPal non c\'e\' l\'addebito automatico delle rate (quello lo fa Stripe).',
+                ],
+                'manual' => [
+                    'Dallo Scadenzario: "Link" crea il link di pagamento, oppure il cliente paga dalla sua area cliente.',
+                ],
+                'where' => 'Scadenzario e area cliente.',
+            ],
             'note' => 'Il pagamento risulta incassato quando il cliente torna da PayPal e l\'ordine viene confermato.',
         ];
     }

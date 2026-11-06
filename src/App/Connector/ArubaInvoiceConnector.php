@@ -50,6 +50,18 @@ final class ArubaInvoiceConnector extends AbstractApiKeyConnector implements Inv
                 ['key' => 'api_key', 'label' => 'Password', 'type' => 'password', 'placeholder' => ''],
                 ['key' => 'mode', 'label' => 'Ambiente', 'type' => 'select', 'options' => [['value' => 'prod', 'label' => 'Reale'], ['value' => 'demo', 'label' => 'Demo (prove)']]],
             ],
+            'about' => [
+                'purpose' => 'In alternativa a Fatture in Cloud: le fatture preparate qui partono allo SdI dal vostro servizio di Fatturazione Elettronica Aruba. Serve solo per fatturare dal gestionale.',
+                'auto' => [
+                    'Quando invii una fattura, manda l\'XML allo SdI tramite Aruba.',
+                    'Niente parte da solo: ogni fattura la mandi tu.',
+                ],
+                'manual' => [
+                    'Dallo Scadenzario: "Fattura" prepara la fattura della scadenza.',
+                    'In Fatture: "Emetti" e poi "Invia allo SdI" (o "Scarica XML" per caricarla a mano).',
+                ],
+                'where' => 'Scadenzario e Fatture (menu). Servono anche i Dati dell\'azienda.',
+            ],
             'note' => 'Si verifica solo che Aruba accetti le credenziali.',
         ];
     }

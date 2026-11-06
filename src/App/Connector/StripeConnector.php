@@ -54,6 +54,18 @@ final class StripeConnector extends AbstractApiKeyConnector implements PaymentGa
                 ['key' => 'api_key', 'label' => 'Chiave segreta', 'type' => 'password', 'placeholder' => 'sk_live_...'],
                 ['key' => 'webhook_secret', 'label' => 'Segreto del webhook', 'type' => 'password', 'placeholder' => 'whsec_...'],
             ],
+            'about' => [
+                'purpose' => 'I clienti pagano rate, rinnovi ed extra con carta o addebito SEPA, e lo scadenzario si aggiorna da solo.',
+                'auto' => [
+                    'Quando il cliente paga, la scadenza risulta incassata (con la carta subito, con il SEPA quando l\'addebito va a buon fine).',
+                    'Per chi ha attivato il pagamento automatico dall\'area cliente, ogni giorno addebita da solo le rate scadute e i rinnovi.',
+                ],
+                'manual' => [
+                    'Dallo Scadenzario, su una scadenza: "Link" crea il link di pagamento da mandare al cliente.',
+                    'Il cliente puo\' pagare, o attivare il pagamento automatico, dalla sua area cliente.',
+                ],
+                'where' => 'Scadenzario e area cliente.',
+            ],
             'note' => 'Con una chiave sk_test_ tutto funziona in prova: nessun soldo vero si muove.',
         ];
     }

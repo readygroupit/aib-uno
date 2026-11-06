@@ -58,14 +58,27 @@ final class GoogleCalendarConnector extends AbstractOAuthConnector implements Re
             'intro' => 'Gli appuntamenti finiscono sul Google Calendar dell\'agenzia, i colleghi ricevono l\'invito e le videochiamate hanno il link Meet. Si collega una volta, con l\'account Google aziendale.',
             'steps' => [
                 'Apri console.cloud.google.com, crea (o scegli) un progetto e in "API e servizi", "Libreria" attiva "Google Calendar API".',
-                'In "Schermata consenso OAuth" compila nome app ed email. Con un account Google Workspace scegli "Interno". Con un Gmail normale si puo\' solo "Esterno": poi in "Pubblico" premi "Pubblica app" (stato "In produzione"), altrimenti Google blocca l\'accesso ("non ha completato la procedura di verifica") o lo fa scadere dopo 7 giorni.',
-                'In "Credenziali", "Crea credenziali", "ID client OAuth", tipo "Applicazione web". In "URI di reindirizzamento autorizzati" aggiungi esattamente: ' . $redirect,
+                'In "Google Auth Platform" (prima "Schermata consenso OAuth") compila nome app ed email. Con un account Google Workspace scegli "Interno". Con un Gmail normale si puo\' solo "Esterno": poi in "Pubblico" premi "Pubblica app" (stato "In produzione"), altrimenti Google blocca l\'accesso ("non ha completato la procedura di verifica") o lo fa scadere dopo 7 giorni.',
+                'In "Client" (o "Credenziali", "Crea credenziali", "ID client OAuth") crea un client di tipo "Applicazione web". In "URI di reindirizzamento autorizzati" aggiungi esattamente: ' . $redirect,
                 'Copia "ID client" e "Client secret" nei campi qui sotto e premi "Verifica e collega": si apre Google, entra con l\'account dell\'agenzia e consenti l\'accesso al calendario.',
             ],
             'fields' => [
                 ['key' => 'client_id', 'label' => 'ID client', 'type' => 'text', 'placeholder' => '1234-abc.apps.googleusercontent.com'],
                 ['key' => 'client_secret', 'label' => 'Client secret', 'type' => 'password', 'placeholder' => 'GOCSPX-...'],
                 ['key' => 'calendar_id', 'label' => 'Calendario (facoltativo)', 'type' => 'text', 'placeholder' => 'vuoto = il calendario principale dell\'account', 'help' => 'Per un calendario condiviso "Agenzia": impostazioni del calendario su Google, "ID calendario".'],
+            ],
+            'about' => [
+                'purpose' => 'Il calendario dell\'agenzia e quello del gestionale restano uguali: chi lavora su Google o qui vede gli stessi appuntamenti, con inviti e link Meet.',
+                'auto' => [
+                    'Ogni 5 minuti, nei due sensi: un appuntamento creato o cambiato qui diventa un evento su Google; un evento creato o spostato su Google crea o aggiorna l\'appuntamento; uno cancellato su Google lo segna annullato.',
+                    'Invita i colleghi dell\'appuntamento (solo chi ha l\'email in Utenti), mette il promemoria e, per le videochiamate, crea il link Meet.',
+                    'Al primo giro manda a Google solo gli appuntamenti dagli ultimi 7 giorni in poi: lo storico resta qui.',
+                ],
+                'manual' => [
+                    'Crei e sposti gli appuntamenti come sempre, qui o su Google.',
+                    'Se non vuoi aspettare: "Sincronizza" nel Calendario.',
+                ],
+                'where' => 'Calendario (menu), e su Google Calendar.',
             ],
             'note' => 'Si sincronizza ogni pochi minuti nei due sensi: un evento creato su Google compare anche qui.',
         ];

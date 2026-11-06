@@ -49,6 +49,16 @@ final class WhatsAppConnector extends AbstractApiKeyConnector
                 ['key' => 'access_token', 'label' => 'Token di accesso permanente', 'type' => 'password', 'placeholder' => 'Incolla qui il token'],
                 ['key' => 'phone_number_id', 'label' => 'ID numero di telefono', 'type' => 'text', 'placeholder' => 'Solo cifre, es. 109876543210987'],
             ],
+            'about' => [
+                'purpose' => 'Il numero WhatsApp Business dell\'azienda, per mandare i messaggi ai clienti dal gestionale.',
+                'auto' => [
+                    'Per ora verifica solo che token e numero siano validi: l\'invio dei messaggi dalle comunicazioni non c\'e\' ancora.',
+                ],
+                'manual' => [
+                    'Inserisci token e ID del numero dall\'account Meta.',
+                ],
+                'where' => 'Configurazione.',
+            ],
             'note' => 'Qui si verifica solo che token e numero siano validi. L\'invio vero dei messaggi dalle comunicazioni e\' il passo successivo, e i primi contatti verso un cliente richiedono comunque un modello approvato da Meta.',
         ];
     }

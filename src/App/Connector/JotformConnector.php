@@ -53,6 +53,16 @@ final class JotformConnector extends AbstractApiKeyConnector
                     ],
                 ],
             ],
+            'about' => [
+                'purpose' => 'Per far arrivare nel gestionale i contatti raccolti con i moduli Jotform.',
+                'auto' => [
+                    'Per ora verifica solo che la chiave funzioni e mostra i moduli trovati: l\'importazione automatica dei contatti non c\'e\' ancora.',
+                ],
+                'manual' => [
+                    'Inserisci la chiave API di Jotform.',
+                ],
+                'where' => 'Configurazione.',
+            ],
             'note' => 'Qui si verifica solo che la chiave funzioni e si vedono i moduli trovati. L\'importazione automatica dei contatti e\' il passo successivo.',
         ];
     }

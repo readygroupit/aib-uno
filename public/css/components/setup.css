@@ -310,3 +310,50 @@
     line-height: 1.6;
     color: rgba(18, 51, 63, 0.8);
 }
+
+/* Riquadro "A cosa serve" di ogni collegamento (vedi aboutBox in setup.js). */
+.setup__about {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    background: rgba(95, 138, 134, 0.08);
+    border: 1px solid rgba(95, 138, 134, 0.18);
+}
+
+.setup__about-title {
+    margin: 0 0 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-teal-dark);
+}
+
+.setup__steps-title { margin: 0 0 10px; }
+
+.setup__about-text,
+.setup__about-where {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: rgba(18, 51, 63, 0.85);
+}
+
+.setup__about-list {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: rgba(18, 51, 63, 0.85);
+}
+
+.setup__about-where {
+    padding-top: 10px;
+    border-top: 1px solid rgba(95, 138, 134, 0.18);
+}

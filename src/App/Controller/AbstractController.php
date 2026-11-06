@@ -77,6 +77,7 @@ abstract class AbstractController
     protected function render(string $template, array $vars = [], bool $useLayout = true): string
     {
         $view = new View();
+        $vars += ['brand' => $this->brand()];
         $templateFile = $this->viewBasePath() . $template . '.phtml';
 
         if (!$useLayout) {
@@ -124,9 +125,15 @@ abstract class AbstractController
 
         return $view->renderWithLayout(
             ROOT_PATH . '/view/layout/page-root.phtml',
-            $vars + ['json' => $json],
+            $vars + ['json' => $json, 'brand' => $this->brand()],
             ROOT_PATH . '/view/layout/layout.phtml'
         );
+    }
+
+    /** I loghi dell'azienda per le viste (login, layout, area cliente...): vedi BrandingService. */
+    protected function brand(): array
+    {
+        return $this->container->get(\App\Service\BrandingService::class)->current();
     }
 
     protected function redirect(string $url, int $status = 302): void

@@ -24,6 +24,7 @@
 <main class="qp__page">
     <header class="qp__head">
         <div>
+            <?php if (!empty($brand['logo'])): ?><img class="qp__logo" src="<?= $this->e($brand['logo']) ?>" alt=""><?php endif; ?>
             <div class="qp__company"><?= $this->e($company?->companyName ?: APP_NAME) ?></div>
             <?php if ($company): ?>
                 <div class="qp__small"><?= $this->e(trim("{$company->address}, {$company->postalCode} {$company->city} ({$company->province})", ' ,()')) ?><?= $company->vatNumber ? ' · P.IVA ' . $this->e($company->vatNumber) : '' ?></div>

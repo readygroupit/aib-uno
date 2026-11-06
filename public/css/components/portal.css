@@ -34,6 +34,14 @@ body.portal {
     padding: 28px 26px;
 }
 
+.portal__logo {
+    display: block;
+    max-height: 36px;
+    max-width: 180px;
+    margin-bottom: 14px;
+    object-fit: contain;
+}
+
 .portal__agency {
     font-size: 12px;
     letter-spacing: 0.08em;

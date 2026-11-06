@@ -16,7 +16,12 @@ include __DIR__ . '/_head.phtml';
 <body class="portal">
 <main class="portal__main">
     <header class="portal-card portal-card--hero">
-        <span class="portal__agency"><?= $this->e($view['agency']) ?></span>
+        <?php // Riquadro scuro: il logo per sfondi scuri, se c'e' (BrandingService), altrimenti il nome. ?>
+        <?php if (!empty($brand['logoLight'])): ?>
+            <img class="portal__logo" src="<?= $this->e($brand['logoLight']) ?>" alt="<?= $this->e($view['agency']) ?>">
+        <?php else: ?>
+            <span class="portal__agency"><?= $this->e($view['agency']) ?></span>
+        <?php endif; ?>
         <h1 class="portal__title">Ciao <?= $this->e($view['customer']) ?></h1>
         <p class="portal__lead">
             <?php if ($todo === 0): ?>

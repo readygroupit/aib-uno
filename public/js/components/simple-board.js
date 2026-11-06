@@ -1,7 +1,7 @@
 import { registerComponent, renderComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { badge } from '../accounts-ui.js';
+import { badge, shortList } from '../accounts-ui.js';
 import { actionsRow } from '../work-ui.js';
 
 // Schermata a sezioni di righe, per le cose piccole (ferie, spese): in
@@ -31,10 +31,10 @@ function renderSimpleBoard(data) {
         data.stats.length ? el('div', { className: 'stat-grid' }, data.stats.map(renderComponent).filter(Boolean)) : null,
         ...data.sections.map((s) => el('section', { className: `card acc-section acc-group acc-group--${s.tone || 'neutral'}` }, [
             el('div', { className: 'acc-section__head' }, [
-                el('h2', { className: 'card__title' }, [s.title]),
+                el('h2', { className: 'card__title' }, [s.title, s.rows.length ? el('span', { className: 'acc-count' }, [String(s.rows.length)]) : null]),
                 s.total ? el('span', { className: 'acc-group__total' }, [s.total]) : null,
             ]),
-            s.rows.length ? el('div', { className: 'acc-due-list' }, s.rows.map(row)) : el('p', { className: 'acc-empty' }, [s.empty || 'Niente.']),
+            s.rows.length ? shortList(s.rows.map(row)) : el('p', { className: 'acc-empty' }, [s.empty || 'Niente.']),
         ])),
     ].filter(Boolean));
 }

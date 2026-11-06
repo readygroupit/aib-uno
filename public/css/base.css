@@ -150,16 +150,21 @@ a {
 .auth-login-card__header {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 18px;
+    text-align: center;
 }
 
-/* Lockup orizzontale (icona+testo), altezza libera: non forzare una
-   larghezza fissa come si faceva prima con l'icona quadrata di Uno. */
+/* Il logo dell'azienda (BrandingService), o quello di aiBrains se non
+   c'e': al centro, altezza libera entro un riquadro, cosi' va bene sia un
+   logo orizzontale sia uno quadrato. */
 .auth-login-card__logo {
     display: block;
-    height: 44px;
+    max-height: 56px;
+    max-width: 240px;
     width: auto;
+    height: auto;
+    object-fit: contain;
 }
 
 .auth-login-card__title {
@@ -410,6 +415,21 @@ a {
         radial-gradient(520px 420px at 0% 0%, rgba(95, 138, 134, 0.4), transparent 60%),
         linear-gradient(160deg, #1a4250, #12333f 55%, #0d2833);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 40px 80px -50px rgba(18, 51, 63, 0.7);
+}
+
+.auth-showcase__top {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+}
+
+/* Il logo per sfondi scuri (di solito bianco), solo se caricato. */
+.auth-showcase__logo {
+    display: block;
+    max-height: 40px;
+    max-width: 200px;
+    object-fit: contain;
 }
 
 .auth-showcase__badge {

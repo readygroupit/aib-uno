@@ -1,7 +1,7 @@
 import { registerComponent, renderComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { badge } from '../accounts-ui.js';
+import { badge, shortList } from '../accounts-ui.js';
 import { actionsRow } from '../work-ui.js';
 
 // Richieste dei clienti: prima quelle da smistare, poi quelle in corso,
@@ -36,23 +36,22 @@ function renderRequestBoard(data) {
             el('div', { className: 'acc-board__main' }, data.groups.length
                 ? data.groups.map((g) => el('section', { className: `card acc-section acc-group acc-group--${g.tone}` }, [
                     el('div', { className: 'acc-section__head' }, [
-                        el('h2', { className: 'card__title' }, [g.title]),
-                        el('span', { className: 'acc-group__total' }, [String(g.items.length)]),
+                        el('h2', { className: 'card__title' }, [g.title, el('span', { className: 'acc-count' }, [String(g.items.length)])]),
                     ]),
-                    el('div', { className: 'acc-due-list' }, g.items.map(requestRow)),
+                    shortList(g.items.map(requestRow)),
                 ]))
                 : [el('section', { className: 'card acc-section' }, [el('p', { className: 'acc-empty' }, [icon('circle-check'), ' Nessuna richiesta aperta.'])])]),
             el('div', { className: 'acc-board__side' }, [
                 data.top.length ? el('section', { className: 'card acc-section' }, [
                     el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Chi chiede di piu\' (30 giorni)'])]),
-                    el('div', { className: 'acc-due-list' }, data.top.map((t) => el('a', { className: 'acc-line', href: t.href }, [
+                    shortList(data.top.map((t) => el('a', { className: 'acc-line', href: t.href }, [
                         el('span', { className: 'acc-line__title' }, [t.name]),
                         el('span', { className: 'acc-line__meta' }, [`${t.count} ${t.count === 1 ? 'richiesta' : 'richieste'}`]),
                     ]))),
                 ]) : null,
                 data.done.length ? el('section', { className: 'card acc-section' }, [
-                    el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Fatte questa settimana'])]),
-                    el('div', { className: 'acc-due-list' }, data.done.map(requestRow)),
+                    el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Fatte questa settimana', el('span', { className: 'acc-count' }, [String(data.done.length)])])]),
+                    shortList(data.done.map(requestRow)),
                 ]) : null,
             ].filter(Boolean)),
         ]),

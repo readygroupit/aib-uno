@@ -51,6 +51,7 @@ import './components/simple-board.js';
 import './components/quote-summary.js';
 import { checkWorklogNudge } from './worklog-nudge.js';
 import './components/setup-checklist.js';
+import './components/brand-logos.js';
 import './components/agent-feed.js';
 import './components/agent-activity.js';
 import './components/agents-board.js';

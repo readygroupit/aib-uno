@@ -4,7 +4,7 @@
       <form method="post" action="/primo-accesso?step=account" class="auth-login-card">
         <?= $this->csrfField() ?>
         <div class="auth-login-card__header">
-            <img class="auth-login-card__logo" src="<?= $this->asset('/img/aibrains.png') ?>" alt="aiBrains">
+            <img class="auth-login-card__logo" src="<?= $this->e(($brand['logo'] ?? null) ?: $this->asset('/img/aibrains.png')) ?>" alt="<?= $this->e(($brand['logo'] ?? null) ? $brand['name'] : 'aiBrains') ?>">
             <div>
                 <p class="first-access__step">Passo 1 di 2</p>
                 <h1 class="auth-login-card__title">Benvenuto in <?= $this->e(APP_NAME) ?></h1>

@@ -958,3 +958,45 @@ a.acc-fact:hover,
 .acc-board__side .acc-due--nodate .acc-due__actions {
     justify-content: flex-start;
 }
+
+/* Elenco lungo di una sezione: le prime righe e "Mostra altri N" (vedi
+   shortList in accounts-ui.js). Le righe nascoste hanno l'attributo hidden,
+   che da solo perde contro display: grid/flex delle righe. */
+.acc-short-list [hidden] {
+    display: none !important;
+}
+
+.acc-more {
+    display: block;
+    margin: 10px auto 0;
+    padding: 6px 14px;
+    border: var(--hairline);
+    border-radius: 999px;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-teal-dark);
+    cursor: pointer;
+}
+
+.acc-more:hover {
+    background: rgba(95, 138, 134, 0.1);
+}
+
+/* Quante righe ha la sezione, subito dopo il titolo ("Mancano contenuti 14"). */
+.acc-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 20px;
+    margin-left: 8px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: rgba(18, 51, 63, 0.08);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-petrol);
+    vertical-align: 2px;
+}

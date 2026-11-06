@@ -357,3 +357,78 @@
     padding-top: 10px;
     border-top: 1px solid rgba(95, 138, 134, 0.18);
 }
+
+/* Configurazione, "Logo dell'azienda" (vedi components/brand-logos.js). */
+.brand-logos__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.brand-logo__help { margin: 4px 0 14px; }
+
+.brand-logo__preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 130px;
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    border: 1px dashed rgba(18, 51, 63, 0.18);
+    background: var(--color-canvas);
+}
+
+.brand-logo__preview--dark {
+    background: linear-gradient(160deg, #1a4250, #12333f 55%, #0d2833);
+    border-color: transparent;
+}
+
+.brand-logo__preview img {
+    max-height: 70px;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.brand-logo__empty {
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.5);
+}
+
+.brand-logo__preview--dark .brand-logo__empty { color: rgba(255, 255, 255, 0.6); }
+
+.brand-logo__error { margin: 10px 0 0; }
+
+.brand-logo__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.brand-logo__file { display: none; }
+
+.brand-logos__note { margin: 16px 0 0; }
+
+.brand-logo__used {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md, 11px);
+    background: rgba(95, 138, 134, 0.08);
+}
+
+.brand-logo__used-title {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-teal-dark);
+}
+
+.brand-logo__used-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(18, 51, 63, 0.85);
+}

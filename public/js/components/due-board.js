@@ -1,7 +1,7 @@
 import { registerComponent, renderComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { badge, installmentRow, actionButton } from '../accounts-ui.js';
+import { badge, installmentRow, actionButton, shortList } from '../accounts-ui.js';
 
 // Scadenzario: prima cio' che e' in ritardo, poi cio' che arriva. Ogni
 // gruppo dice quanto vale; ogni riga ha "incassato" a portata di clic.
@@ -16,7 +16,7 @@ function groupBlock(group) {
                 el('strong', {}, [group.totalLabel]),
             ]),
         ]),
-        el('div', { className: 'acc-due-list' }, group.items.map((i) => installmentRow(i))),
+        shortList(group.items.map((i) => installmentRow(i))),
     ]);
 }
 
@@ -52,15 +52,15 @@ function renderDueBoard(data) {
 
     const side = [];
     side.push(el('section', { className: 'card acc-section' }, [
-        el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Rinnovi in arrivo'])]),
+        el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Rinnovi in arrivo', data.renewals.length ? el('span', { className: 'acc-count' }, [String(data.renewals.length)]) : null])]),
         data.renewals.length
-            ? el('div', { className: 'acc-due-list' }, data.renewals.map(renewalRow))
+            ? shortList(data.renewals.map(renewalRow))
             : el('p', { className: 'acc-empty' }, ['Nessun rinnovo nei prossimi 60 giorni.']),
     ]));
     if (data.recentPaid.length) {
         side.push(el('section', { className: 'card acc-section' }, [
-            el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Incassati di recente'])]),
-            el('div', { className: 'acc-due-list' }, data.recentPaid.map((i) => installmentRow(i))),
+            el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Incassati di recente', el('span', { className: 'acc-count' }, [String(data.recentPaid.length)])])]),
+            shortList(data.recentPaid.map((i) => installmentRow(i))),
         ]));
     }
 

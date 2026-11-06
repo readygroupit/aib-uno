@@ -1,7 +1,7 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { badge, suggestionBox } from '../accounts-ui.js';
+import { badge, suggestionBox, shortList } from '../accounts-ui.js';
 import { progressBar, taskRow, actionsRow } from '../work-ui.js';
 
 // Scheda commessa: per chi e', a che punto e', la cosa da fare adesso,
@@ -60,7 +60,7 @@ function renderSummary(data) {
                 el('a', { className: 'btn btn--ghost btn--small', href: data.addAppointmentHref }, [icon('plus'), 'Appuntamento']),
             ]),
             data.appointments.length
-                ? el('div', { className: 'acc-due-list' }, data.appointments.map((a) => el('a', { className: 'cal-row' + (a.past || a.cancelled ? ' is-cancelled' : ''), href: a.href }, [
+                ? shortList(data.appointments.map((a) => el('a', { className: 'cal-row' + (a.past || a.cancelled ? ' is-cancelled' : ''), href: a.href }, [
                     el('span', { className: `cal-row__dot cal-dot--${a.color}` }),
                     el('span', { className: 'cal-row__time' }, [a.dayLabel]),
                     el('span', { className: 'cal-row__body' }, [

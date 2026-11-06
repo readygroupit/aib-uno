@@ -36,8 +36,6 @@ final class FirstAccessService
         'address' => ['label' => 'Indirizzo', 'required' => false],
     ];
 
-    private const LOGO_TYPES = ['image/png' => 'png', 'image/jpeg' => 'jpg', 'image/webp' => 'webp'];
-    private const LOGO_MAX_BYTES = 2 * 1024 * 1024;
 
     private ?bool $pending = null;
 
@@ -180,30 +178,10 @@ final class FirstAccessService
         return null;
     }
 
+    /** Lo stesso logo di Configurazione, "Logo dell'azienda" (vedi BrandingService). */
     private function storeLogo(array $file): ?string
     {
-        if ((int) $file['size'] > self::LOGO_MAX_BYTES) {
-            return 'Il logo deve pesare al massimo 2 MB.';
-        }
-        $type = (string) (new \finfo(FILEINFO_MIME_TYPE))->file((string) $file['tmp_name']);
-        $extension = self::LOGO_TYPES[$type] ?? null;
-        if ($extension === null) {
-            return 'Il logo deve essere un\'immagine PNG, JPG o WebP.';
-        }
-
-        $dir = ROOT_PATH . '/public/uploads';
-        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-            return 'Impossibile salvare il logo (cartella uploads non scrivibile).';
-        }
-        foreach (glob("{$dir}/logo.*") ?: [] as $old) {
-            unlink($old);
-        }
-        if (!move_uploaded_file((string) $file['tmp_name'], "{$dir}/logo.{$extension}")) {
-            return 'Impossibile salvare il logo.';
-        }
-        $this->settings()->set('project.logo', "/uploads/logo.{$extension}?v=" . time());
-
-        return null;
+        return $this->container->get(BrandingService::class)->store('logo', $file);
     }
 
     private function settings(): SettingRepository

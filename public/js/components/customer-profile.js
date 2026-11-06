@@ -1,7 +1,7 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { badge, suggestionBox, avatar, installmentRow, actionButton } from '../accounts-ui.js';
+import { badge, suggestionBox, avatar, installmentRow, actionButton, shortList } from '../accounts-ui.js';
 import { progressBar } from '../work-ui.js';
 import { healthDot, touchpointRow } from './client-health.js';
 
@@ -129,7 +129,7 @@ function renderCustomerProfile(data) {
                 h.level !== 'bene' ? el('span', { className: 'ch-row__suggestion' }, [icon('sparkle'), h.suggestion]) : null,
             ]) : el('p', { className: 'acc-empty' }, ['Si misura per i clienti con servizi attivi.']),
             data.health.touchpoints.length
-                ? el('div', { className: 'ch-touches' }, data.health.touchpoints.map(touchpointRow))
+                ? shortList(data.health.touchpoints.map(touchpointRow), { className: 'ch-touches' })
                 : el('p', { className: 'acc-empty' }, ['Nessun contatto registrato.']),
         ], can('logTouchpoint') ? el('a', { className: 'btn btn--ghost btn--small', href: data.health.logHref }, [icon('phone'), "Com'e' andata"]) : null));
     }
@@ -137,7 +137,7 @@ function renderCustomerProfile(data) {
     // Commesse (se il pacchetto c'e'): prima quelle che aspettano o sono in corso.
     if (data.workOrders) {
         blocks.push(section('Commesse', data.workOrders.length
-            ? [el('div', { className: 'acc-due-list' }, data.workOrders.map((w) => el('a', { className: 'acc-line wk-order-line', href: w.href }, [
+            ? [shortList(data.workOrders.map((w) => el('a', { className: 'acc-line wk-order-line', href: w.href }, [
                 el('span', { className: 'acc-line__title' }, [w.title, badge(w.stageLabel, w.stageTone)]),
                 progressBar(w.progress),
                 el('span', { className: 'acc-line__meta' }, [
@@ -151,7 +151,7 @@ function renderCustomerProfile(data) {
 
     if (data.appointments) {
         blocks.push(section('Prossimi appuntamenti', data.appointments.length
-            ? [el('div', { className: 'acc-due-list' }, data.appointments.map((a) => el('a', { className: 'cal-row', href: a.href }, [
+            ? [shortList(data.appointments.map((a) => el('a', { className: 'cal-row', href: a.href }, [
                 el('span', { className: `cal-row__dot cal-dot--${a.color}` }),
                 el('span', { className: 'cal-row__time' }, [a.dayLabel]),
                 el('span', { className: 'cal-row__body' }, [
@@ -171,7 +171,7 @@ function renderCustomerProfile(data) {
         can('newService') ? el('a', { className: 'btn btn--ghost btn--small', href: newServiceHref }, [icon('plus'), 'Nuovo servizio']) : null));
 
         blocks.push(section('Pagamenti', data.installments.length
-            ? [el('div', { className: 'acc-due-list' }, data.installments.map((i) => installmentRow(i, { showCustomer: false })))]
+            ? [shortList(data.installments.map((i) => installmentRow(i, { showCustomer: false })))]
             : [el('p', { className: 'acc-empty' }, ['Nessun pagamento in programma.'])],
         can('newInstallment') ? el('a', { className: 'btn btn--ghost btn--small', href: `/scadenzario/nuovo?customer_id=${c.id}` }, [icon('plus'), 'Incasso a parte']) : null));
     }

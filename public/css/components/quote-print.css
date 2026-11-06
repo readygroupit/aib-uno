@@ -2,6 +2,7 @@
 body.qp { margin: 0; background: #e9e7e2; font-family: var(--font-body); color: var(--color-petrol); }
 .qp__page { max-width: 210mm; min-height: 297mm; margin: 24px auto; background: #fff; padding: 18mm 16mm; box-sizing: border-box; }
 .qp__head { display: flex; justify-content: space-between; gap: 20px; border-bottom: 2px solid var(--color-petrol); padding-bottom: 14px; }
+.qp__logo { display: block; max-height: 52px; max-width: 200px; margin-bottom: 10px; object-fit: contain; }
 .qp__company { font-family: var(--font-heading); font-size: 20px; font-weight: 600; }
 .qp__meta { text-align: right; }
 .qp__label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(18, 51, 63, 0.55); }

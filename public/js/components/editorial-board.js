@@ -1,7 +1,7 @@
 import { registerComponent, renderComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { actionButton } from '../accounts-ui.js';
+import { actionButton, shortList } from '../accounts-ui.js';
 
 // Piano editoriale: la settimana, una riga per cliente. Ogni contenuto e'
 // un'etichetta colorata per stato (cosa manca a quel contenuto si vede
@@ -42,8 +42,8 @@ function renderEditorialBoard(data) {
     // La coda dei titolari: cosa aspetta la revisione interna, cliente per cliente, approvabile in un colpo.
     const review = data.review.length
         ? el('section', { className: 'card acc-section acc-group acc-group--info' }, [
-            el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Da approvare internamente'])]),
-            el('div', { className: 'acc-due-list' }, data.review.map((r) => el('div', { className: 'ed-review' }, [
+            el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Da approvare internamente', el('span', { className: 'acc-count' }, [String(data.review.reduce((n, r) => n + r.count, 0))])])]),
+            shortList(data.review.map((r) => el('div', { className: 'ed-review' }, [
                 el('div', { className: 'ed-review__head' }, [
                     el('strong', {}, [r.name]),
                     el('span', { className: 'acc-muted' }, [`${r.count} ${r.count === 1 ? 'contenuto' : 'contenuti'}, dal ${r.first}`]),
@@ -59,8 +59,8 @@ function renderEditorialBoard(data) {
 
     const gaps = data.gaps.length
         ? el('section', { className: 'card acc-section acc-group acc-group--warning' }, [
-            el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Mancano contenuti'])]),
-            el('div', { className: 'acc-due-list' }, data.gaps.map((g) => el('div', { className: 'ed-gap' }, [
+            el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Mancano contenuti', el('span', { className: 'acc-count' }, [String(data.gaps.length)])])]),
+            shortList(data.gaps.map((g) => el('div', { className: 'ed-gap' }, [
                 el('span', { className: 'ed-gap__text' }, [g.text]),
                 el('span', { className: 'ed-gap__actions' }, [
                     g.aiAction ? actionButton("Proponi con l'IA", g.aiAction, { iconName: 'wand-magic-sparkles', variant: 'secondary' }) : null,

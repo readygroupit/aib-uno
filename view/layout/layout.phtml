@@ -10,6 +10,7 @@ $unoUser = isset($_SESSION['user']['id']) ? [
         . mb_substr((string) ($_SESSION['user']['lastName'] ?? ''), 0, 1)
     ),
     'name' => trim(($_SESSION['user']['firstName'] ?? '') . ' ' . ($_SESSION['user']['lastName'] ?? '')),
+    'firstName' => (string) ($_SESSION['user']['firstName'] ?? ''),
     'role' => $_SESSION['user']['profileName'] ?? '',
 ] : null;
 
@@ -96,6 +97,8 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <script>window.UNO_GUIDE = <?= json_encode(is_file(CONFIG_PATH . '/guide.php') ? require CONFIG_PATH . '/guide.php' : [], JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) ?>;</script>
     <script>window.UNO_DASHBOARD_HOME = <?= json_encode(APP_HAS_DASHBOARD) ?>;</script>
     <script>window.UNO_APP_NAME = <?= json_encode(APP_NAME) ?>;</script>
+    <!-- Loghi dell'azienda (BrandingService): in cima al prompt, vedi hero.js. -->
+    <script>window.UNO_BRAND = <?= json_encode($brand ?? null, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES) ?>;</script>
     <script>window.UNO_WORKLOG = <?= json_encode(in_array('worklog.view', $_SESSION['user']['permissions'] ?? [], true) && in_array('worklog', \App\Package\PackageCatalogService::installedNames(), true)) ?>;</script>
     <script>window.UNO_SHOW_ONBOARDING = <?= json_encode($unoShowOnboarding) ?>;</script>
     <!-- Versione (?v=filemtime) di ogni file JS, anche di quelli importati da altri moduli: nessun file vecchio dalla cache del browser (vedi View::importMap()). -->

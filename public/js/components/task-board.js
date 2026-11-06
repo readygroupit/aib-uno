@@ -1,5 +1,6 @@
 import { registerComponent, renderComponent } from './registry.js';
 import { el } from '../dom.js';
+import { shortList } from '../accounts-ui.js';
 import { icon } from '../icons.js';
 import { taskRow } from '../work-ui.js';
 
@@ -39,7 +40,7 @@ function renderTaskBoard(data) {
                   el('h2', { className: 'card__title' }, ['Appuntamenti in arrivo']),
                   el('a', { className: 'btn btn--ghost btn--small', href: '/appuntamenti' }, [icon('calendar'), 'Calendario']),
               ]),
-              el('div', { className: 'acc-due-list' }, data.appointments.map((a) => el('a', { className: 'cal-row', href: a.href }, [
+              shortList(data.appointments.map((a) => el('a', { className: 'cal-row', href: a.href }, [
                   el('span', { className: `cal-row__dot cal-dot--${a.color}` }),
                   el('span', { className: 'cal-row__time' }, [a.dayLabel]),
                   el('span', { className: 'cal-row__body' }, [

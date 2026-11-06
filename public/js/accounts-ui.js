@@ -188,3 +188,36 @@ export function suggestionBox(suggestion) {
 export function avatar(initials, variant, size = 'md') {
     return el('span', { className: `acc-avatar acc-avatar--${size} acc-avatar--${variant}` }, [initials]);
 }
+
+/**
+ * Elenco di una sezione (es. "Mancano contenuti") che non si srotola
+ * tutto: le prime `limit` righe e sotto "Mostra altri N" / "Mostra meno".
+ * Con poche righe in piu' (fino a `limit` + 2) le mostra tutte: un
+ * pulsante per due righe non vale il clic.
+ *
+ * @param {Array<Node|null>} children le righe
+ * @param {{className?: string, limit?: number}} [options] className: la classe della lista (acc-due-list, ch-list...)
+ */
+export function shortList(children, { className = 'acc-due-list', limit = 5 } = {}) {
+    const rows = children.filter(Boolean);
+    const list = el('div', { className }, rows);
+    if (rows.length <= limit + 2) return list;
+
+    const hidden = rows.slice(limit);
+    const more = `Mostra altri ${hidden.length}`;
+    const toggle = el('button', { type: 'button', className: 'acc-more' }, [more]);
+    let open = false;
+    const apply = () => {
+        hidden.forEach((row) => { row.hidden = !open; });
+        toggle.textContent = open ? 'Mostra meno' : more;
+        toggle.setAttribute('aria-expanded', String(open));
+    };
+    toggle.addEventListener('click', () => {
+        open = !open;
+        apply();
+        if (!open) list.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+    apply();
+
+    return el('div', { className: 'acc-short-list' }, [list, toggle]);
+}

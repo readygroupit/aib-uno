@@ -13,6 +13,7 @@ use App\Connector\PCloudConnector;
 use App\Connector\RedirectingConnectorInterface;
 use App\Controller\AuthController;
 use App\Prompt\Tool\ShowSetupTool;
+use App\Service\BrandingService;
 use App\Service\SetupService;
 
 /**
@@ -127,6 +128,78 @@ final class SetupController extends AuthController
         $this->redirect('/configurazione');
 
         return null;
+    }
+
+    /**
+     * Logo dell'azienda: la versione normale e quella per gli sfondi scuri
+     * (vedi BrandingService). GET la pagina, POST carica un file
+     * (campo 'file', tipo in 'kind') o lo toglie ('remove' = 1).
+     */
+    public function logoAction(): ?string
+    {
+        $branding = $this->container->get(BrandingService::class);
+        if ($this->request->getMethod() !== 'POST') {
+            return $this->renderPage([$this->logoComponent($branding)], ['title' => 'Logo dell\'azienda']);
+        }
+
+        $kind = (string) $this->request->get('kind', '');
+        if (!isset(BrandingService::KINDS[$kind])) {
+            $this->json(['ok' => false, 'error' => 'Logo sconosciuto.'], 422);
+
+            return null;
+        }
+        if ($this->request->get('remove') === '1') {
+            $branding->remove($kind);
+        } else {
+            $file = $this->request->file('file');
+            $error = $file === null ? 'Scegli un\'immagine da caricare.' : $branding->store($kind, $file);
+            if ($error !== null) {
+                $this->json(['ok' => false, 'error' => $error], 422);
+
+                return null;
+            }
+        }
+        $this->json(['ok' => true, 'component' => $this->logoComponent($branding)]);
+
+        return null;
+    }
+
+    private function logoComponent(BrandingService $branding): array
+    {
+        $current = $branding->current();
+
+        return [
+            'type' => 'brand-logos',
+            'title' => 'Logo dell\'azienda',
+            'action' => '/configurazione/logo',
+            'logos' => [
+                [
+                    'kind' => 'logo',
+                    'label' => 'Logo normale',
+                    'help' => 'La versione per gli sfondi chiari. E\' lo stesso logo del primo accesso.',
+                    'usedIn' => [
+                        'Login: al centro, sopra "Bentornato" (senza, c\'e\' il logo di aiBrains)',
+                        'Home: sopra il saluto "Ciao ..., sono Uno"',
+                        'Colonna della chat, in alto a sinistra: cliccandolo si torna alla home',
+                        'Preventivo da stampare o salvare in PDF: in testa, sopra i dati dell\'azienda',
+                    ],
+                    'url' => $current['logo'],
+                    'dark' => false,
+                ],
+                [
+                    'kind' => 'logo_light',
+                    'label' => 'Logo per sfondi scuri (di solito bianco)',
+                    'help' => 'Facoltativo: la versione per gli sfondi scuri, di solito bianca.',
+                    'usedIn' => [
+                        'Login: nel riquadro scuro a destra, sopra "Private AI" (senza, li\' non c\'e\' logo)',
+                        'Area cliente: nel riquadro scuro in cima (senza, c\'e\' il nome dell\'agenzia)',
+                    ],
+                    'url' => $current['logoLight'],
+                    'dark' => true,
+                ],
+            ],
+            'note' => 'PNG, JPG o WebP, massimo 2 MB. Meglio un PNG con lo sfondo trasparente, largo almeno 400 pixel.',
+        ];
     }
 
     public function disconnectAction(): void

@@ -1,7 +1,7 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { actionButton } from '../accounts-ui.js';
+import { actionButton, shortList } from '../accounts-ui.js';
 import { dateJump } from '../date-jump.js';
 
 // Il team in un colpo d'occhio: chi e' pieno, chi e' libero, cosa sta
@@ -42,7 +42,7 @@ function renderTeam(data) {
 
     const suggestions = data.suggestions.length ? el('section', { className: 'card acc-section' }, [
         el('h2', { className: 'card__title' }, ['Per riequilibrare']),
-        el('div', { className: 'acc-due-list' }, data.suggestions.map((s) => el('div', { className: 'acc-suggestion acc-suggestion--info pl-suggestion' }, [
+        shortList(data.suggestions.map((s) => el('div', { className: 'acc-suggestion acc-suggestion--info pl-suggestion' }, [
             el('span', { className: 'acc-suggestion__icon' }, [icon('handshake')]),
             el('p', { className: 'acc-suggestion__text' }, [s.text]),
             actionButton(s.label, s.action, { variant: 'primary' }),

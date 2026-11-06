@@ -1,7 +1,7 @@
 import { registerComponent, renderComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { badge } from '../accounts-ui.js';
+import { badge, shortList } from '../accounts-ui.js';
 
 // Temperatura dei clienti: in cima chi rischia, ognuno con il perche' e
 // la cosa da fare; un clic per registrare com'e' andata la telefonata.
@@ -52,13 +52,13 @@ function renderClientHealth(data) {
         el('div', { className: 'acc-board__layout' }, [
             el('div', { className: 'acc-board__main' }, [
                 el('section', { className: 'card acc-section' }, [
-                    el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Da sentire'])]),
+                    el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Da sentire', risky.length ? el('span', { className: 'acc-count' }, [String(risky.length)]) : null])]),
                     risky.length
-                        ? el('div', { className: 'ch-list' }, risky.map(row))
+                        ? shortList(risky.map(row), { className: 'ch-list' })
                         : el('p', { className: 'acc-empty' }, [icon('circle-check'), ' Nessun cliente da recuperare: tutti stanno bene.']),
                 ]),
                 fine.length ? el('section', { className: 'card acc-section' }, [
-                    el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, [`Stanno bene (${fine.length})`])]),
+                    el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Stanno bene', el('span', { className: 'acc-count' }, [String(fine.length)])])]),
                     el('div', { className: 'acc-chips' }, fine.map((r) => el('a', { className: 'acc-chip', href: r.href }, [healthDot('success'), r.name]))),
                 ]) : null,
             ].filter(Boolean)),
@@ -66,7 +66,7 @@ function renderClientHealth(data) {
                 el('section', { className: 'card acc-section' }, [
                     el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Ultimi contatti'])]),
                     data.recent.length
-                        ? el('div', { className: 'ch-touches' }, data.recent.map(touchpointRow))
+                        ? shortList(data.recent.map(touchpointRow), { className: 'ch-touches' })
                         : el('p', { className: 'acc-empty' }, ['Ancora nessun contatto registrato. Dopo una telefonata importante, segna in 20 secondi com\'e\' andata.']),
                 ]),
             ]),

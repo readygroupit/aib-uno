@@ -1,7 +1,7 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { badge, installmentRow, actionButton } from '../accounts-ui.js';
+import { badge, installmentRow, actionButton, shortList } from '../accounts-ui.js';
 
 // Testata di un servizio venduto e le sue scadenze; il form dei dati segue sotto, chiuso.
 function renderServiceSummary(data) {
@@ -33,7 +33,7 @@ function renderServiceSummary(data) {
         el('section', { className: 'card acc-section' }, [
             el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Pagamenti di questo servizio'])]),
             data.installments.length
-                ? el('div', { className: 'acc-due-list' }, data.installments.map((i) => installmentRow(i, { showCustomer: false })))
+                ? shortList(data.installments.map((i) => installmentRow(i, { showCustomer: false })))
                 : el('p', { className: 'acc-empty' }, ['Nessun pagamento in programma.']),
         ]),
     ]);

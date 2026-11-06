@@ -345,6 +345,11 @@ return [
         'controller' => SetupController::class,
         'action' => 'googleCallback',
     ],
+    'setup-logo' => [
+        'path' => '/configurazione/logo',
+        'controller' => SetupController::class,
+        'action' => 'logo',
+    ],
     'setup-pcloud-callback' => [
         'path' => '/configurazione/pcloud/callback',
         'controller' => SetupController::class,

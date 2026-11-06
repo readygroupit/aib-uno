@@ -1,7 +1,7 @@
 import { registerComponent, renderComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { badge, actionButton } from '../accounts-ui.js';
+import { badge, actionButton, shortList } from '../accounts-ui.js';
 
 // Fatture per cosa c'e' da fare: prima cio' che va fatturato o inviato,
 // poi cio' che si aspetta di incassare. Ogni riga ha il passo successivo.
@@ -26,11 +26,10 @@ export function invoiceRow(item) {
 function group(g) {
     return el('section', { className: `card acc-section acc-group acc-group--${g.tone}` }, [
         el('div', { className: 'acc-section__head' }, [
-            el('h2', { className: 'card__title' }, [g.title]),
-            el('span', { className: 'acc-group__total' }, [`${g.items.length}`]),
+            el('h2', { className: 'card__title' }, [g.title, el('span', { className: 'acc-count' }, [String(g.items.length)])]),
         ]),
         g.hint ? el('p', { className: 'acc-muted inv-hint' }, [g.hint]) : null,
-        el('div', { className: 'acc-due-list' }, g.items.map(invoiceRow)),
+        shortList(g.items.map(invoiceRow)),
     ]);
 }
 
@@ -50,9 +49,9 @@ function renderInvoiceBoard(data) {
             el('div', { className: 'acc-board__main' }, main),
             el('div', { className: 'acc-board__side' }, [
                 el('section', { className: 'card acc-section' }, [
-                    el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Pagate di recente'])]),
+                    el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Pagate di recente', data.recentPaid.length ? el('span', { className: 'acc-count' }, [String(data.recentPaid.length)]) : null])]),
                     data.recentPaid.length
-                        ? el('div', { className: 'acc-due-list' }, data.recentPaid.map(invoiceRow))
+                        ? shortList(data.recentPaid.map(invoiceRow))
                         : el('p', { className: 'acc-empty' }, ['Nessuna fattura pagata ancora.']),
                 ]),
             ]),

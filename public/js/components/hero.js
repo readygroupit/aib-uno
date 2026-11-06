@@ -709,12 +709,25 @@ export function mountPromptShell(root, initialComponents) {
     // della home vuota (nascosti via CSS quando .hero-wrap--top).
     const logoBig = el('img', { src: window.UNO_LOGO, alt: 'Uno', className: 'hero__logo hero__logo--big' });
     const greeting = el('div', { className: 'hero__greeting' }, [
-        el('p', { className: 'hero__greeting-line1' }, ['Ciao, sono Uno']),
+        // "Ciao Fabrizio, sono Uno": il nome di chi e' collegato, se lo sappiamo.
+        el('p', { className: 'hero__greeting-line1' }, [window.UNO_USER?.firstName ? `Ciao ${window.UNO_USER.firstName}, sono Uno` : 'Ciao, sono Uno']),
         el('p', { className: 'hero__greeting-line2' }, [homeShortLine()]),
     ]);
     const intro = el('div', { className: 'hero__intro' }, [logoBig, greeting]);
 
-    const wrap = el('div', { className: 'hero-wrap' }, [intro, card]);
+    // Il logo dell'azienda (BrandingService) in cima, e in fondo chi ha
+    // fatto il servizio: sulla home centrata il credito sta in fondo alla
+    // pagina, con la chat a sinistra in fondo alla colonna (hero.css).
+    const brandInfo = window.UNO_BRAND || {};
+    const brand = brandInfo.logo
+        ? el('a', { className: 'hero__brand', href: '/', title: brandInfo.name || '' }, [el('img', { src: brandInfo.logo, alt: brandInfo.name || 'Logo' })])
+        : null;
+    const credit = el('p', { className: 'app-credit' }, [
+        `© ${new Date().getFullYear()} `,
+        el('a', { href: 'https://aibrains.it', target: '_blank', rel: 'noopener' }, ['AI Brains']),
+    ]);
+
+    const wrap = el('div', { className: 'hero-wrap' }, [brand, intro, card, credit]);
 
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {

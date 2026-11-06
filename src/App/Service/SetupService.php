@@ -71,6 +71,7 @@ final class SetupService
             $has('client_requests', 'connectors') ? $this->connectorItem('gmail', 'Collega Gmail', 'Le email dei clienti alla casella dell\'agenzia diventano richieste da smistare, con il cliente gia\' riconosciuto.', false) : null,
             $has('installments', 'connectors') ? $this->connectorItem('stripe', 'Collega Stripe', 'Il cliente paga con carta o addebito SEPA da un link; rate e rinnovi si addebitano da soli a chi attiva il pagamento automatico.', false) : null,
             $has('installments', 'connectors') ? $this->connectorItem('paypal', 'Collega PayPal', 'Per i clienti che preferiscono pagare con PayPal.', false) : null,
+            $this->brandItem(),
             $has('invoices') ? $this->companyItem() : null,
             $has('invoices', 'connectors') ? $this->connectorItem('fatture_in_cloud', 'Collega Fatture in Cloud', 'Le fatture emesse partono allo SdI da Fatture in Cloud (con il PDF per il cliente). Basta uno tra Fatture in Cloud e Aruba.', false) : null,
             $has('invoices', 'connectors') ? $this->connectorItem('aruba_invoices', 'Collega Aruba Fatturazione', 'In alternativa a Fatture in Cloud: l\'XML parte allo SdI dal vostro servizio Aruba.', false) : null,
@@ -120,6 +121,25 @@ final class SetupService
             'status' => $connected ? 'Collegato' : 'Da collegare',
             'summary' => $connected ? $connector->summary() : null,
             'spec' => $connector->setupSpec(),
+        ];
+    }
+
+    /** Il logo dell'azienda (normale e per sfondi scuri), vedi BrandingService. */
+    private function brandItem(): array
+    {
+        $brand = $this->container->get(BrandingService::class)->current();
+        $count = count(array_filter([$brand['logo'], $brand['logoLight']]));
+
+        return [
+            'key' => 'brand_logos',
+            'label' => 'Logo dell\'azienda',
+            'description' => 'Il vostro logo al posto di quello di aiBrains: al centro del login, sopra il saluto in home, in cima alla chat, nel preventivo stampato; la versione bianca nel riquadro scuro del login e nell\'area cliente.',
+            'required' => false,
+            'kind' => 'link',
+            'href' => '/configurazione/logo',
+            'done' => $brand['logo'] !== null,
+            'status' => $brand['logo'] !== null ? ($count === 2 ? 'Caricati' : 'Caricato') : 'Da caricare',
+            'summary' => $brand['logo'] !== null ? ($count === 2 ? 'Normale e per sfondi scuri' : 'Solo la versione normale') : null,
         ];
     }
 

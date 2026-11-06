@@ -4,7 +4,7 @@
       <form method="post" action="/login" class="auth-login-card">
         <?= $this->csrfField() ?>
         <div class="auth-login-card__header">
-            <img class="auth-login-card__logo" src="<?= $this->asset('/img/aibrains.png') ?>" alt="aiBrains">
+            <img class="auth-login-card__logo" src="<?= $this->e(($brand['logo'] ?? null) ?: $this->asset('/img/aibrains.png')) ?>" alt="<?= $this->e(($brand['logo'] ?? null) ? $brand['name'] : 'aiBrains') ?>">
             <div>
                 <h1 class="auth-login-card__title">Bentornato</h1>
                 <p class="auth-login-card__tagline">Accedi al tuo spazio di lavoro per continuare.</p>
@@ -48,12 +48,15 @@
             Ambiente privato · connessione cifrata
         </div>
       </form>
-      <p class="auth-copyright">© <?= date('Y') ?> aiBrains · <a href="#">Privacy</a> · <a href="#">Assistenza</a></p>
+      <p class="auth-copyright">© <?= date('Y') ?> <a href="https://aibrains.it" target="_blank" rel="noopener">AI Brains</a></p>
     </div>
   </main>
 
   <aside class="auth-showcase">
-    <span class="auth-showcase__badge">Private AI</span>
+    <div class="auth-showcase__top">
+        <?php if (!empty($brand['logoLight'])): ?><img class="auth-showcase__logo" src="<?= $this->e($brand['logoLight']) ?>" alt="<?= $this->e($brand['name']) ?>"><?php endif; ?>
+        <span class="auth-showcase__badge">Private AI</span>
+    </div>
     <div class="auth-showcase__copy">
         <h2 class="auth-showcase__heading">Agenti intelligenti che lavorano con te, non al posto tuo.</h2>
         <p class="auth-showcase__text">Lead, pratiche e documenti in un unico spazio. Ogni azione importante passa dalla tua approvazione.</p>

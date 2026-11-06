@@ -22,11 +22,35 @@ final class MailService
 
     public function send(string $to, string $subject, string $body): bool
     {
+        // Modalita' prova: agli utenti del gestionale si scrive davvero (es.
+        // link per la password), a tutti gli altri (clienti) no: la mail va
+        // all'indirizzo per le prove, o resta nel registro delle prove.
+        $test = $this->container->get(\App\TestMode\TestModeService::class);
+        if ($test->simulates('customer_email') && !$this->isUserEmail($to)) {
+            $test->record('customer_email', "Email a {$to}: {$subject}", $body, $test->testEmail() ?? $to);
+            if ($test->testEmail() === null) {
+                $this->log($to, '[PROVA, NON INVIATA] ' . $subject, $body);
+
+                return true;
+            }
+            $subject = "[PROVA per {$to}] {$subject}";
+            $to = $test->testEmail();
+        }
+
         $this->log($to, $subject, $body);
 
         @mail($to, $subject, $body);
 
         return true;
+    }
+
+    private function isUserEmail(string $email): bool
+    {
+        try {
+            return $this->container->get(\App\Repository\UserRepository::class)->findAll(['email' => strtolower(trim($email))]) !== [];
+        } catch (\Throwable) {
+            return true;
+        }
     }
 
     private function log(string $to, string $subject, string $body): void

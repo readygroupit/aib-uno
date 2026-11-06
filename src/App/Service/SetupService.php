@@ -68,15 +68,18 @@ final class SetupService
             $has('appointments') ? $this->connectorItem('google_calendar', 'Collega Google Calendar', 'Appuntamenti sul calendario dell\'agenzia, inviti ai colleghi, link Meet per le videochiamate.', true) : null,
             $has('media_library', 'connectors') ? $this->connectorItem('google_drive', 'Collega Google Drive', 'L\'archivio di foto e video: Uno li fa descrivere dall\'IA e li rende ricercabili a parole.', true) : null,
             $has('media_library', 'connectors') ? $this->connectorItem('pcloud', 'Collega pCloud', 'Se foto e video stanno (anche) su pCloud: si leggono e si cercano insieme a quelli del Drive.', false) : null,
+            $has('editorial', 'connectors') ? $this->connectorItem('meta', 'Collega Facebook e Instagram', 'I contenuti approvati escono sulle pagine e sui profili dei clienti, all\'ora di uscita o con un clic.', false) : null,
+            $has('editorial', 'connectors') ? $this->socialItem() : null,
             $has('client_requests', 'connectors') ? $this->connectorItem('gmail', 'Collega Gmail', 'Le email dei clienti alla casella dell\'agenzia diventano richieste da smistare, con il cliente gia\' riconosciuto.', false) : null,
             $has('installments', 'connectors') ? $this->connectorItem('stripe', 'Collega Stripe', 'Il cliente paga con carta o addebito SEPA da un link; rate e rinnovi si addebitano da soli a chi attiva il pagamento automatico.', false) : null,
             $has('installments', 'connectors') ? $this->connectorItem('paypal', 'Collega PayPal', 'Per i clienti che preferiscono pagare con PayPal.', false) : null,
+            $this->testModeItem(),
             $this->brandItem(),
             $has('invoices') ? $this->companyItem() : null,
             $has('invoices', 'connectors') ? $this->connectorItem('fatture_in_cloud', 'Collega Fatture in Cloud', 'Le fatture emesse partono allo SdI da Fatture in Cloud (con il PDF per il cliente). Basta uno tra Fatture in Cloud e Aruba.', false) : null,
             $has('invoices', 'connectors') ? $this->connectorItem('aruba_invoices', 'Collega Aruba Fatturazione', 'In alternativa a Fatture in Cloud: l\'XML parte allo SdI dal vostro servizio Aruba.', false) : null,
             $has('message_templates') ? $this->templatesItem() : null,
-            $has('communications') ? $this->connectorItem('whatsapp', 'Collega WhatsApp', 'Il numero aziendale da cui far partire i messaggi ai clienti.', false) : null,
+            $has('connectors') ? $this->connectorItem('whatsapp', 'Collega WhatsApp', 'I link per i clienti (preventivo, area cliente, contenuti, pagamenti) partono su WhatsApp dal numero aziendale, con un clic.', false) : null,
             $has('cases') ? $this->linkItem('conciliaweb', 'ConciliaWeb', 'Invio e monitoraggio delle pratiche in conciliazione: per ora si seguono a mano.', '/pratiche?setup=conciliaweb') : null,
             $has('cases') ? $this->linkItem('classification', 'Classificazione del disservizio', 'Il tipo di disservizio si sceglie a mano per ogni pratica.', '/pratiche?setup=classification') : null,
         ]));
@@ -121,6 +124,50 @@ final class SetupService
             'status' => $connected ? 'Collegato' : 'Da collegare',
             'summary' => $connected ? $connector->summary() : null,
             'spec' => $connector->setupSpec(),
+        ];
+    }
+
+    /** Modalita' prova (TestModeService): accesa o spenta, e cosa e' reale. */
+    private function testModeItem(): ?array
+    {
+        $test = $this->container->get(\App\TestMode\TestModeService::class);
+        $state = $test->state();
+        if (!$state['available']) {
+            return null;
+        }
+
+        return [
+            'key' => 'test_mode',
+            'label' => 'Modalita\' prova',
+            'description' => 'Per provare tutto senza effetti veri: email e WhatsApp ai clienti, pagamenti, fatture allo SdI e social sono simulati.',
+            'required' => false,
+            'kind' => 'link',
+            'href' => '/configurazione/prova',
+            'done' => null,
+            'status' => $state['enabled'] ? 'Accesa' : 'Spenta',
+            'summary' => $state['enabled'] ? 'Accesa: niente parte davvero verso clienti, soldi e social' : 'Spenta: tutto e\' reale',
+        ];
+    }
+
+    /** A quale cliente va ogni pagina Facebook e profilo Instagram (vedi MetaConnector). */
+    private function socialItem(): ?array
+    {
+        if (!$this->connectors->get('meta')->isConnected()) {
+            return null;
+        }
+        $accounts = $this->container->get(\App\Repository\SocialAccountRepository::class)->findAll();
+        $free = count(array_filter($accounts, static fn ($a) => $a->customerId === null));
+
+        return [
+            'key' => 'social_accounts',
+            'label' => 'Pagine e profili social',
+            'description' => 'A quale cliente va ogni pagina Facebook e profilo Instagram collegato.',
+            'required' => false,
+            'kind' => 'link',
+            'href' => '/configurazione/social',
+            'done' => $free === 0,
+            'status' => $free === 0 ? 'Assegnati' : "{$free} da assegnare",
+            'summary' => count($accounts) . ' tra pagine e profili',
         ];
     }
 

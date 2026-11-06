@@ -87,14 +87,13 @@ final class CustomersController extends AbstractEntityController
         $renew = $this->request->get('nuovo') === '1';
         $url = $this->container->get(PortalService::class)->link((int) $customer->id, $this->request->baseUrl(), $renew);
 
-        $this->json(['ok' => true, 'share' => [
+        $this->json(['ok' => true, 'share' => $this->container->get(\App\Messaging\CustomerMessageService::class)->share($customer, [
             'title' => $renew ? 'Nuovo link dell\'area cliente' : 'Area cliente',
             'intro' => ($renew ? 'Il link di prima non funziona piu\'. ' : '') . "Con questo link {$customer->displayName()} vede servizi, rinnovi e pagamenti, paga online, sceglie come pagare e approva i contenuti. Niente password: mandalo solo a lui.",
             'url' => $url,
-            'email' => $customer->email,
             'subject' => 'La tua area',
             'text' => "Ciao,\nqui trovi la tua area: servizi attivi, rinnovi, pagamenti e i contenuti da approvare.\n{$url}\n\nE' personale, tienila per te. A presto!",
-        ]]);
+        ])]);
     }
 
     /**

@@ -35,6 +35,7 @@ final class PortalController extends AbstractController
             'errore' => ['tone' => 'error', 'text' => 'Il pagamento non e\' andato a buon fine. Riprova o scrivici.'],
             default => match ((string) $this->request->get('automatico', '')) {
                 'ok' => ['tone' => 'success', 'text' => 'Fatto: le prossime scadenze si addebitano da sole. Ti avvisiamo prima di ogni addebito.'],
+                'prova' => ['tone' => 'info', 'text' => 'Modalita\' prova: attivazione del pagamento automatico simulata, nessuna carta o conto e\' stato salvato.'],
                 'annullato' => ['tone' => 'info', 'text' => 'Addebito automatico non attivato.'],
                 default => null,
             },
@@ -101,6 +102,42 @@ final class PortalController extends AbstractController
         } catch (ConnectorException $e) {
             $this->back(['tone' => 'error', 'text' => 'Il pagamento online non e\' disponibile in questo momento: ' . $e->getMessage()]);
         }
+    }
+
+    /**
+     * Modalita' prova: la pagina a cui porta il link di pagamento al posto
+     * di Stripe/PayPal (vedi PaymentService::createLink). "Simula il
+     * pagamento" segna l'incasso come fatto, con la nota "prova".
+     */
+    public function testPayAction(): ?string
+    {
+        $customer = $this->customer();
+        if ($customer === null) {
+            return $this->missing();
+        }
+        $portal = $this->container->get(PortalService::class);
+        $payments = $this->container->get(PaymentService::class);
+        $installment = $portal->ownOpenInstallment($customer, (int) $this->param('id'));
+        if ($installment === null) {
+            $this->back(['tone' => 'info', 'text' => 'Questo pagamento risulta gia\' fatto.']);
+
+            return null;
+        }
+        if ($this->request->getMethod() === 'POST') {
+            $payments->markPaid((int) $installment->id, 'prova', 'prova-' . date('YmdHis'));
+            $this->container->get(\App\TestMode\TestModeService::class)->record('payments', 'Pagamento simulato da ' . $customer->displayName() . ': ' . $installment->description, null, null, 'installments', (int) $installment->id);
+            $this->back(['tone' => 'success', 'text' => 'Modalita\' prova: pagamento simulato riuscito. Nessun soldo si e\' mosso; la scadenza risulta incassata.']);
+
+            return null;
+        }
+
+        return $this->render('portal/test-payment', [
+            'title' => 'Pagamento simulato',
+            'token' => (string) $customer->portalToken,
+            'installment' => $installment,
+            'amount' => number_format($payments->grossAmount($installment), 2, ',', '.') . ' €',
+            'agency' => $this->brand()['name'],
+        ], false);
     }
 
     /** Pagina Stripe in cui il cliente salva carta o conto per gli addebiti automatici. */

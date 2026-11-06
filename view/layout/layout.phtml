@@ -113,6 +113,10 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
   singoli (render) - ogni .phtml di pagina deve avvolgere il proprio
   contenuto in <section class="card">.
 -->
+<?php if (!empty($testBanner) && isset($_SESSION['user']['id'])): ?>
+<!-- Modalita' prova (TestModeService): sempre in vista, per tutti. -->
+<a class="test-banner" href="<?= in_array('users.manage', $_SESSION['user']['permissions'] ?? [], true) ? $this->e($testBanner['href']) : '#' ?>" title="Modalita' prova"><?= $this->e($testBanner['text']) ?></a>
+<?php endif; ?>
 <div class="page-stack">
 <?= $content ?>
 </div>

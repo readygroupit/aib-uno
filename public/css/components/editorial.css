@@ -309,3 +309,65 @@
 
 /* --- Preventivi (quote-summary.js) --- */
 .qs-text { margin: 0 0 8px; font-size: 14px; line-height: 1.55; white-space: pre-line; }
+
+/* "Da pubblicare" nella pagina del contenuto (vedi socialPanel in post-summary.js). */
+.ed-social__status,
+.ed-social__error {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 0 0 12px;
+    font-size: 13.5px;
+}
+
+.ed-social__status svg,
+.ed-social__error svg { width: 14px; height: 14px; }
+
+.ed-social__status--done { color: var(--color-moss); }
+.ed-social__status--scheduled { color: var(--color-teal-dark); }
+.ed-social__error { color: var(--color-danger); }
+.ed-social__blocker { margin: 0 0 12px; }
+
+.ed-social__files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.ed-social__item { position: relative; }
+
+.ed-social__thumb {
+    display: block;
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: var(--radius-md, 11px);
+    border: var(--hairline);
+    background: var(--color-canvas);
+}
+
+.ed-social__remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(18, 51, 63, 0.75);
+    color: #fff;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.ed-social__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+}
+
+.ed-social__file { display: none; }

@@ -9,12 +9,17 @@ use App\Connector\ConnectorRegistry;
 use App\Connector\GmailConnector;
 use App\Connector\GoogleCalendarConnector;
 use App\Connector\GoogleDriveConnector;
+use App\Connector\MetaConnector;
 use App\Connector\PCloudConnector;
 use App\Connector\RedirectingConnectorInterface;
 use App\Controller\AuthController;
 use App\Prompt\Tool\ShowSetupTool;
+use App\Repository\CustomerRepository;
+use App\Repository\SimulatedActionRepository;
+use App\Repository\SocialAccountRepository;
 use App\Service\BrandingService;
 use App\Service\SetupService;
+use App\TestMode\TestModeService;
 
 /**
  * Configurazione: cosa manca per rendere operativo il sistema (vedi
@@ -116,6 +121,128 @@ final class SetupController extends AuthController
         }
 
         return $this->backToSetup($flash);
+    }
+
+    /** Ritorno da Facebook dopo il consenso (vedi MetaConnector). */
+    public function metaCallbackAction(): ?string
+    {
+        $registry = $this->container->get(ConnectorRegistry::class);
+        $connector = $registry->has('meta') ? $registry->get('meta') : null;
+        $code = (string) $this->request->get('code', '');
+        $flash = null;
+        if ($code === '') {
+            $flash = ['tone' => 'error', 'text' => 'Facebook e Instagram non collegati: accesso non autorizzato.'];
+        } elseif ($connector instanceof MetaConnector) {
+            try {
+                $summary = $connector->completeAuthorization($code, (string) $this->request->get('state', ''));
+                $flash = ['tone' => 'success', 'text' => "Facebook e Instagram collegati: {$summary}. Ora controlla a quale cliente va ognuno in \"Pagine e profili social\"."];
+            } catch (ConnectorException $e) {
+                $flash = ['tone' => 'error', 'text' => $e->getMessage()];
+            }
+        }
+
+        return $this->backToSetup($flash);
+    }
+
+    /**
+     * Pagine e profili social: a quale cliente va ognuno. GET la pagina;
+     * POST 'account' + 'customer' (vuoto = nessuno) assegna, 'refresh' = 1
+     * rilegge l'elenco da Meta.
+     */
+    public function socialAction(): ?string
+    {
+        $accounts = $this->container->get(SocialAccountRepository::class);
+        if ($this->request->getMethod() === 'POST') {
+            $body = json_decode(file_get_contents('php://input') ?: '{}', true) ?: [];
+            try {
+                if (!empty($body['refresh'])) {
+                    $message = 'Elenco aggiornato: ' . $this->container->get(ConnectorRegistry::class)->get('meta')->refreshAccounts() . '.';
+                } else {
+                    $account = $accounts->find((int) ($body['account'] ?? 0));
+                    if ($account === null) {
+                        throw new ConnectorException('Pagina o profilo non trovato.');
+                    }
+                    $customer = (int) ($body['customer'] ?? 0);
+                    $accounts->update((int) $account->id, ['customer_id' => $customer > 0 ? $customer : null]);
+                    $message = $customer > 0 ? 'Assegnato.' : 'Tolto dal cliente.';
+                }
+            } catch (ConnectorException $e) {
+                $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
+
+                return null;
+            }
+            $this->json(['ok' => true, 'message' => $message, 'component' => $this->socialComponent()]);
+
+            return null;
+        }
+
+        return $this->renderPage([$this->socialComponent()], ['title' => 'Pagine e profili social']);
+    }
+
+    private function socialComponent(): array
+    {
+        $customers = array_map(static fn ($c) => ['id' => (int) $c->id, 'name' => $c->displayName()], $this->container->get(CustomerRepository::class)->findAll());
+        usort($customers, static fn ($a, $b) => strcasecmp($a['name'], $b['name']));
+        $rows = array_map(static fn ($a) => [
+            'id' => (int) $a->id,
+            'network' => (string) $a->network,
+            'label' => $a->label(),
+            'name' => (string) $a->name,
+            'customerId' => $a->customerId,
+        ], $this->container->get(SocialAccountRepository::class)->findAll([], 'network, name'));
+
+        return [
+            'type' => 'social-accounts',
+            'title' => 'Pagine e profili social',
+            'action' => '/configurazione/social',
+            'intro' => 'Le pagine Facebook e i profili Instagram che l\'account collegato gestisce. Assegna ognuno al suo cliente: i contenuti di quel cliente escono li\'. Quelli con lo stesso nome di un cliente sono gia\' assegnati, controllali.',
+            'accounts' => $rows,
+            'customers' => $customers,
+        ];
+    }
+
+    /** Modalita' prova (TestModeService): GET la pagina, POST salva. */
+    public function testModeAction(): ?string
+    {
+        $test = $this->container->get(TestModeService::class);
+        if ($this->request->getMethod() === 'POST') {
+            $body = json_decode(file_get_contents('php://input') ?: '{}', true) ?: [];
+            $error = $test->save($body);
+            if ($error !== null) {
+                $this->json(['ok' => false, 'message' => $error], 422);
+
+                return null;
+            }
+            $this->json(['ok' => true, 'message' => $test->isEnabled() ? 'Salvato: modalita\' prova accesa.' : 'Salvato: modalita\' prova spenta, ora tutto e\' reale.', 'component' => $this->testModeComponent()]);
+
+            return null;
+        }
+
+        return $this->renderPage([$this->testModeComponent()], ['title' => 'Modalita\' prova']);
+    }
+
+    private function testModeComponent(): array
+    {
+        $test = $this->container->get(TestModeService::class);
+        $state = $test->state();
+        $log = array_map(static fn ($a) => [
+            'when' => date('d/m H:i', strtotime((string) $a->createdAt)),
+            'effect' => TestModeService::EFFECTS[$a->effect] ?? (string) $a->effect,
+            'summary' => (string) $a->summary,
+            'detail' => $a->detail !== null ? mb_substr($a->detail, 0, 600) : null,
+            'recipient' => $a->recipient,
+        ], $this->container->get(SimulatedActionRepository::class)->findRecent(50));
+
+        return [
+            'type' => 'test-mode',
+            'title' => 'Modalita\' prova',
+            'action' => '/configurazione/prova',
+            'enabled' => $state['enabled'],
+            'email' => $state['email'],
+            'phone' => $state['phone'],
+            'effects' => array_map(static fn (string $key, string $label) => ['key' => $key, 'label' => $label, 'real' => in_array($key, $state['real'], true)], array_keys(TestModeService::EFFECTS), TestModeService::EFFECTS),
+            'log' => $log,
+        ];
     }
 
     /**

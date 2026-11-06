@@ -13,6 +13,8 @@ use App\Core\Container;
 use App\Model\Customer;
 use App\Model\Installment;
 use App\Package\PackageCatalogService;
+use App\Portal\PortalService;
+use App\TestMode\TestModeService;
 use App\Repository\CompanyProfileRepository;
 use App\Repository\CustomerRepository;
 use App\Repository\CustomerServiceRepository;
@@ -57,19 +59,33 @@ final class PaymentService
         }
     }
 
+    /**
+     * Modalita' prova (TestModeService): nessun fornitore viene chiamato, il
+     * link porta a una pagina "pagamento simulato" nell'area del cliente e
+     * gli addebiti automatici restano nel registro delle prove.
+     */
+    private function simulated(): bool
+    {
+        return $this->container->get(TestModeService::class)->simulates('payments');
+    }
+
     public function hasOnlinePayments(): bool
     {
-        return $this->stripe !== null || $this->paypal !== null;
+        return $this->stripe !== null || $this->paypal !== null || $this->simulated();
     }
 
     public function canAutoPay(): bool
     {
-        return $this->stripe !== null;
+        return $this->stripe !== null || $this->simulated();
     }
 
     /** @return list<array{code:string,label:string}> */
     public function available(): array
     {
+        if ($this->simulated()) {
+            return [['code' => 'prova', 'label' => 'Pagamento simulato (prova)']];
+        }
+
         return array_values(array_filter([
             $this->stripe !== null ? ['code' => 'stripe', 'label' => 'Carta o addebito SEPA'] : null,
             $this->paypal !== null ? ['code' => 'paypal', 'label' => 'PayPal'] : null,
@@ -127,6 +143,13 @@ final class PaymentService
             throw new ConnectorException('Cliente non trovato.');
         }
 
+        if ($this->simulated()) {
+            $url = $this->container->get(PortalService::class)->link((int) $customer->id, $baseUrl) . '/pagamento-prova/' . $installment->id;
+            $this->container->get(TestModeService::class)->record('payments', 'Link di pagamento per ' . $customer->displayName() . ': ' . number_format($this->grossAmount($installment), 2, ',', '.') . ' EUR, ' . $installment->description, $url, $customer->email, 'installments', (int) $installment->id);
+
+            return ['url' => $url, 'provider' => 'prova'];
+        }
+
         $provider ??= $customer->preferredPaymentMethod === 'PayPal' ? 'paypal' : 'stripe';
         $gateway = $provider === 'paypal' ? ($this->paypal ?? $this->stripe) : ($this->stripe ?? $this->paypal);
         if ($gateway === null) {
@@ -160,6 +183,11 @@ final class PaymentService
     /** Pagina Stripe in cui il cliente salva carta o mandato SEPA per gli addebiti automatici. */
     public function autoPaySetupLink(int $customerId, string $baseUrl, string $returnPath): string
     {
+        if ($this->simulated()) {
+            $this->container->get(TestModeService::class)->record('payments', 'Attivazione del pagamento automatico (simulata)', null, null, 'customers', $customerId);
+
+            return rtrim($baseUrl, '/') . $returnPath . (str_contains($returnPath, '?') ? '&' : '?') . 'automatico=prova';
+        }
         if ($this->stripe === null) {
             throw new ConnectorException('Il pagamento automatico richiede Stripe collegato.');
         }
@@ -259,6 +287,18 @@ final class PaymentService
     public function chargeDue(string $today): array
     {
         $outcome = ['charged' => 0, 'pending' => 0, 'failed' => 0];
+        if ($this->simulated()) {
+            // Chi ha il pagamento automatico: si registra cosa sarebbe stato addebitato, niente di piu'.
+            $test = $this->container->get(TestModeService::class);
+            foreach ($this->installments->findOpenUntil($today) as $installment) {
+                $customer = $this->customers->find((int) $installment->customerId);
+                if ($installment->paymentReference === null && $customer instanceof Customer && (int) $customer->autoPay === 1) {
+                    $test->record('payments', 'Addebito automatico (simulato) a ' . $customer->displayName() . ': ' . number_format($this->grossAmount($installment), 2, ',', '.') . ' EUR, ' . $installment->description, null, $customer->email, 'installments', (int) $installment->id);
+                }
+            }
+
+            return $outcome;
+        }
         if ($this->stripe === null) {
             return $outcome;
         }
@@ -298,6 +338,9 @@ final class PaymentService
             return;
         }
         $method = $provider === 'paypal' ? 'PayPal' : ($installment->paymentMethod === 'addebito SEPA' ? 'addebito SEPA' : 'carta');
+        if ($provider === 'prova') {
+            $this->installments->update($installmentId, ['notes' => trim(($installment->notes ?? '') . ' Incasso simulato in modalita\' prova il ' . date('d/m/Y') . '.')]);
+        }
         $this->plans->markPaid($installmentId, date('Y-m-d'), $method);
         $this->installments->update($installmentId, ['payment_provider' => $provider, 'payment_reference' => $reference]);
     }

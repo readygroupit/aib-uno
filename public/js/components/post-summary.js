@@ -1,7 +1,7 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
-import { badge } from '../accounts-ui.js';
+import { badge, toast, reloadCurrentScreen, runAction } from '../accounts-ui.js';
 import { actionsRow } from '../work-ui.js';
 
 // Un contenuto come lo vedra' il pubblico (anteprima tipo telefono) e
@@ -20,6 +20,61 @@ function phone(data) {
         el('div', { className: 'ed-phone__caption' }, data.caption
             ? [el('strong', {}, [data.handle.replace('@', '') + ' ']), data.caption]
             : [el('span', { className: 'acc-muted' }, ['Testo ancora da scrivere.'])]),
+    ]);
+}
+
+// Dove esce (pagina o profilo del cliente), i file da pubblicare (si
+// caricano e si tolgono qui) e cosa manca per pubblicare: vedi SocialPublisher.
+function socialPanel(social) {
+    if (!social || !social.supported) return null;
+    const input = el('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,video/mp4,video/quicktime', multiple: true, className: 'ed-social__file' });
+    const upload = social.uploadAction
+        ? el('button', { type: 'button', className: 'btn btn--secondary btn--small' }, [icon('image'), 'Carica foto o video'])
+        : null;
+    if (upload) {
+        upload.addEventListener('click', () => input.click());
+        input.addEventListener('change', async () => {
+            upload.disabled = true;
+            for (const file of [...input.files]) {
+                const body = new FormData();
+                body.append('file', file);
+                try {
+                    const response = await fetch(social.uploadAction, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': window.UNO_CSRF || '' }, body });
+                    const result = await response.json();
+                    if (!result.ok) toast(`${file.name}: ${result.message}`, 'error');
+                } catch (e) {
+                    toast(`${file.name}: non caricato (troppo grande o connessione interrotta).`, 'error');
+                }
+            }
+            upload.disabled = false;
+            await reloadCurrentScreen();
+        });
+    }
+
+    const status = social.publishedAt
+        ? el('p', { className: 'ed-social__status ed-social__status--done' }, [icon('circle-check'), `Pubblicato dal gestionale il ${social.publishedAt.slice(8, 10)}/${social.publishedAt.slice(5, 7)} alle ${social.publishedAt.slice(11, 16)}`])
+        : social.scheduled
+            ? el('p', { className: 'ed-social__status ed-social__status--scheduled' }, [icon('calendar'), 'Programmato: esce da solo all\'ora di uscita.'])
+            : null;
+
+    return el('section', { className: 'card acc-section ed-social' }, [
+        el('div', { className: 'acc-section__head' }, [
+            el('h2', { className: 'card__title' }, ['Da pubblicare']),
+            social.account ? el('span', { className: 'acc-group__total' }, [social.account]) : null,
+        ]),
+        social.test ? el('p', { className: 'acc-share__test' }, [icon('circle-exclamation'), 'Modalita\' prova: la pubblicazione e\' simulata, sul social non esce niente.']) : null,
+        status,
+        social.error ? el('p', { className: 'ed-social__error' }, [icon('circle-exclamation'), `Non pubblicato: ${social.error}`]) : null,
+        social.blocker ? el('p', { className: 'acc-muted ed-social__blocker' }, [social.blocker]) : null,
+        social.files.length
+            ? el('div', { className: 'ed-social__files' }, social.files.map((f) => el('div', { className: 'ed-social__item' }, [
+                f.video
+                    ? el('video', { src: f.url, className: 'ed-social__thumb', muted: true, preload: 'metadata' })
+                    : el('img', { src: f.url, alt: f.name, className: 'ed-social__thumb', loading: 'lazy' }),
+                social.uploadAction ? el('button', { type: 'button', className: 'ed-social__remove', title: 'Togli', onClick: (e) => runAction(f.remove, { button: e.currentTarget }) }, ['×']) : null,
+            ])))
+            : null,
+        upload ? el('div', { className: 'ed-social__actions' }, [upload, input, el('span', { className: 'acc-muted' }, ['Foto JPG/PNG (max 8 MB) o video MP4 (max 300 MB), nell\'ordine di uscita.'])]) : null,
     ]);
 }
 
@@ -76,6 +131,7 @@ function renderPostSummary(data) {
                 ])
                 : null,
         ]),
+        socialPanel(data.social),
         el('section', { className: 'card acc-section ed-preview' }, [
             el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, ['Anteprima'])]),
             phone(data),

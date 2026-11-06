@@ -1000,3 +1000,19 @@ a.acc-fact:hover,
     color: var(--color-petrol);
     vertical-align: 2px;
 }
+
+/* Finestra "link per il cliente" in modalita' prova (vedi shareModal). */
+.acc-share__test {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 0 0 12px;
+    padding: 9px 12px;
+    border-radius: var(--radius-md, 11px);
+    background: rgba(185, 147, 51, 0.12);
+    color: #6b5214;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.acc-share__test svg { width: 14px; height: 14px; flex: 0 0 auto; margin-top: 2px; }

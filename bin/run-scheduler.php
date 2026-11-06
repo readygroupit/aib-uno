@@ -52,6 +52,11 @@ if (in_array('client_requests', $installed, true) && in_array('connectors', $ins
     $scheduledJobs->ensureRecurring('import_email_requests', 5);
 }
 
+if (in_array('editorial', $installed, true) && in_array('connectors', $installed, true)) {
+    $registry->register('publish_social_posts', \App\Job\Handler\PublishSocialPostsHandler::class);
+    $scheduledJobs->ensureRecurring('publish_social_posts', 5);
+}
+
 // registrare qui gli altri handler reali del progetto, es.:
 // $registry->register('send_weekly_report', \App\Job\Handler\SendWeeklyReportHandler::class);
 

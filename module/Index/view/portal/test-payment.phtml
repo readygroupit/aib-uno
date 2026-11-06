@@ -1,0 +1,32 @@
+<?php
+/**
+ * Modalita' prova: il "pagamento" al posto di Stripe/PayPal (vedi
+ * PortalController::testPayAction). Nessun dato di pagamento, nessun soldo.
+ *
+ * @var \App\Model\Installment $installment
+ * @var string $amount
+ * @var string $token
+ * @var string $agency
+ */
+include __DIR__ . '/_head.phtml';
+?>
+<body class="portal">
+<main class="portal__main">
+    <section class="portal-card portal-card--hero">
+        <span class="portal__agency"><?= $this->e($agency) ?></span>
+        <h1 class="portal__title">Pagamento simulato</h1>
+        <p class="portal__lead">Il gestionale e' in modalita' prova: qui ci sarebbe la pagina di pagamento con carta, SEPA o PayPal.</p>
+    </section>
+    <section class="portal-card">
+        <p class="portal__lead portal__lead--small"><?= $this->e((string) $installment->description) ?></p>
+        <p class="portal__test-amount"><?= $this->e($amount) ?></p>
+        <div class="portal-flash portal-flash--info" role="status">Nessun soldo si muove e non serve nessun dato di pagamento: "Simula il pagamento" segna la scadenza come incassata, con la nota "prova".</div>
+        <form method="post" action="/area/<?= $this->e($token) ?>/pagamento-prova/<?= (int) $installment->id ?>" class="portal__test-actions">
+            <?= $this->csrfField() ?>
+            <button class="btn btn--primary" type="submit">Simula il pagamento</button>
+            <a class="btn btn--ghost" href="/area/<?= $this->e($token) ?>?pagamento=annullato">Annulla</a>
+        </form>
+    </section>
+</main>
+</body>
+</html>

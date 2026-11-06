@@ -191,6 +191,19 @@ final class InvoiceService
     /** Invio allo SdI con il fornitore collegato. */
     public function send(int $invoiceId): string
     {
+        // Modalita' prova: niente SdI. La fattura resta "da inviare", cosi'
+        // passando al reale la si manda davvero.
+        $test = $this->container->get(\App\TestMode\TestModeService::class);
+        if ($test->simulates('invoices')) {
+            [$invoice, , $customer] = $this->parts($invoiceId);
+            if ($invoice->stage === 'bozza' || $invoice->stage === 'annullata') {
+                throw new InvoicingException('Si invia solo una fattura emessa.');
+            }
+            $provider = $this->provider();
+            $test->record('invoices', 'Fattura ' . ($invoice->invoiceNumber ?? '') . ' a ' . ($customer?->displayName() ?? 'cliente') . ': invio allo SdI simulato', $provider !== null ? 'Sarebbe partita con ' . $provider->label() . '.' : 'Nessun fornitore collegato: in produzione serve Fatture in Cloud o Aruba.', null, 'invoices', $invoiceId);
+
+            return 'Modalita\' prova: invio allo SdI simulato, non e\' partito niente. La fattura resta da inviare.';
+        }
         $provider = $this->provider();
         if ($provider === null) {
             throw new InvoicingException('Nessun fornitore collegato per lo SdI: collega Fatture in Cloud o Aruba dalla Configurazione, oppure scarica l\'XML e caricalo a mano.');

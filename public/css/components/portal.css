@@ -206,3 +206,17 @@ body.portal {
     .portal-row { flex-wrap: wrap; }
     .portal-autopay { flex-direction: column; align-items: flex-start; }
 }
+
+/* Modalita' prova: pagina del pagamento simulato. */
+.portal__test-amount {
+    margin: 4px 0 14px;
+    font-family: var(--font-heading);
+    font-size: 30px;
+    font-weight: 600;
+}
+
+.portal__test-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}

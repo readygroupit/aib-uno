@@ -136,14 +136,13 @@ final class InstallmentsController extends AbstractEntityController
 
         $this->json([
             'ok' => true,
-            'share' => [
+            'share' => $this->container->get(\App\Messaging\CustomerMessageService::class)->share($customer, [
                 'title' => 'Link di pagamento',
                 'intro' => "{$amount} per {$installment->description}. Il pagamento risulta incassato da solo quando il cliente paga.",
                 'url' => $link['url'],
-                'email' => $customer?->email,
                 'subject' => 'Pagamento: ' . $installment->description,
                 'text' => $text,
-            ],
+            ]),
         ]);
     }
 }

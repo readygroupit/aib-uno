@@ -30,6 +30,19 @@ final class EditorialPost extends AbstractModel
     public ?string $approvedVia = null;
     public ?int $revisionCount = null;
     public ?int $writerTaskId = null;
+    public ?string $publishFiles = null;
+    public ?int $autoPublish = null;
+    public ?string $publishedAt = null;
+    public ?string $externalPostId = null;
+    public ?string $publishError = null;
+
+    /** @return list<array{path:string, name:string, video:bool}> i file da pubblicare, nell'ordine */
+    public function publishFileList(): array
+    {
+        $files = json_decode((string) $this->publishFiles, true);
+
+        return is_array($files) ? array_values(array_filter($files, 'is_array')) : [];
+    }
 
     /** Ancora da fare (non pubblicato, non scartato). */
     public function isOpen(): bool

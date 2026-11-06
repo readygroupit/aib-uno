@@ -186,6 +186,36 @@ return [
                     'label' => 'Link al contenuto pubblicato',
                     'defaultRequired' => true,
                 ],
+                // Pubblicazione sui social (SocialPublisher): i file caricati
+                // (JSON), "programmato" = si pubblica da solo all'ora di
+                // uscita, quando e come e' uscito, l'ultimo errore.
+                'publish_files' => [
+                    'sql' => 'TEXT',
+                    'label' => 'File da pubblicare',
+                    'defaultRequired' => true,
+                ],
+                'auto_publish' => [
+                    'sql' => 'TINYINT(1)',
+                    'label' => 'Si pubblica da solo',
+                    'defaultRequired' => true,
+                    'format' => 'boolean',
+                ],
+                'published_at' => [
+                    'sql' => 'DATETIME',
+                    'label' => 'Pubblicato il',
+                    'defaultRequired' => true,
+                    'format' => 'datetime',
+                ],
+                'external_post_id' => [
+                    'sql' => 'VARCHAR(100)',
+                    'label' => 'ID sul social',
+                    'defaultRequired' => true,
+                ],
+                'publish_error' => [
+                    'sql' => 'VARCHAR(255)',
+                    'label' => 'Errore di pubblicazione',
+                    'defaultRequired' => true,
+                ],
                 'task_id' => [
                     'sql' => 'INT UNSIGNED',
                     'label' => "Attivita' di realizzazione",

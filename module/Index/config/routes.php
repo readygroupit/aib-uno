@@ -50,6 +50,7 @@ use Index\Controller\RefundsController;
 use Index\Controller\ReportController;
 use Index\Controller\RestrictedAreaController;
 use Index\Controller\ServicesController;
+use Index\Controller\MessagesController;
 use Index\Controller\SetupController;
 use Index\Controller\TasksController;
 use Index\Controller\UsersController;
@@ -245,6 +246,7 @@ return [
     'portal-accept-quote' => ['path' => '/area/:token/accetta-preventivo', 'controller' => PortalController::class, 'action' => 'acceptQuote'],
     'portal-changes' => ['path' => '/area/:token/modifiche', 'controller' => PortalController::class, 'action' => 'changes'],
     'portal-pay' => ['path' => '/area/:token/paga', 'controller' => PortalController::class, 'action' => 'pay'],
+    'portal-test-pay' => ['path' => '/area/:token/pagamento-prova/:id', 'controller' => PortalController::class, 'action' => 'testPay'],
     'portal-method' => ['path' => '/area/:token/metodo', 'controller' => PortalController::class, 'action' => 'method'],
     'portal-autopay' => ['path' => '/area/:token/automatico', 'controller' => PortalController::class, 'action' => 'autoPay'],
     'portal-autopay-off' => ['path' => '/area/:token/automatico/disattiva', 'controller' => PortalController::class, 'action' => 'autoPayOff'],
@@ -284,6 +286,9 @@ return [
     'editorial-caption' => ['path' => '/piano-editoriale/:id/testo', 'controller' => EditorialController::class, 'action' => 'caption'],
     'editorial-client-link' => ['path' => '/piano-editoriale/:id/link-cliente', 'controller' => EditorialController::class, 'action' => 'clientLink'],
     'editorial-story' => ['path' => '/piano-editoriale/:id/storia', 'controller' => EditorialController::class, 'action' => 'story'],
+    'editorial-file' => ['path' => '/piano-editoriale/:id/file', 'controller' => EditorialController::class, 'action' => 'file'],
+    'editorial-publish' => ['path' => '/piano-editoriale/:id/pubblica', 'controller' => EditorialController::class, 'action' => 'publish'],
+    'editorial-schedule' => ['path' => '/piano-editoriale/:id/programma', 'controller' => EditorialController::class, 'action' => 'schedule'],
     ...entityRoutes('tasks', '/attivita', TasksController::class),
     'tasks-toggle' => ['path' => '/attivita/:id/fatta', 'controller' => TasksController::class, 'action' => 'toggle'],
     // Le fasi dei modelli prima di '/tipi-commessa/:id' (first-match-wins).
@@ -345,6 +350,10 @@ return [
         'controller' => SetupController::class,
         'action' => 'googleCallback',
     ],
+    'messages-whatsapp' => ['path' => '/messaggi/whatsapp', 'controller' => MessagesController::class, 'action' => 'whatsapp'],
+    'setup-meta-callback' => ['path' => '/configurazione/meta/callback', 'controller' => SetupController::class, 'action' => 'metaCallback'],
+    'setup-social' => ['path' => '/configurazione/social', 'controller' => SetupController::class, 'action' => 'social'],
+    'setup-test-mode' => ['path' => '/configurazione/prova', 'controller' => SetupController::class, 'action' => 'testMode'],
     'setup-logo' => [
         'path' => '/configurazione/logo',
         'controller' => SetupController::class,

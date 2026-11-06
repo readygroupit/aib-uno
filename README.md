@@ -995,6 +995,35 @@ manuale non verificabile, ne' fatta ne' mancante.
   riquadro in cima all'area cliente. Senza logo il login usa quello di aiBrains.
   Credito "© anno AI Brains" (link ad aibrains.it, nuova scheda) sotto il
   login, in fondo alla home e in fondo alla colonna della chat.
+- **Modalita' prova** (`App\TestMode\TestModeService`, `/configurazione/prova`):
+  accesa di partenza nei progetti con la tabella settings. Simula cio' che
+  va verso clienti, soldi e social; Google Calendar resta reale (eccezioni
+  in 'test.real'). Il controllo e' nei punti di uscita: `MailService`
+  (email a chi non e' un utente -> email per le prove o solo registro),
+  `CustomerMessageService` (finestra "link per il cliente": email e
+  WhatsApp verso email/numero per le prove), `PaymentService` (link ->
+  `/area/:token/pagamento-prova/:id`, addebiti automatici solo registrati),
+  `InvoiceService::send()` (SdI simulato, la fattura resta da inviare),
+  `SocialPublisher` (pubblicazione simulata), `CalendarSyncService`. Ogni
+  simulazione finisce in `simulated_actions` (registro nella pagina).
+  Fascia sempre in vista in cima (`layout.phtml`, `$testBanner`).
+- **WhatsApp** (`WhatsAppConnector::send()`, `CustomerMessageService`,
+  `POST /messaggi/whatsapp`): "Invia su WhatsApp" nella finestra "link per
+  il cliente" (preventivo, area cliente, piano editoriale, pagamento), al
+  cellulare del cliente. Con il nome di un modello approvato da Meta si
+  manda sempre come modello (testo come variabile {{1}}), senza solo se il
+  cliente ha scritto nelle ultime 24 ore. Senza collegamento: wa.me con il
+  testo pronto.
+- **Facebook e Instagram** (`MetaConnector`, `App\Social\SocialPublisher`):
+  Facebook Login con l'app Meta dell'agenzia (callback
+  `/configurazione/meta/callback`), pagine e profili in `social_accounts`
+  assegnati ai clienti in `/configurazione/social` (in automatico per
+  nome). Nel contenuto: file da pubblicare (`public/uploads/social/<id>`,
+  PNG/WebP convertiti in JPG, video MP4/MOV), "Pubblica ora", "Programma la
+  pubblicazione" (job `publish_social_posts` ogni 5 minuti all'ora di
+  uscita). Instagram: post, carosello, reel, storie; Facebook: foto, piu'
+  foto, video, testo. TikTok e LinkedIn no (serve l'approvazione delle
+  piattaforme).
 - **Passaggi-sezione**: portano a una pagina con `?setup=<chiave>`, che mostra
   in cima la spiegazione (`SetupService::HINTS`, componente `setup-hint`,
   iniettato da `AbstractController::renderPage()`).

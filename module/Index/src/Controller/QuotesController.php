@@ -129,14 +129,13 @@ final class QuotesController extends AbstractEntityController
             return;
         }
         $url = $this->container->get(PortalService::class)->link((int) $customer->id, $this->request->baseUrl());
-        $this->json(['ok' => true, 'share' => [
+        $this->json(['ok' => true, 'share' => $this->container->get(\App\Messaging\CustomerMessageService::class)->share($customer, [
             'title' => 'Preventivo per il cliente',
             'intro' => "Nella sua area {$customer->displayName()} vede il preventivo {$quote->quoteNumber} e lo accetta con un clic. Prima segnalo come inviato.",
             'url' => $url,
-            'email' => $customer->email,
             'subject' => 'La nostra proposta: ' . $quote->title,
             'text' => "Buongiorno,\nqui trova la nostra proposta \u{ab}{$quote->title}\u{bb}: puo' leggerla e accettarla direttamente da questo link.\n{$url}\n\nRestiamo a disposizione per qualsiasi domanda.",
-        ]]);
+        ])]);
     }
 
     /** Pagina da stampare o salvare in PDF dal browser. */

@@ -31,7 +31,7 @@ export function toast(message, tone = 'success') {
     }, 3600);
 }
 
-async function reloadCurrentScreen() {
+export async function reloadCurrentScreen() {
     const response = await fetch(window.location.pathname + window.location.search, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
     });
@@ -102,14 +102,50 @@ export function shareModal(share) {
         }, [icon('envelope'), `Scrivi a ${share.email}`])
         : null;
 
+    // WhatsApp: dal numero aziendale (WhatsApp collegato, o la modalita'
+    // prova), altrimenti si apre WhatsApp sul dispositivo con il testo pronto.
+    const wa = share.whatsapp || {};
+    const message = share.text || share.url;
+    let whatsapp = null;
+    if (wa.api && wa.action && share.customerId) {
+        whatsapp = el('button', { type: 'button', className: 'btn btn--primary btn--small' }, [icon('paper-plane'), 'Invia su WhatsApp']);
+        whatsapp.addEventListener('click', async () => {
+            whatsapp.disabled = true;
+            try {
+                const response = await fetch(wa.action, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': window.UNO_CSRF || '' },
+                    body: JSON.stringify({ customerId: share.customerId, text: message }),
+                });
+                const result = await response.json();
+                toast(result.message || (result.ok ? 'Inviato.' : 'Non inviato.'), result.ok ? 'success' : 'error');
+                if (result.ok) closeModal();
+            } catch (e) {
+                toast('Non inviato: riprova.', 'error');
+            } finally {
+                whatsapp.disabled = false;
+            }
+        });
+    } else if (wa.phone || !wa.api) {
+        whatsapp = el('a', {
+            className: 'btn btn--secondary btn--small',
+            href: `https://wa.me/${wa.phone || ''}?text=${encodeURIComponent(message)}`,
+            target: '_blank',
+            rel: 'noopener',
+            onClick: () => closeModal(),
+        }, [icon('paper-plane'), wa.phone ? 'Apri WhatsApp' : 'Apri WhatsApp (scegli il contatto)']);
+    }
+
     openModal({
         title: share.title || 'Link',
         tone: 'info',
         body: [
             share.intro ? el('p', { className: 'acc-share__intro' }, [share.intro]) : null,
+            share.testNote ? el('p', { className: 'acc-share__test' }, [icon('circle-exclamation'), share.testNote]) : null,
             el('div', { className: 'acc-share__url' }, [share.url]),
             el('div', { className: 'acc-share__actions' }, [
                 mail,
+                whatsapp,
                 copy(share.url, 'Copia il link'),
                 share.text ? copy(share.text, 'Copia il messaggio') : null,
             ].filter(Boolean)),

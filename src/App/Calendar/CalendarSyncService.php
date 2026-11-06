@@ -33,9 +33,11 @@ final class CalendarSyncService
     private UserRepository $users;
     private ?GoogleCalendarConnector $google = null;
     private ?CustomerRepository $customers = null;
+    private Container $container;
 
     public function __construct(Container $container)
     {
+        $this->container = $container;
         $this->appointments = $container->get(AppointmentRepository::class);
         $this->users = $container->get(UserRepository::class);
         $installed = PackageCatalogService::installedNames();
@@ -53,6 +55,12 @@ final class CalendarSyncService
 
     public function isEnabled(): bool
     {
+        // Modalita' prova con Google Calendar tra le cose simulate: niente
+        // eventi ne' inviti (di partenza il Calendario resta reale).
+        if ($this->container->get(\App\TestMode\TestModeService::class)->simulates('calendar')) {
+            return false;
+        }
+
         return $this->google !== null && $this->google->isConnected();
     }
 

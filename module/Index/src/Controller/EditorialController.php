@@ -14,6 +14,7 @@ use App\Prompt\Tool\ShowEditorialTool;
 use App\Repository\CustomerRepository;
 use App\Repository\EditorialPostRepository;
 use App\Service\AuthService;
+use App\Social\SocialPublisher;
 
 /**
  * Piano editoriale. Ogni salvataggio riallinea l'attivita' di
@@ -76,7 +77,7 @@ final class EditorialController extends AbstractEntityController
     protected function requiredPermissionForAction(string $action): ?string
     {
         return match ($action) {
-            'stage', 'caption', 'clientLink' => 'editorial.edit',
+            'stage', 'caption', 'clientLink', 'file', 'publish', 'schedule' => 'editorial.edit',
             'fill', 'story' => 'editorial.create',
             'approveCustomer' => 'editorial.approve',
             default => parent::requiredPermissionForAction($action),
@@ -126,6 +127,56 @@ final class EditorialController extends AbstractEntityController
                 $stage === 'approvato' ? (trim($text) ?: null) : null
             );
         } catch (\InvalidArgumentException $e) {
+            $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
+
+            return;
+        }
+        $this->json(['ok' => true, 'message' => $message]);
+    }
+
+    /**
+     * File da pubblicare sui social (SocialPublisher): POST con 'file' lo
+     * aggiunge, con 'rimuovi' (indice) lo toglie.
+     */
+    public function fileAction(): void
+    {
+        $publisher = $this->container->get(SocialPublisher::class);
+        $id = (int) $this->param('id');
+        try {
+            if ($this->request->get('rimuovi') !== null) {
+                $publisher->removeFile($id, (int) $this->request->get('rimuovi'));
+                $this->json(['ok' => true, 'message' => 'File tolto.']);
+
+                return;
+            }
+            $file = $this->request->file('file');
+            $error = $file === null ? 'Scegli una foto o un video.' : $publisher->addFile($id, $file, $this->request->baseUrl());
+        } catch (\InvalidArgumentException $e) {
+            $error = $e->getMessage();
+        }
+        $error === null
+            ? $this->json(['ok' => true, 'message' => 'File caricato.'])
+            : $this->json(['ok' => false, 'message' => $error], 422);
+    }
+
+    /** "Pubblica ora" sul social del cliente. */
+    public function publishAction(): void
+    {
+        $this->socialAction(fn (SocialPublisher $p, int $id) => $p->publish($id, $this->container->get(AuthService::class)->currentUserId()));
+    }
+
+    /** "Programma la pubblicazione" (o, con 'togli' = 1, la toglie). */
+    public function scheduleAction(): void
+    {
+        $remove = $this->request->get('togli') === '1';
+        $this->socialAction(fn (SocialPublisher $p, int $id) => $remove ? $p->unschedule($id) : $p->schedule($id, (int) $this->container->get(AuthService::class)->currentUserId()));
+    }
+
+    private function socialAction(callable $run): void
+    {
+        try {
+            $message = $run($this->container->get(SocialPublisher::class), (int) $this->param('id'));
+        } catch (\InvalidArgumentException | \App\Connector\ConnectorException $e) {
             $this->json(['ok' => false, 'message' => $e->getMessage()], 422);
 
             return;
@@ -197,13 +248,12 @@ final class EditorialController extends AbstractEntityController
         $waiting = count($this->container->get(EditorialPostRepository::class)->findForCustomerInStage((int) $customer->id, 'da approvare'));
         $what = $waiting > 1 ? "{$waiting} contenuti da approvare" : "un contenuto da approvare (\u{ab}{$post->title}\u{bb})";
 
-        $this->json(['ok' => true, 'share' => [
+        $this->json(['ok' => true, 'share' => $this->container->get(\App\Messaging\CustomerMessageService::class)->share($customer, [
             'title' => 'Link per il cliente',
             'intro' => "Nell'area di {$customer->displayName()} c'e' {$what}: il cliente approva o chiede modifiche, senza password.",
             'url' => $url,
-            'email' => $customer->email,
             'subject' => 'Contenuti da approvare',
             'text' => "Ciao,\nnella tua area c'e' {$what}. Puoi approvare o chiederci modifiche da qui:\n{$url}\n\nGrazie!",
-        ]]);
+        ])]);
     }
 }

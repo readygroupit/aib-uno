@@ -9,6 +9,7 @@ use App\Editorial\EditorialOverviewService;
 use App\Model\AbstractModel;
 use App\Model\EditorialPost;
 use App\Repository\EditorialPostRepository;
+use App\Social\SocialPublisher;
 use App\View\Component\PostSummaryComponent;
 
 final class EditEditorialPostTool extends AbstractEditEntityTool
@@ -16,10 +17,12 @@ final class EditEditorialPostTool extends AbstractEditEntityTool
     private EditorialOverviewService $overview;
     private PostSummaryComponent $summary;
     private EditorialPostRepository $posts;
+    private SocialPublisher $publisher;
 
     public function __construct(Container $container)
     {
         parent::__construct($container);
+        $this->publisher = $container->get(SocialPublisher::class);
         $this->overview = $container->get(EditorialOverviewService::class);
         $this->summary = $container->get(PostSummaryComponent::class);
         $this->posts = $container->get(EditorialPostRepository::class);
@@ -62,7 +65,7 @@ final class EditEditorialPostTool extends AbstractEditEntityTool
 
     protected function systemManagedFields(): array
     {
-        return ['client_feedback', 'review_note', 'internal_approved_by', 'internal_approved_at', 'approved_at', 'approved_via', 'revision_count', 'task_id', 'writer_task_id', 'parent_post_id'];
+        return ['client_feedback', 'review_note', 'internal_approved_by', 'internal_approved_at', 'approved_at', 'approved_via', 'revision_count', 'task_id', 'writer_task_id', 'parent_post_id', 'publish_files', 'auto_publish', 'published_at', 'external_post_id', 'publish_error'];
     }
 
     protected function searchColumns(): array
@@ -86,7 +89,8 @@ final class EditEditorialPostTool extends AbstractEditEntityTool
             return [];
         }
         $base = '/piano-editoriale/' . $model->id;
-        $actions = $this->nextSteps($model, $base);
+        $social = $this->publisher->panel($model, $base);
+        $actions = $this->nextSteps($model, $base, $social);
         if ($model->stage === 'da approvare') {
             $actions[] = ['label' => 'Link per il cliente', 'action' => "{$base}/link-cliente", 'variant' => 'ghost', 'icon' => 'link'];
         }
@@ -101,7 +105,7 @@ final class EditEditorialPostTool extends AbstractEditEntityTool
             $actions[] = ['label' => 'Scarta', 'action' => "{$base}/stato", 'body' => ['stage' => 'scartato'], 'variant' => 'ghost', 'confirm' => 'Scartare questo contenuto? Si annullano anche le attivita\'.'];
         }
 
-        return [$this->summary->toData(['url' => $base, 'post' => $this->overview->detail($model), 'actions' => $actions])];
+        return [$this->summary->toData(['url' => $base, 'post' => $this->overview->detail($model) + ['social' => $social], 'actions' => $actions])];
     }
 
     /**
@@ -109,8 +113,20 @@ final class EditEditorialPostTool extends AbstractEditEntityTool
      * da un elenco. Chi puo' approvare salta la revisione interna (la sua e'
      * gia' l'approvazione); gli altri la chiedono.
      */
-    private function nextSteps(EditorialPost $post, string $base): array
+    private function nextSteps(EditorialPost $post, string $base, array $social = []): array
     {
+        // Con Facebook/Instagram collegati (o in modalita' prova): si pubblica
+        // dal gestionale; "segna a mano" resta per chi pubblica altrove.
+        if (($social['canPublish'] ?? false) && in_array($post->stage, ['approvato', 'programmato'], true)) {
+            $publishNow = ['label' => 'Pubblica ora', 'action' => "{$base}/pubblica", 'icon' => 'paper-plane', 'confirm' => 'Pubblicare adesso su ' . ($social['account'] ?? $post->channel) . '?' . (($social['test'] ?? false) ? ' (Modalita\' prova: e\' simulato.)' : ' Esce subito.')];
+            $manual = $post->stage === 'approvato'
+                ? ['label' => 'Segna programmato a mano', 'action' => "{$base}/stato", 'body' => ['stage' => 'programmato'], 'variant' => 'ghost']
+                : ['label' => 'Segna pubblicato a mano', 'action' => "{$base}/stato", 'body' => ['stage' => 'pubblicato'], 'variant' => 'ghost', 'ask' => 'Link al contenuto pubblicato (facoltativo)', 'placeholder' => 'https://www.instagram.com/p/...'];
+
+            return ($social['scheduled'] ?? false)
+                ? [$publishNow + ['variant' => 'primary'], ['label' => 'Togli la programmazione', 'action' => "{$base}/programma", 'body' => ['togli' => '1'], 'variant' => 'secondary'], $manual]
+                : [['label' => 'Programma la pubblicazione', 'action' => "{$base}/programma", 'variant' => 'primary', 'icon' => 'calendar'], $publishNow + ['variant' => 'secondary'], $manual];
+        }
         $canApprove = $this->auth->hasPermission('editorial.approve');
         $step = static fn (string $stage, string $label, string $variant = 'primary', array $extra = []) => ['label' => $label, 'action' => "{$base}/stato", 'body' => ['stage' => $stage], 'variant' => $variant] + $extra;
 

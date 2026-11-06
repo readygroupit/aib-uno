@@ -77,7 +77,7 @@ abstract class AbstractController
     protected function render(string $template, array $vars = [], bool $useLayout = true): string
     {
         $view = new View();
-        $vars += ['brand' => $this->brand()];
+        $vars += ['brand' => $this->brand(), 'testBanner' => $this->testBanner()];
         $templateFile = $this->viewBasePath() . $template . '.phtml';
 
         if (!$useLayout) {
@@ -125,7 +125,7 @@ abstract class AbstractController
 
         return $view->renderWithLayout(
             ROOT_PATH . '/view/layout/page-root.phtml',
-            $vars + ['json' => $json, 'brand' => $this->brand()],
+            $vars + ['json' => $json, 'brand' => $this->brand(), 'testBanner' => $this->testBanner()],
             ROOT_PATH . '/view/layout/layout.phtml'
         );
     }
@@ -134,6 +134,12 @@ abstract class AbstractController
     protected function brand(): array
     {
         return $this->container->get(\App\Service\BrandingService::class)->current();
+    }
+
+    /** La fascia "Modalita' prova" in cima alle pagine (layout.phtml), null se spenta. */
+    protected function testBanner(): ?array
+    {
+        return $this->container->get(\App\TestMode\TestModeService::class)->banner();
     }
 
     protected function redirect(string $url, int $status = 302): void

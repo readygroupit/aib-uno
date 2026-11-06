@@ -10,6 +10,7 @@ use App\Connector\GoogleCalendarConnector;
 use App\Connector\GoogleDriveConnector;
 use App\Connector\GoogleSheetsConnector;
 use App\Connector\JotformConnector;
+use App\Connector\MetaConnector;
 use App\Connector\PCloudConnector;
 use App\Connector\PayPalConnector;
 use App\Connector\StripeConnector;
@@ -29,6 +30,7 @@ return static function (ConnectorRegistry $registry): void {
     $registry->register(GoogleDriveConnector::class);
     $registry->register(PCloudConnector::class);
     $registry->register(GmailConnector::class);
+    $registry->register(MetaConnector::class);
     $registry->register(StripeConnector::class);
     $registry->register(PayPalConnector::class);
     $registry->register(FattureInCloudConnector::class);

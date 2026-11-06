@@ -51,6 +51,10 @@
     color: rgba(18, 51, 63, 0.7);
 }
 
+/* "Ho cercato: ..." tra la ricerca e i risultati, staccato da tutti e due. */
+.md-library > .md-search-card + * { margin-top: 16px; }
+.md-library > .md-understood + * { margin-top: 14px; }
+
 .md-understood svg { width: 13px; height: 13px; color: var(--color-brass); }
 
 .md-grid {

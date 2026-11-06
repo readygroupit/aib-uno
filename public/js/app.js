@@ -1,3 +1,5 @@
+// Prima di tutto: la rotella "Sto elaborando" avvolge fetch per tutti i moduli.
+import './loader.js';
 import { mountPromptShell } from './components/hero.js';
 import { openGuide, loadSetupState, setupIsPending } from './onboarding.js';
 import './auth.js';

@@ -10,8 +10,9 @@
 .wizard-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(18, 51, 63, 0.45);
-    backdrop-filter: blur(3px);
+    /* Niente backdrop-filter: con la sfocatura il browser ridisegna tutta la
+       pagina dietro a ogni tasto premuto nei campi del modale (lento). */
+    background: rgba(18, 51, 63, 0.55);
     display: flex;
     align-items: center;
     justify-content: center;

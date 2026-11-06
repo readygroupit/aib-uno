@@ -516,3 +516,58 @@ a {
 .first-access__actions { display: flex; gap: 10px; align-items: center; }
 .first-access__actions .auth-submit { flex: 1 1 auto; }
 @media (max-width: 520px) { .first-access__row { grid-template-columns: 1fr; } }
+
+/* "Sto elaborando" al centro dello schermo (vedi public/js/loader.js): non
+   blocca la pagina, compare solo se la risposta tarda. */
+.page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+.page-loader.is-visible { opacity: 1; }
+
+.page-loader__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-width: 150px;
+    padding: 22px 26px 18px;
+    background: var(--color-panel);
+    border: var(--hairline);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 24px 60px -24px rgba(18, 51, 63, 0.45), 0 2px 6px rgba(18, 51, 63, 0.08);
+    transform: translateY(6px) scale(0.98);
+    transition: transform 0.18s ease;
+}
+
+.page-loader.is-visible .page-loader__card { transform: none; }
+
+.page-loader__spinner {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid rgba(18, 51, 63, 0.1);
+    border-top-color: var(--color-brass);
+    border-right-color: var(--color-teal);
+    animation: page-loader-spin 0.8s linear infinite;
+}
+
+.page-loader__text {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: rgba(18, 51, 63, 0.75);
+}
+
+@keyframes page-loader-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .page-loader__spinner { animation-duration: 2.4s; }
+}

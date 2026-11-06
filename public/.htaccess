@@ -1,11 +1,18 @@
-# I file .js importati da altri .js (import './x.js') non passano mai da
-# un tag <script>/<link> quindi non ricevono mai il '?v=' di View::asset():
-# senza questo, un F5 puo' servire una copia vecchia dal disco del browser
-# anche subito dopo aver modificato il file (successo davvero in sessione).
+
+# Cache di css e js. Con la versione nell'indirizzo (?v=filemtime: View::asset()
+# per i tag <link>/<script>, View::importMap() per gli import tra moduli) il
+# file non cambia mai a quell'indirizzo: il browser lo tiene un anno senza
+# richiederlo (prima, con "no-cache", ogni pagina ricontrollava ~100 file sul
+# server, una andata e ritorno ciascuno: era la lentezza in produzione). Una
+# modifica cambia ?v= e quindi l'indirizzo. Senza ?v= resta "no-cache", cosi'
+# un F5 non serve mai una copia vecchia.
 <IfModule mod_headers.c>
     <FilesMatch "\.(js|css)$">
         Header set Cache-Control "no-cache"
     </FilesMatch>
+    <If "%{QUERY_STRING} =~ /(^|&)v=\d+/ && %{REQUEST_URI} =~ /\.(js|css)$/">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
 </IfModule>
 
 RewriteEngine On

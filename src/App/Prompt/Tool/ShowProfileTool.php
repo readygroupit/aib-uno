@@ -223,27 +223,30 @@ final class ShowProfileTool implements PromptToolInterface
     {
         /** @var StatBoxComponent $statBox */
         $statBox = $this->container->get(StatBoxComponent::class);
-        $leads = $this->container->get(LeadRepository::class);
-        $cases = $this->container->get(CaseFileRepository::class);
-        $tasks = $this->container->get(TaskRepository::class);
+        $stats = [];
+        // Solo i numeri dei pacchetti di questo progetto: senza, la tabella non c'e'.
+        if (self::installed('leads')) {
+            $stats[] = $statBox->toData(['label' => 'Contatti assegnati', 'value' => (string) $this->container->get(LeadRepository::class)->count(['assigned_user_id' => $userId]), 'href' => '/contatti', 'dotColor' => 'moss', 'hero' => $stats === []]);
+        }
+        if (self::installed('cases')) {
+            $stats[] = $statBox->toData(['label' => 'Pratiche assegnate', 'value' => (string) $this->container->get(CaseFileRepository::class)->count(['assigned_user_id' => $userId]), 'href' => '/pratiche', 'dotColor' => 'lilac', 'hero' => $stats === []]);
+        }
+        if (self::installed('tasks')) {
+            $openTasks = count(array_filter(
+                $this->container->get(TaskRepository::class)->findAll(['assigned_user_id' => $userId]),
+                static fn ($t) => $t->completedAt === null
+            ));
+            $stats[] = $statBox->toData(['label' => 'Attivita\' da completare', 'value' => (string) $openTasks, 'href' => '/attivita', 'dotColor' => 'brass', 'hero' => $stats === []]);
+        }
 
-        $openTasks = count(array_filter(
-            $tasks->findAll(['assigned_user_id' => $userId]),
-            static fn ($t) => $t->completedAt === null
-        ));
-
-        return [
-            $statBox->toData(['label' => 'Contatti assegnati', 'value' => (string) $leads->count(['assigned_user_id' => $userId]), 'href' => '/contatti', 'dotColor' => 'moss', 'hero' => true]),
-            $statBox->toData(['label' => 'Pratiche assegnate', 'value' => (string) $cases->count(['assigned_user_id' => $userId]), 'href' => '/pratiche', 'dotColor' => 'lilac']),
-            $statBox->toData(['label' => 'Attivita\' da completare', 'value' => (string) $openTasks, 'href' => '/attivita', 'dotColor' => 'brass']),
-        ];
+        return $stats;
     }
 
     private function buildActivityFeed(int $userId): array
     {
         $items = [];
 
-        $leads = $this->container->get(LeadRepository::class)->findAll(['created_by' => $userId], 'created_at DESC');
+        $leads = self::installed('leads') ? $this->container->get(LeadRepository::class)->findAll(['created_by' => $userId], 'created_at DESC') : [];
         foreach (array_slice($leads, 0, 4) as $lead) {
             $items[] = [
                 'label' => 'Contatto creato: ' . trim("{$lead->firstName} {$lead->lastName}"),
@@ -254,7 +257,7 @@ final class ShowProfileTool implements PromptToolInterface
             ];
         }
 
-        $cases = $this->container->get(CaseFileRepository::class)->findAll(['created_by' => $userId], 'created_at DESC');
+        $cases = self::installed('cases') ? $this->container->get(CaseFileRepository::class)->findAll(['created_by' => $userId], 'created_at DESC') : [];
         foreach (array_slice($cases, 0, 4) as $case) {
             $items[] = [
                 'label' => 'Pratica creata: ' . $case->title,
@@ -265,7 +268,7 @@ final class ShowProfileTool implements PromptToolInterface
             ];
         }
 
-        $comms = $this->container->get(CommunicationRepository::class)->findAll(['created_by' => $userId], 'created_at DESC');
+        $comms = self::installed('communications') ? $this->container->get(CommunicationRepository::class)->findAll(['created_by' => $userId], 'created_at DESC') : [];
         foreach (array_slice($comms, 0, 3) as $comm) {
             $items[] = [
                 'label' => 'Comunicazione registrata (' . $comm->channel . ')',
@@ -276,7 +279,7 @@ final class ShowProfileTool implements PromptToolInterface
             ];
         }
 
-        $refunds = $this->container->get(RefundRepository::class)->findAll(['created_by' => $userId], 'created_at DESC');
+        $refunds = self::installed('refunds') ? $this->container->get(RefundRepository::class)->findAll(['created_by' => $userId], 'created_at DESC') : [];
         foreach (array_slice($refunds, 0, 3) as $refund) {
             $items[] = [
                 'label' => 'Rimborso registrato',
@@ -287,7 +290,7 @@ final class ShowProfileTool implements PromptToolInterface
             ];
         }
 
-        $docs = $this->container->get(DocumentRequestRepository::class)->findAll(['created_by' => $userId], 'created_at DESC');
+        $docs = self::installed('document_requests') ? $this->container->get(DocumentRequestRepository::class)->findAll(['created_by' => $userId], 'created_at DESC') : [];
         foreach (array_slice($docs, 0, 3) as $doc) {
             $items[] = [
                 'label' => 'Documento richiesto: ' . $doc->documentType,
@@ -331,5 +334,10 @@ final class ShowProfileTool implements PromptToolInterface
         $diffDays = (int) round($diffHours / 24);
 
         return $diffDays === 1 ? 'ieri' : "{$diffDays} giorni fa";
+    }
+
+    private static function installed(string $package): bool
+    {
+        return in_array($package, \App\Package\PackageCatalogService::installedNames(), true);
     }
 }

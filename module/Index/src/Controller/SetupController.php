@@ -179,7 +179,7 @@ final class SetupController extends AuthController
                     'help' => 'La versione per gli sfondi chiari. E\' lo stesso logo del primo accesso.',
                     'usedIn' => [
                         'Login: al centro, sopra "Bentornato" (senza, c\'e\' il logo di aiBrains)',
-                        'Home: sopra il saluto "Ciao ..., sono Uno"',
+                        'Home: piccolo, sotto la casella "Cosa vuoi fare?"',
                         'Colonna della chat, in alto a sinistra: cliccandolo si torna alla home',
                         'Preventivo da stampare o salvare in PDF: in testa, sopra i dati dell\'azienda',
                     ],
@@ -191,7 +191,6 @@ final class SetupController extends AuthController
                     'label' => 'Logo per sfondi scuri (di solito bianco)',
                     'help' => 'Facoltativo: la versione per gli sfondi scuri, di solito bianca.',
                     'usedIn' => [
-                        'Login: nel riquadro scuro a destra, sopra "Private AI" (senza, li\' non c\'e\' logo)',
                         'Area cliente: nel riquadro scuro in cima (senza, c\'e\' il nome dell\'agenzia)',
                     ],
                     'url' => $current['logoLight'],

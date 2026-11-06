@@ -990,9 +990,9 @@ manuale non verificabile, ne' fatta ne' mancante.
 - **Logo dell'azienda** (`/configurazione/logo`, `BrandingService`): la
   versione normale (`project.logo`, la stessa del primo accesso) e quella
   per sfondi scuri (`project.logo_light`, di solito bianca), in
-  `public/uploads`. Normale: al centro del login, in cima alla chat,
-  preventivo stampato. Scura: pannello a destra del login, riquadro in
-  cima all'area cliente. Senza logo il login usa quello di aiBrains.
+  `public/uploads`. Normale: al centro del login, piccolo sotto la casella
+  in home, in cima alla colonna della chat, preventivo stampato. Scura:
+  riquadro in cima all'area cliente. Senza logo il login usa quello di aiBrains.
   Credito "© anno AI Brains" (link ad aibrains.it, nuova scheda) sotto il
   login, in fondo alla home e in fondo alla colonna della chat.
 - **Passaggi-sezione**: portano a una pagina con `?setup=<chiave>`, che mostra

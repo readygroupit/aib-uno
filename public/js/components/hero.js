@@ -719,15 +719,17 @@ export function mountPromptShell(root, initialComponents) {
     // fatto il servizio: sulla home centrata il credito sta in fondo alla
     // pagina, con la chat a sinistra in fondo alla colonna (hero.css).
     const brandInfo = window.UNO_BRAND || {};
-    const brand = brandInfo.logo
-        ? el('a', { className: 'hero__brand', href: '/', title: brandInfo.name || '' }, [el('img', { src: brandInfo.logo, alt: brandInfo.name || 'Logo' })])
-        : null;
+    // Due posti: sulla home centrata piccolo sotto la casella, con la chat
+    // in colonna in alto a sinistra (hero.css mostra quello giusto).
+    const brandLink = (place) => (brandInfo.logo
+        ? el('a', { className: `hero__brand hero__brand--${place}`, href: '/', title: brandInfo.name || '' }, [el('img', { src: brandInfo.logo, alt: brandInfo.name || 'Logo' })])
+        : null);
     const credit = el('p', { className: 'app-credit' }, [
         `© ${new Date().getFullYear()} `,
         el('a', { href: 'https://aibrains.it', target: '_blank', rel: 'noopener' }, ['AI Brains']),
     ]);
 
-    const wrap = el('div', { className: 'hero-wrap' }, [brand, intro, card, credit]);
+    const wrap = el('div', { className: 'hero-wrap' }, [brandLink('top'), intro, card, brandLink('home'), credit]);
 
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {

@@ -133,7 +133,7 @@ final class SetupService
         return [
             'key' => 'brand_logos',
             'label' => 'Logo dell\'azienda',
-            'description' => 'Il vostro logo al posto di quello di aiBrains: al centro del login, sopra il saluto in home, in cima alla chat, nel preventivo stampato; la versione bianca nel riquadro scuro del login e nell\'area cliente.',
+            'description' => 'Il vostro logo al posto di quello di aiBrains: al centro del login, sotto la casella in home, in cima alla chat, nel preventivo stampato; la versione bianca nell\'area cliente.',
             'required' => false,
             'kind' => 'link',
             'href' => '/configurazione/logo',

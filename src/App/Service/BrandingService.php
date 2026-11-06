@@ -9,10 +9,12 @@ use App\Repository\SettingRepository;
 
 /**
  * I loghi dell'azienda che usa il gestionale (non quello di aiBrains):
- * - 'logo': la versione normale, per gli sfondi chiari (login, in cima al
- *   prompt, area cliente, preventivo stampato). E' quello del primo accesso.
+ * - 'logo': la versione normale, per gli sfondi chiari (login, home sotto
+ *   la casella, colonna della chat, preventivo stampato). E' quello del
+ *   primo accesso.
  * - 'logo_light': la versione per gli sfondi scuri, di solito bianca (il
- *   pannello scuro del login). Facoltativa: senza, li' non c'e' logo.
+ *   riquadro scuro in cima all'area cliente). Facoltativa: senza, li' c'e'
+ *   il nome dell'agenzia.
  *
  * File in public/uploads (logo.png, logo-light.png...), indirizzo con
  * ?v= nelle impostazioni 'project.logo' e 'project.logo_light'. Si

@@ -89,15 +89,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Su ogni pagina: alimenta il riquadro rosso nella toolbar (hero.js).
     const setup = await loadSetupState();
 
-    // La Guida si apre da sola solo sulla home. Al primo accesso (finche'
-    // non e' chiusa con "Ho capito") e, dopo, ogni volta che c'e' ancora
-    // qualcosa di obbligatorio da configurare - in quel caso non si puo'
-    // nemmeno spegnere per sempre (vedi openGuide()).
-    // window.UNO_SHOW_ONBOARDING e' gia' false da disconnessi.
-    // Un progetto puo' non volerla affatto all'avvio ('autoOpen' => false in
-    // config/guide.php, come Uno: la home e' solo il prompt).
+    // La Guida si apre da sola solo sulla home, finche' l'utente non la
+    // spegne con "Non mostrare piu'" (anche se manca ancora qualcosa da
+    // configurare: per quello resta il riquadro rosso nella toolbar).
+    // window.UNO_SHOW_ONBOARDING e' gia' false da disconnessi o dopo averla
+    // spenta. Un progetto puo' non volerla affatto all'avvio ('autoOpen' =>
+    // false in config/guide.php, come Uno): allora si apre da sola solo se
+    // manca qualcosa di obbligatorio.
     const autoOpen = (window.UNO_GUIDE || {}).autoOpen !== false;
-    if (window.location.pathname === '/' && ((window.UNO_SHOW_ONBOARDING && autoOpen) || setupIsPending(setup))) {
-        openGuide({ tab: window.UNO_SHOW_ONBOARDING ? null : 'missing' });
+    const pending = setupIsPending(setup);
+    if (window.location.pathname === '/' && window.UNO_SHOW_ONBOARDING && (autoOpen || pending)) {
+        openGuide({ tab: pending ? 'missing' : null });
     }
 });

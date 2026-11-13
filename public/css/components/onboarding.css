@@ -175,10 +175,21 @@
 
 .onboarding__footer {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: flex-end;
+    gap: 8px;
     padding: 14px 20px;
     border-top: 1px solid rgba(139, 131, 173, 0.25);
     flex-shrink: 0;
+}
+
+/* "Puoi riaprirla da...": a sinistra, i pulsanti a destra */
+.onboarding__footer-hint {
+    margin-right: auto;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: rgba(18, 51, 63, 0.66);
 }
 
 /* Segnale "c'e' ancora da fare" accanto alla scheda Cosa manca ancora */

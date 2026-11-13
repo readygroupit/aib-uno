@@ -12,9 +12,9 @@ import { buildFunctionsView, fetchFunctions } from './wizard.js';
  * permessi - vedi wizard.js) e "Cosa manca ancora" (la checklist di
  * configurazione, finche' ci sono passaggi obbligatori).
  *
- * Si apre da sola sulla home al primo accesso (finche' non e' chiusa con
- * "Ho capito, non mostrarmelo piu'", vedi AuthService::dismissOnboarding())
- * e finche' resta qualcosa di obbligatorio da configurare; in ogni altro
+ * Si apre da sola sulla home finche' non e' spenta con "Non mostrare piu'"
+ * (vedi AuthService::dismissOnboarding()), anche se resta qualcosa di
+ * obbligatorio da configurare; in ogni altro
  * momento la si apre dal riquadro rosso nella toolbar del prompt (solo se
  * manca qualcosa) o dalla voce "Guida" del menu profilo.
  *
@@ -41,6 +41,7 @@ function dismissForever() {
         method: 'POST',
         headers: { 'X-CSRF-Token': window.UNO_CSRF || '' },
     }).catch(() => {});
+    window.UNO_SHOW_ONBOARDING = false;
     closeGuide();
 }
 
@@ -188,10 +189,15 @@ export function openGuide({ tab = null, entity = null, functionsData = null } = 
 
     function renderFooter() {
         footer.textContent = '';
-        // "Non mostrarmelo piu'" solo se ha ancora senso: mai con cose
-        // obbligatorie da fare, e solo finche' non e' stato gia' spento.
-        if (firstTime && !pending()) {
-            footer.appendChild(el('button', { type: 'button', className: 'btn btn--primary', onClick: dismissForever }, ['Ho capito, non mostrarmelo più']));
+        // "Non mostrare piu'" finche' la Guida si apre da sola: sempre, anche
+        // con cose da configurare (le ricorda il riquadro rosso nella toolbar).
+        if (firstTime) {
+            footer.appendChild(el('span', { className: 'onboarding__footer-hint' }, [
+                'Puoi riaprirla quando vuoi da "Guida" nel menu del profilo'
+                + (pending() ? ' o dal riquadro rosso in alto.' : '.'),
+            ]));
+            footer.appendChild(el('button', { type: 'button', className: 'btn btn--secondary', onClick: closeGuide }, ['Chiudi']));
+            footer.appendChild(el('button', { type: 'button', className: 'btn btn--primary', onClick: dismissForever }, ['Non mostrare più']));
         } else {
             footer.appendChild(el('button', { type: 'button', className: 'btn btn--secondary', onClick: closeGuide }, ['Chiudi']));
         }

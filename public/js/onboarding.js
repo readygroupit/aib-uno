@@ -196,8 +196,12 @@ export function openGuide({ tab = null, entity = null, functionsData = null } = 
                 'Puoi riaprirla quando vuoi da "Guida" nel menu del profilo'
                 + (pending() ? ' o dal riquadro rosso in alto.' : '.'),
             ]));
-            footer.appendChild(el('button', { type: 'button', className: 'btn btn--secondary', onClick: closeGuide }, ['Chiudi']));
-            footer.appendChild(el('button', { type: 'button', className: 'btn btn--primary', onClick: dismissForever }, ['Non mostrare più']));
+            // I due pulsanti in un gruppo: restano vicini sulla stessa riga
+            // anche quando la frase va a capo.
+            footer.appendChild(el('div', { className: 'onboarding__footer-actions' }, [
+                el('button', { type: 'button', className: 'btn btn--secondary', onClick: closeGuide }, ['Chiudi']),
+                el('button', { type: 'button', className: 'btn btn--primary', onClick: dismissForever }, ['Non mostrare più']),
+            ]));
         } else {
             footer.appendChild(el('button', { type: 'button', className: 'btn btn--secondary', onClick: closeGuide }, ['Chiudi']));
         }

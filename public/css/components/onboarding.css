@@ -186,10 +186,19 @@
 
 /* "Puoi riaprirla da...": a sinistra, i pulsanti a destra */
 .onboarding__footer-hint {
-    margin-right: auto;
+    flex: 1 1 220px;
     font-size: 12.5px;
     line-height: 1.4;
     color: rgba(18, 51, 63, 0.66);
+}
+
+/* Chiudi + Non mostrare piu': vicini, mai uno sotto l'altro */
+.onboarding__footer-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 /* Segnale "c'e' ancora da fare" accanto alla scheda Cosa manca ancora */

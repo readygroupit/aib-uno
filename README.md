@@ -350,6 +350,420 @@ commesse.
 Prompt: "commesse", "lavori in corso", "attivita", "cosa devo fare",
 "le mie attivita", "tipi di commessa".
 
+### Processi dei servizi (18/11/2026)
+
+**Dove si fa (24/11/2026): menu Vendite, Servizi.** La pagina di un servizio
+del listino mostra il suo processo (`EditServiceTool::detailComponents()`
+-> `EditWorkOrderTypeTool::processComponents()`): ruoli, date chiave, fasi,
+cose da consegnare, poi due form chiusi, quello del processo (nome,
+descrizione, cartelle) e i dati di vendita. Senza processo: "Crea il
+processo" o "Collega" uno esistente (`/servizi/:id/processo`). Un processo
+collegato a un servizio si apre sempre dalla pagina del servizio (anche
+dopo aver salvato una sua fase o un suo ruolo). "Tipi di commessa" non e'
+piu' nel menu (la pagina `/tipi-commessa` resta per quelli senza servizio).
+
+**Prezzo indicativo (24/11/2026).** `services.price` e' facoltativo (NULL,
+migrazione `20261124140000_01_services__3_optional_price.sql`): il prezzo
+vero si decide nel preventivo, cliente per cliente. Se c'e', la riga del
+preventivo parte da li'; se manca parte da 0 e `QuoteService::problems()`
+chiede di scriverlo prima dell'invio. La pagina del servizio scrive
+"prezzo nel preventivo".
+
+**Pagina del servizio a schede (24/11/2026).** `EditServiceTool::servicePage()`:
+in testa `service-header` (nome, categoria, prezzo indicativo, ruoli, fasi,
+date chiave, "Nuovo progetto con questo servizio"), sotto `page-tabs` con:
+- "Il servizio" e "Vendita": le due sezioni `servizio`/`vendita` del
+  layout del manifest, un form solo (`tabsExternal`), campi in colonne;
+- sotto il form della scheda "Il servizio",
+  `EditWorkOrderTypeTool::processSettingsForm()`: cartelle sul Drive,
+  durata e stato del processo. Nome e descrizione del processo sono quelli
+  del servizio (campi nascosti, allineati da
+  `ServicesController::afterUpdate()`);
+- "Processo di lavoro": `type-steps` con `embedded`, oppure "Crea il
+  processo".
+
+**Fasi guidate e checklist (24/11/2026).**
+- Le voci della checklist di un'attivita' si spuntano dalla sua pagina:
+  `POST /attivita/:id/punto` (`TaskService::toggleChecklistItem()`, "[x] "
+  davanti alla riga).
+- Nuovo tipo di fase **raccolta informazioni**
+  (`ProcessService::KIND_INFO`). Come il briefing, apre le domande (la
+  checklist piu' "Altro da sapere") nella scheda "Da fare" dell'attivita',
+  ma le
+  risposte restano nel progetto: una sola nota del diario di tipo
+  `preventivo`, aggiornata a ogni salvataggio, che non tocca il profilo del
+  cliente.
+- "Salva e continua dopo" ritrova le risposte. Le voci con una risposta
+  si spuntano da sole.
+- `KnowledgeService::quoteBrief()` mostra "Cosa ha chiesto il cliente"
+  nelle fasi che si chiudono con un evento del preventivo
+  (`completes_on` "preventivo ...") e nella pagina del preventivo.
+- Pulsanti delle fasi guidate in un posto solo:
+  `ProcessService::guidedAction()`.
+- Scenario in Brains: `tests/scenari/attivita.php`.
+
+**Pagina dell'attivita' (24/11/2026).** `EditTaskTool::buildPage()`: in
+testa `task-summary` (stato, titolo, progetto, quando, chi), sotto
+`page-tabs` con:
+- "Da fare" (`task-work`): una lista sola, con la spunta a sinistra, il
+  testo a destra e, nelle fasi guidate, la risposta sotto. Le risposte si
+  salvano da sole (`POST /attivita/:id/briefing` con `mode=autosave`,
+  `KnowledgeService::saveAnswers()`: una nota per progetto e tipo, senza
+  toccare spunte, profilo o stato). La prima risposta spunta la voce. Un
+  solo pulsante chiude ("Segna fatta", "Informazioni raccolte", "Briefing
+  fatto"). Il briefing aggiorna il profilo del cliente solo a fase fatta.
+  Qui compaiono anche "Cosa ha chiesto il cliente" e "Cosa sappiamo gia'";
+- "Dettagli": il form dell'attivita'.
+
+Il vecchio componente `briefing-form` non c'e' piu'.
+Nelle fasi che si chiudono da sole con il preventivo (`completes_on`
+"preventivo ..."), "Da fare" ha il pulsante per farlo: "Prepara il
+preventivo" (con `quotes.create`, lo stesso del progetto) o "Apri il
+preventivo". Al posto di "Segna fatta" c'e' "Si chiude da sola quando...".
+
+**Pagina del preventivo (24/11/2026).** Usa `tabbedPage()` come
+l'attivita':
+- in testa `quote-summary`: stato, cliente, date, chi lo segue, totale,
+  azioni e "Prima di mandarlo manca";
+- scheda "Righe": `quote-lines` con le righe e i totali, piu' "Cosa ha
+  chiesto il cliente" (in Brains anche "Dai lavori passati");
+- scheda "Dati del preventivo": il form.
+
+Il riquadro "Condizioni", che ripeteva il form, non c'e' piu'.
+
+**Pannello laterale per gli elementi figli (24/11/2026).** `public/js/drawer.js`
+e `public/css/components/drawer.css`:
+- i link agli indirizzi in `DRAWER_PATHS` (righe del preventivo; fasi,
+  ruoli, date e consegne del processo; squadra, date, consegne e modifiche
+  del progetto; referenti, squadra, contatti, diario e profilo del
+  cliente) non cambiano schermata: il form si apre in un pannello da
+  destra (da telefono a tutto schermo), sopra la pagina;
+- `hero.js` intercetta i link e `form.js`, se il form e' nel pannello,
+  passa la risposta a `handleDrawerResponse()`;
+- con errori il form si ridisegna nel pannello; senza errori compare
+  l'esito in basso, il pannello si chiude e la pagina sotto si ricarica
+  (scheda e parti aperte restano);
+- Esc, clic fuori o la X chiudono. Lato server non cambia niente: le
+  pagine dei figli restano anche come indirizzi normali.
+
+**"Prima di mandarlo manca" con i pulsanti (24/11/2026).**
+`QuoteService::problemsByArea()` divide cosa manca per dove si sistema:
+righe, dati del preventivo, dati del cliente. Nel riquadro:
+- "Completa i dati del cliente" apre nel pannello
+  `/clienti/:id/dati-mancanti` (`CustomersController::missingAction()`):
+  email, indirizzo, partita IVA, SDI e PEC, con
+  `AbstractEditEntityTool::formWithOnly()`. Si salva con il form normale
+  del cliente, e i campi assenti non si toccano;
+- "Scadenza e pagamento" porta a `#dati`, "Vai alle righe" a `#righe`
+  (`page-tabs` segue il cambio di `#`).
+
+**Progetto a schede, stampa del preventivo (24/11/2026).**
+- `EditWorkOrderTool::buildPage()` con `tabbedPage()`:
+  - in testa `work-order-summary`: stato, cliente, date, azioni,
+    avanzamento, attesa del cliente, cosa fare adesso;
+  - schede "Fasi" (`wo-steps`), "Squadra e date" (`wo-team`,
+    `wo-milestones`, `wo-appointments`), "Consegne" (`wo-deliverables`,
+    `wo-changes`), "Cliente e file" (documenti e conoscenza del cliente) e
+    "Dettagli";
+  - le schede vuote non compaiono; ogni riquadro ha la sua guida.
+- Il preventivo mostra "Progetto: ..." per tornare al progetto.
+- Stampa del preventivo (`quotes/print.phtml`, `quote-print.css`): foglio
+  A4 con fascia colorata, Da/Per (il "Da" solo se ci sono i dati
+  dell'agenzia in Dati azienda), data/scadenza/referente/pagamento, voci
+  numerate con quantita' e prezzo (`lineData()` ha `qty`, `unitPrice`,
+  `period`), totale in evidenza, condizioni, firme e piede. In alto, fuori
+  dalla stampa, la barra con "Torna al preventivo" e "Stampa o salva in
+  PDF".
+
+**Fase "squadra" e scheda cliente a schede (24/11/2026).**
+- Nuovo tipo di fase **squadra** (`ProcessService::KIND_TEAM`). Nella
+  scheda "Da fare" c'e' ogni ruolo del processo con chi lo fa
+  (`ProcessOverviewService::teamEditor()`): la x toglie una persona, il
+  menu la aggiunge subito. Gli indirizzi sono
+  `POST /commesse/:id/squadra/assegna` e `POST /commesse/squadra/:id/togli`
+  (`ProcessService::assignRole()` e `removeMember()`, con avviso e
+  passaggio delle fasi; permesso `work_orders.edit`). "Squadra pronta"
+  chiede conferma se manca un ruolo obbligatorio.
+- `EditCustomerTool::buildPage()` con `tabbedPage()`:
+  - in testa `customer-profile` con `only: ['head']`;
+  - schede "Lavori" (progetti, appuntamenti), "Rapporto" (temperatura,
+    diario e profilo), "Persone" (squadra interna, referenti), "Servizi e
+    pagamenti", "Documenti" e "Dati";
+  - `customer-profile` mostra solo i riquadri in `only`, con le guide in
+    `guides`.
+
+**Conferme nel modale, fasi da fare dalla loro pagina (24/11/2026).**
+- Niente piu' `window.confirm`/`prompt`: `confirmModal()` (Annulla e
+  azione, rossa se toglie o elimina) e `copyModal()`. Li usano
+  `runAction`, `form.js` (`data-confirm`), import da foglio, modalita'
+  prova, link da copiare.
+- Pannello laterale: oltre a `DRAWER_PATHS`, ogni `/.../nuovo?...` aperto
+  da una pagina (eccetto progetto, preventivo e fattura nuovi) e la
+  modifica di spese e appuntamenti.
+- Nuovi tipi di fase **appuntamento** e **consegna**;
+  `EditTaskTool::stepTools()` mette nella scheda "Da fare" quello che serve
+  per ogni tipo (vedi AGENTS.md). Un form con `reloadAfterSave` salva e
+  resta sulla pagina.
+- Fasi del progetto: interruttore "Nascondi le fatte", acceso di partenza
+  (`localStorage` `uno.steps.hideDone`). I gruppi tutti fatti restano come
+  una riga sola.
+
+**Campi obbligatori ed email della data chiave (24/11/2026).**
+- Nuovo `'required' => true` nel manifest: asterisco e controllo anche su
+  colonne che ammettono NULL; con `showIf`, solo quando il campo si vede.
+- Ora obbligatori:
+  - data chiave del progetto: "Quando", e "A" se l'email si manda;
+  - squadra: il ruolo;
+  - progetto: il responsabile;
+  - fase del processo: il tipo;
+  - riga del preventivo: quantita', tipo di pagamento e "ogni quanto" se
+    ricorrente;
+  - servizio: come si paga e "ogni quanto" se ricorrente;
+  - cliente: ragione sociale oppure nome o cognome
+    (`CustomersController::crossFieldErrors()`).
+- "A" della data chiave si riempie con l'email del cliente
+  (`ProcessService::customerEmails()`: la sua scheda, o il referente che
+  decide). Se manca, lo dice sotto il campo.
+- Fasi del progetto: "Nascondi le fatte" sta accanto al titolo; i gruppi
+  tutti fatti spariscono del tutto.
+- A fase fatta si vede quello che e' stato fatto. Per la data chiave, la data
+  fissata e l'email mandata (a chi, quando, oggetto e testo), con sotto
+  "Cambia la data" chiuso. Per le fasi del preventivo resta "Apri il
+  preventivo".
+
+**Spazio di lavoro delle fasi (24/11/2026).**
+- Colonne nuove: `tasks.outcome`, `outcome_date` e `item_notes` (JSON),
+  `documents.task_id` e `local_path`, `work_order_type_steps.folder_name`.
+  Nuovo tipo di fase **approvazione del cliente**.
+- Scheda "Da fare" (`EditTaskTool::workArea()`):
+  - esito/note, salvati da soli (`POST /attivita/:id/esito`);
+  - "+ nota" sotto ogni voce (`/nota-voce`);
+  - file (`/file`): `DocumentService::uploadForTask()` li mette sul Drive
+    nella cartella della fase (creata se manca). Senza Drive restano in
+    `storage/uploads/tasks/:id`, fuori da `public`, e si scaricano da
+    `/documenti/file/:id/scarica` solo da collegati. `pushPending()`,
+    chiamato da `sync()`, li manda quando il Drive c'e';
+  - per l'approvazione del cliente, data (non futura) ed email
+    obbligatorie (`/approvato-dal-cliente`).
+- L'assistente legge esiti, note e file del progetto
+  (`TaskWorkService::projectContext()` in `AssistantWriter`).
+
+**Spunta dagli elenchi e "chi la fa" (24/11/2026).**
+- Fasi che si fanno nella loro pagina (`ProcessService::needsPage()`):
+  data chiave, briefing, raccolta, squadra, approvazione, approvazione del
+  cliente, appuntamento, consegna, fasi del preventivo. Negli elenchi la
+  spunta e' una freccia e apre la fase (`openHref` in
+  `WorkOrderOverviewService`, `taskRow()` in `work-ui.js`).
+- Con dati obbligatori (`needsData()`: data chiave, approvazione del
+  cliente) "Fatta" non c'e' nella fase, e il server rifiuta
+  `/attivita/:id/fatta` finche' manca il dato
+  (`TasksController::missingData()`).
+- "Chi la fa" nell'intestazione dell'attivita': menu con le persone e il
+  ruolo della fase; `POST /attivita/:id/assegna` (`TaskService::assign()`,
+  con l'avviso a chi la riceve). Cambia solo quell'attivita'.
+- Azioni dal pannello laterale (es. "Confermato" su un appuntamento):
+  `runAction` aggiorna il pannello (`refreshDrawer()`) e la pagina sotto.
+- Home, agenti e giornata: ogni cosa che riguarda un'attivita' porta "Tocca
+  a ..." (`AssistantService::withWho()`). Per i promemoria delle date chiave
+  e' la persona della fase dopo la data. I promemoria delle date chiave (`milestone_soon`)
+  arrivano solo a lei e al responsabile del progetto, non a tutta la
+  squadra; se mancano tutti e due, alla squadra.
+
+**Roadmap collegata ai progetti, qualificazione del cliente (24/11/2026).**
+- Su un'idea della roadmap c'e' "Diventa un progetto": si sceglie il
+  processo e nasce il progetto (`POST /clienti/diario/:id/progetto`,
+  `WorkOrdersController::fromIdeaAction()`, stessi passaggi di "Nuovo
+  progetto"). L'idea si collega (`work_order_id`) e passa "in corso".
+- Lo stato dell'idea segue il progetto (`KnowledgeService::syncRoadmap()`):
+  "fatta" alla consegna (`WorkOrderService::deliver()`), "scartata" se non
+  acquisito o se il preventivo e' rifiutato.
+- Scheda cliente, Rapporto: in cima "Com'e' il cliente" (a che punto,
+  quanto e' caldo, importanza, com'e' da seguire, quando risentirlo), che
+  si salva e resta sulla pagina. In testa alla scheda le etichette:
+  caldo/tiepido/freddo, "da seguire: esigente", "risentirlo il ...".
+
+La scheda aperta resta nell'indirizzo (`#vendita`). Dopo il salvataggio di
+una fase, un ruolo o una data dalla sua pagina si torna su `#processo`. Nel processo le quattro parti (chi ci lavora, date chiave,
+fasi, cosa si consegna) stanno su una linea del tempo, con cerchietto,
+icona e colore propri. Partono chiuse, con un riassunto; aperte mostrano in
+cima cosa sono. Il browser ricorda quali sono aperte. Mini guide: vedi AGENTS.md,
+"Mini guida ovunque".
+
+Progetto completo in `design/processi-servizi.md`. Un tipo di commessa con
+**ruoli** e' il processo di un servizio (`work_order_types.service_id`):
+- modello: ruoli (`work_order_type_roles`, chi "di solito", dalla squadra
+  del cliente), date chiave (`work_order_type_milestones`, con l'email al
+  cliente), fasi con fase del processo, tipo (`lavoro`, `approvazione`,
+  `attesa del cliente`, `data chiave`), ruolo, chiusura automatica dal
+  preventivo (`completes_on`), giro se rimandata (`reject_step_id`),
+  facoltativa o ripetibile; cosa si consegna (`work_order_type_deliverables`);
+- progetto (la commessa): parte da `contatto` se il processo ha fasi
+  commerciali, squadra (`work_order_members`), date chiave
+  (`work_order_milestones`), cosa si consegna, modifiche del cliente
+  (`work_order_change_requests`, comprese o extra), `quote_id`.
+
+`App\Work\ProcessService` fa il lavoro: squadra proposta, fasi a chi ha il
+ruolo (e di nuovo quando la squadra cambia), approva/rimanda (un giro in
+piu' della fase da rifare), fasi facoltative saltate, data chiave salvata
+(appuntamento, email al cliente una volta sola, fase chiusa), eventi del
+preventivo (`QuoteService::advance()`/`accept()`). Scheda:
+`ProcessOverviewService`. Pagine figlie: `/tipi-commessa/{ruoli,date,consegne}`,
+`/commesse/{squadra,date,consegne,modifiche}` (prima di `/:id` nelle rotte);
+azioni `/attivita/:id/{approva,rimanda,salta}`, `/commesse/:id/{preventivo,non-acquisita}`.
+I campi che scelgono ruolo/fase/data dello stesso processo sono menu fatti
+dal tool (`AbstractProcessChildTool::dynamicOptions()`).
+
+### Assistente (pacchetto `assistant`, fase 2, 18/11/2026)
+
+L'assistente parla per primo: senza cruscotto la home e' la giornata di
+chi entra (`ShowAssistantTool`, anche dal prompt "assistente" e su
+`/assistente`). `App\Assistant\AssistantService::collect()` calcola sul
+momento, dai progetti, cosa tocca a ciascuno: approvazioni che aspettano,
+"tocca a te", date chiave da fissare, ruoli scoperti, date in arrivo (con
+cosa preparare, es. le domande del briefing), lavoro non pronto per una
+data, contatti senza incontro, preventivi senza risposta, clienti che non
+rispondono, progetti fermi, idea per il portfolio dopo la consegna,
+attivita' in ritardo (al massimo 5 + "altre N").
+
+**Home: i colleghi digitali** (24/11/2026). Senza cruscotto la home resta
+la ricerca al centro; sotto (componente `assistant-colleagues`, marcato
+`homeBelow`: hero.js lo monta sotto la casella e lo nasconde alla prima
+richiesta) quattro colleghi, `AssistantRules::COLLEAGUES`: Nora (progetti),
+Teo (clienti), Ada (preventivi e contatti), Leo (periodi forti e idee).
+Ognuno mostra le sue 3 cose piu' urgenti (`AssistantRules::URGENCY`: oggi,
+presto, importante, idea) con l'etichetta di tempo ("Da 8 giorni",
+"Natale tra 31 giorni") e i pulsanti; il riassunto va nel saluto. Nomi,
+ruoli e colori per progetto: `'assistant' => ['colleagues' => ['projects'
+=> ['name' => ...]]]` in config. Sul telefono le schede scorrono di lato,
+una per volta, con solo la cosa piu' urgente ("+N" per il resto).
+Uno stesso (configuratore, pacchetto `provisioning`) resta con la sola
+ricerca, anche con l'assistente installato.
+
+**Pagina degli agenti** (`/assistente`, anche `/agenti` dove non c'e' il
+pacchetto dimostrativo `agents` di Assilevi): in alto i quattro agenti con
+volto e numero di cose, sotto quello scelto (`?agente=projects`, di
+default il piu' urgente) che saluta chi e' collegato e dice la prima cosa,
+le sue cose per urgenza con i pulsanti, "Chiedi a..." (manda al prompt),
+"Cosa ho fatto per te" (`assistant_actions` delle sue regole e gli avvisi
+dei suoi tipi, 14 giorni) e "Come lavoro" (le sue regole: ti avvisa,
+chiede conferma, fa da solo, spenta). `AssistantService::agentsFor()`. La
+vecchia giornata a sezioni: `/assistente?vista=giornata`. Le regole
+(`/assistente/regole`, raggruppate per agente con l'ancora `#projects`...)
+e i periodi forti chiedono il permesso `assistant.manage` ("Configurare gli
+agenti": Amministratore, Direzione, Team leader).
+
+**Avatar** (`public/js/avatars.js`): `aiAvatar(key)` per gli agenti (volto
+disegnato, anello nel loro colore, scintilla: si vede che sono agenti IA),
+`personAvatar()` per le persone: la foto caricata da "Il mio profilo"
+(`/profilo/foto`, `App\Service\UserAvatarService`: quadrata 256 px in
+`public/uploads/avatars`, `users.avatar_path`) o le iniziali. Usata nel menu
+profilo, nella pagina del profilo e nella squadra dei progetti.
+
+Le regole sono in `AssistantRules` (codice); `assistant_rules` tiene solo
+accesa/spenta, giorni e autonomia (`/assistente/regole`, `users.manage`).
+Autonomia dei solleciti al cliente: solo avviso / chiede conferma (il
+messaggio e' preparato, `/assistente/azioni/:id`: si rilegge e "Manda al
+cliente") / in automatico (lo manda e lo dice). Il job `run_assistant`
+(ogni ora, 7-20) manda gli avvisi una volta per episodio
+(`assistant_actions.dedupe_key`) e prepara o manda i solleciti. I testi
+li scrive `AssistantWriter`: con l'IA configurata su misura del cliente
+(settore, note, strategia, ultimi contatti), altrimenti un testo pronto.
+Pacchetto di sistema: niente permessi propri, ognuno vede le sue cose.
+
+### Conoscenza del cliente e piani dal prompt (fase 3, 18/11/2026)
+
+Pacchetto `client_knowledge`: `customer_profiles` (un profilo per cliente:
+storia, prodotti, mission, pubblico, concorrenti, stile che piace e da
+evitare, tono, dove si usa il marchio, stagionalita' ed eventi) e
+`customer_notes` (diario: idee, decisioni, preferenze, briefing; con
+`on_roadmap` + `roadmap_status` e' la **roadmap interna**, condivisa con la
+squadra). `App\Knowledge\KnowledgeService`: il profilo si allunga con le
+novita' datate (mai cancella), le note avvisano i menzionati
+(`mentioned_user_ids`) e, se in roadmap, la squadra del cliente e del
+progetto (avviso `mention`). Scheda cliente e pagina del progetto hanno la
+sezione `customer-knowledge`; l'assistente usa il profilo per scrivere.
+
+**Briefing guidato**: fase di tipo `briefing` (la checklist sono le
+domande), `/attivita/:id/briefing`. Le risposte vanno nel diario e nel
+profilo (con l'IA campo per campo, senza IA per parole chiave delle
+domande, `QUESTION_MAP`).
+
+**Piani dal prompt**: lo strumento `plan_actions` (l'IA scrive tutti i
+passi di una richiesta che chiede di fare piu' cose: `add_note`,
+`log_contact`, `notify`, `add_to_team`, `create_task`).
+`App\Assistant\ActionPlanService` risolve clienti, progetti e colleghi
+(`@nome.cognome`, anche attaccato o solo il nome se unico), mostra il
+piano (`action-plan`) e lo esegue solo alla conferma
+(`/prompt/piano/:id/esegui`), dal piano tenuto in sessione. Solo azioni
+interne: niente parte verso il cliente.
+
+### Documenti: il Drive dal gestionale (fase 4, 18/11/2026)
+
+Pacchetto `documents`: `document_folders` e `documents` sono le
+informazioni (nome, cartella, cliente, progetto, descrizione, parole
+chiave, link) di cartelle e file che stanno davvero sul Drive.
+`App\Documents\DocumentService` lavora sopra `DocumentStoreInterface`
+(implementata da `GoogleDriveConnector`, ora con lo scope `drive`
+completo: un collegamento vecchio in sola lettura continua a leggere,
+`canWrite()` falso, e va ricollegato per scrivere):
+- dal gestionale al Drive: cartella del cliente (quella in
+  `customers.drive_folder_url` se il progetto ha il campo, altrimenti per
+  nome in cima, altrimenti la crea), cartella del progetto con le
+  sottocartelle del processo (`work_order_types.folder_template`, una per
+  riga; nascono da sole alla creazione del progetto se il Drive scrive),
+  cartelle nuove, caricamento (a riprese, anche file grandi), rinomina,
+  cestino. Prima il Drive, poi il database: se il Drive dice di no, qui
+  non cambia niente;
+- dal Drive al gestionale (`sync()`, job `sync_documents` ogni 15
+  minuti): il primo giro legge tutto l'albero, poi le modifiche del Drive
+  (`documents.page_token` in settings). Nuovi, rinominati, spostati, nel
+  cestino o ripristinati: si aggiornano, le righe non si cancellano mai
+  (`trashed_at`). Cliente e progetto passano dalla cartella ai file;
+- **niente si cancella per sempre**: "Elimina" mette nel cestino del
+  Drive (30 giorni per recuperare);
+- ricerca sulle informazioni salvate (`search_documents` nel prompt,
+  `/documenti/cerca`), rispettando `CustomerScope` dove c'e'.
+
+Pagine: `/documenti` (cartelle e file, crea, carica, rinomina, cestino,
+"leggi le novita'"), `/documenti/file/:id` (descrizione e parole chiave;
+il nome cambia anche sul Drive), sezione "Documenti" nella pagina del
+progetto e nella scheda del cliente.
+
+### Qualificazione, follow-up e periodi forti (fase 5, 18/11/2026)
+
+Clienti: `commercial_stage` (potenziale, in trattativa, cliente, ex
+cliente; segue il preventivo: collegato = in trattativa, accettato =
+cliente), `temperature` (caldo, tiepido, freddo), `temperament` (com'e' da
+seguire), `next_contact_date` + `next_contact_note`.
+`App\Customers\CustomerFollowUpService`: propone la data dalla temperatura
+(regole `contact_hot/warm/cold`, 3/10/30 giorni), la sposta dopo ogni
+contatto (form, prompt, email dell'assistente) al "prossimo passo" o di un
+altro giro, "Rimanda". Chi segue: `account_user_id`, poi il referente,
+poi il primo della squadra. Fornitori ed ex clienti non si seguono.
+
+Nuove regole dell'assistente: `contact_due` (da risentire oggi, con il
+messaggio da confermare), `customer_silent` (nessun contatto da N giorni,
+la meta' per i clienti chiave), `seasonal` (periodi forti in anticipo,
+per i clienti che ne parlano nel profilo, nei prodotti o nel settore:
+`seasonal_events`, `App\Assistant\SeasonalCalendar`, 11 periodi di
+partenza modificabili da `/assistente/stagioni`, Pasqua calcolata),
+`service_idea` (il servizio che hanno piu' spesso i clienti con gli stessi
+servizi, almeno 2). Un'email mandata a un cliente dall'assistente diventa
+un contatto registrato.
+
+### Avvisi (pacchetto `notifications`)
+
+`App\Notifications\NotificationService::notify()`: nel gestionale
+(campanella in `hero.js`, `/avvisi`) e/o per email secondo le preferenze
+di ciascuno (`/avvisi/preferenze`, default in `NotificationTypes`). Chi fa
+l'azione non riceve l'avviso; lo stesso avviso non letto non si ripete. Le
+email partono raggruppate per persona dal job `send_notification_emails`
+(ogni 5 minuti). `MailService` manda via SMTP con PHPMailer (copiato in
+`lib/PHPMailer`, come in core): server e credenziali in `'mail'` di
+`config/autoload/secrets.php` (esempio in `secrets.php.dist`); senza host
+ricade su `mail()`. Prova: `php bin/test-email.php indirizzo`. Gli errori
+finiscono in `data/logs/mail.log`.
+
 ## Calendario e Google Calendar
 
 Terza fase Brains at Work.

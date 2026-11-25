@@ -15,6 +15,11 @@ const FACES = {
     conciliaweb:    { bg: '#e9f0ef', skin: '#e0b08a', hair: '#17304a', style: 'short',  shirt: '#1f5566', glasses: false },
     administration: { bg: '#eeecf3', skin: '#8d5a3b', hair: '#18120f', style: 'afro',   shirt: '#5b5480', glasses: false },
     reporter:       { bg: '#f6f0df', skin: '#f5d3b3', hair: '#c9a23a', style: 'long',   shirt: '#12333f', glasses: true },
+    // Gli agenti dell'assistente (AssistantRules::COLLEAGUES): Nora, Teo, Ada, Leo.
+    projects:       { bg: '#e9f0ef', skin: '#f2c9a5', hair: '#3b2a20', style: 'bob',    shirt: '#1f5566', glasses: false },
+    customers:      { bg: '#eaf1ea', skin: '#c68e63', hair: '#2a2420', style: 'curly',  shirt: '#4f7b5c', glasses: false },
+    sales:          { bg: '#eeecf3', skin: '#f5d3b3', hair: '#8a4b2a', style: 'bun',    shirt: '#8b83ad', glasses: true },
+    ideas:          { bg: '#f6f0df', skin: '#e0b08a', hair: '#1f1a17', style: 'short',  shirt: '#b99333', glasses: false },
 };
 
 const FALLBACK = { bg: '#e5e3dd', skin: '#e0b08a', hair: '#3b2a20', style: 'short', shirt: '#12333f', glasses: false };
@@ -69,4 +74,47 @@ export function agentAvatar(code, size = 40) {
     svg.appendChild(group);
 
     return svg;
+}
+
+const SPARKLE = 'M12 2l2.2 6.3L20.5 10l-6.3 2.2L12 18.5l-2.2-6.3L3.5 10l6.3-1.7z';
+
+/**
+ * Un agente IA: il suo volto disegnato, con l'anello nel suo colore e la
+ * scintilla in basso - si capisce subito che non e' una persona.
+ */
+export function aiAvatar(code, size = 44, color = null) {
+    const wrap = document.createElement('span');
+    wrap.className = 'ai-avatar';
+    wrap.style.width = `${size}px`;
+    wrap.style.height = `${size}px`;
+    if (color) wrap.style.setProperty('--ai-color', color);
+    wrap.setAttribute('title', 'Agente IA');
+    const ring = document.createElement('span');
+    ring.className = 'ai-avatar__ring';
+    const badge = document.createElement('span');
+    badge.className = 'ai-avatar__badge';
+    const svg = node('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' });
+    svg.appendChild(node('path', { d: SPARKLE, fill: '#e5c979' }));
+    badge.appendChild(svg);
+    wrap.append(ring, agentAvatar(code, size), badge);
+    return wrap;
+}
+
+/** Una persona: la sua foto, altrimenti le iniziali su un colore pieno. */
+export function personAvatar(person, size = 32) {
+    const wrap = document.createElement('span');
+    wrap.className = 'person-avatar';
+    wrap.style.width = `${size}px`;
+    wrap.style.height = `${size}px`;
+    wrap.style.fontSize = `${Math.round(size * 0.38)}px`;
+    if (person && person.avatar) {
+        const img = document.createElement('img');
+        img.src = person.avatar;
+        img.alt = '';
+        wrap.appendChild(img);
+    } else {
+        wrap.textContent = (person && person.initials) || '';
+    }
+    if (person && person.name) wrap.title = person.name;
+    return wrap;
 }

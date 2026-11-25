@@ -552,6 +552,31 @@
     display: block;
 }
 
+.hero__icon-btn--badge {
+    position: relative;
+    text-decoration: none;
+}
+
+.hero__badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--color-danger);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+}
+
+.hero__badge[hidden] {
+    display: none;
+}
+
 .hero__icon-btn--alert {
     background: var(--color-danger-bg);
     border-color: rgba(162, 59, 44, 0.35);
@@ -953,4 +978,14 @@
 
 .hero-wrap--top .app-credit {
     margin-top: 10px;
+}
+
+/* I colleghi digitali sotto la ricerca, solo sulla home centrata (hero.js belowHero). */
+.home-below {
+    width: 100%;
+    margin: 28px auto 0;
+}
+
+.component-stack.has-history .home-below {
+    display: none;
 }

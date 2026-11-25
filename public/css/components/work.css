@@ -251,6 +251,7 @@
 .wk-chip--danger { background: var(--color-danger-bg); color: #8a2f22; }
 .wk-chip--warning { background: #f6f0df; color: #6b5212; }
 .wk-chip--success { background: #eaf1ea; color: #3d6b4f; }
+.wk-chip--info { background: #e7eef0; color: var(--color-teal-dark); }
 
 .wk-who {
     flex-shrink: 0;
@@ -430,6 +431,31 @@
     font-size: 13.5px;
 }
 
+.wk-checklist__item {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.wk-checklist__item:hover {
+    background: rgba(18, 51, 63, 0.05);
+}
+
+.wk-checklist__item:focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 1px;
+}
+
 .wk-checklist li.is-done {
     color: rgba(18, 51, 63, 0.5);
     text-decoration: line-through;
@@ -553,4 +579,785 @@
         margin-left: 0;
         width: 100%;
     }
+}
+
+/* Processi: fasi raggruppate, date chiave, squadra (ProcessOverviewService). */
+.wk-phases { display: flex; flex-direction: column; gap: 18px; }
+.wk-phase__head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.wk-phase__title { margin: 0; font-family: var(--font-heading); font-size: 14px; font-weight: 600; color: var(--color-petrol); text-transform: uppercase; letter-spacing: 0.04em; }
+.wk-phase__count { font-size: 12px; color: var(--color-teal-dark); }
+.wk-phase.is-done .wk-phase__title { color: var(--color-moss); }
+.wk-task__body .acc-profile__actions { margin-top: 8px; justify-content: flex-start; }
+.wk-milestones { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.wk-milestone { display: flex; flex-direction: column; gap: 6px; padding: 12px; border: var(--hairline); border-radius: var(--radius-md); color: inherit; text-decoration: none; background: var(--color-panel); }
+.wk-milestone:hover { border-color: rgba(18, 51, 63, 0.25); }
+.wk-milestone.is-set { background: rgba(229, 201, 121, 0.16); }
+.wk-milestone.is-past { opacity: 0.7; }
+.wk-milestone__label { font-weight: 600; }
+.wk-milestone__when, .wk-milestone__email { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-teal-dark); }
+.wk-milestone .btn { align-self: flex-start; }
+.wk-team { display: flex; flex-wrap: wrap; gap: 10px; }
+.wk-member { display: inline-flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px; border: var(--hairline); border-radius: var(--radius-md); color: inherit; text-decoration: none; }
+.wk-member:hover { border-color: rgba(18, 51, 63, 0.25); }
+.wk-member__text { display: flex; flex-direction: column; }
+.wk-member__name { font-weight: 600; font-size: 14px; }
+.wk-member__role { font-size: 12px; color: var(--color-teal-dark); }
+.wk-member--missing { border-style: dashed; border-color: var(--color-danger); }
+.wk-member--missing .wk-member__name { color: var(--color-danger); }
+.wk-who--empty { background: var(--color-danger-bg); color: var(--color-danger); }
+
+/* --- Attivita': "Da fare" (task-work) ----------------------------------
+   Una lista sola: spunta a sinistra, testo a destra, sotto la risposta
+   (fasi guidate). */
+.tw-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.tw-head .card__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+.tw-progress {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(31, 85, 102, 0.1);
+    color: var(--color-teal-dark);
+}
+
+.tw-progress:empty {
+    display: none;
+}
+
+.tw-progress.is-complete {
+    background: rgba(79, 123, 92, 0.15);
+    color: var(--color-moss);
+}
+
+.tw-hint {
+    margin: 4px 0 6px;
+    font-size: 14px;
+    color: var(--color-petrol);
+}
+
+.tw-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.tw-item {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 12px 0;
+    border-top: 1px solid rgba(18, 51, 63, 0.08);
+}
+
+.tw-item:first-child {
+    border-top: none;
+}
+
+.tw-check,
+.tw-bullet {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+}
+
+.tw-check {
+    appearance: none;
+    border: 2px solid rgba(18, 51, 63, 0.25);
+    background: var(--color-panel);
+    color: transparent;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.tw-check:hover:not(:disabled) {
+    border-color: var(--color-moss);
+}
+
+.tw-check:focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 2px;
+}
+
+.tw-check:disabled {
+    cursor: default;
+}
+
+.tw-check .icon svg,
+.tw-bullet .icon svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+}
+
+.tw-item.is-done .tw-check {
+    background: var(--color-moss);
+    border-color: var(--color-moss);
+    color: #fff;
+}
+
+.tw-bullet {
+    background: rgba(185, 147, 51, 0.14);
+    color: var(--color-brass);
+}
+
+.tw-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.tw-text {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--color-petrol);
+    line-height: 1.4;
+    padding-top: 3px;
+    cursor: pointer;
+}
+
+.tw-item--extra .tw-text {
+    cursor: default;
+}
+
+.tw-item.is-done .tw-text {
+    color: rgba(18, 51, 63, 0.55);
+    text-decoration: line-through;
+    text-decoration-color: rgba(18, 51, 63, 0.3);
+}
+
+.tw-answer {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid rgba(18, 51, 63, 0.15);
+    border-radius: var(--radius-md);
+    background: #fff;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-petrol);
+    resize: vertical;
+    overflow: hidden;
+}
+
+.tw-answer::placeholder {
+    color: rgba(18, 51, 63, 0.4);
+}
+
+.tw-answer:focus {
+    outline: none;
+    border-color: var(--color-teal);
+    box-shadow: 0 0 0 3px rgba(95, 138, 134, 0.18);
+}
+
+.tw-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(18, 51, 63, 0.08);
+}
+
+.tw-status {
+    margin-right: auto;
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.tw-status--ok {
+    color: var(--color-moss);
+}
+
+.tw-status--error {
+    color: var(--color-danger);
+}
+
+.tw-status--auto {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tw-status--auto .icon svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+}
+
+@media (max-width: 720px) {
+    .tw-item {
+        grid-template-columns: 26px minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .tw-footer .btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tw-check {
+        transition: none;
+    }
+}
+
+/* Preventivo: titolo con la guida, totale in testa. */
+.qs-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.qs-total {
+    font-weight: 600;
+    color: var(--color-petrol);
+}
+
+.qs-fixes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+/* Progetto: titoli dei riquadri con contatore e guida. */
+.wo-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+@media (max-width: 720px) {
+    /* Fasi del progetto: ore, spese e pulsanti sotto il titolo. */
+    .acc-section__head:has(.wk-hours) {
+        flex-wrap: wrap;
+        row-gap: 8px;
+    }
+
+    .acc-section__head .wk-hours {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
+
+/* "Comporre la squadra" (task-work con team): ogni ruolo con le persone. */
+.tw-team {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.tw-role {
+    padding: 12px 0;
+    border-top: 1px solid rgba(18, 51, 63, 0.08);
+    display: grid;
+    grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+    gap: 8px 16px;
+    align-items: center;
+}
+
+.tw-role:first-child {
+    border-top: none;
+}
+
+.tw-role--missing {
+    background: linear-gradient(90deg, rgba(185, 147, 51, 0.08), transparent 60%);
+    margin: 0 -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 10px;
+}
+
+.tw-role__head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tw-role__label {
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--color-petrol);
+}
+
+.tw-role__usual {
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.55);
+}
+
+.tw-people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tw-person {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px 4px 4px;
+    border-radius: 999px;
+    background: rgba(139, 131, 173, 0.12);
+    font-size: 13.5px;
+    font-weight: 500;
+}
+
+.tw-person__remove {
+    appearance: none;
+    border: none;
+    background: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(18, 51, 63, 0.5);
+    cursor: pointer;
+}
+
+.tw-person__remove:hover {
+    background: rgba(162, 59, 44, 0.12);
+    color: var(--color-danger);
+}
+
+.tw-person__remove .icon svg {
+    width: 10px;
+    height: 10px;
+    fill: currentColor;
+}
+
+.tw-pick {
+    appearance: none;
+    height: 32px;
+    max-width: 200px;
+    padding: 0 28px 0 12px;
+    border: 1px dashed rgba(18, 51, 63, 0.3);
+    border-radius: 999px;
+    background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath fill='%2312333f' d='M0 0h10L5 6z'/%3E%3C/svg%3E") no-repeat right 11px center / 8px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-petrol);
+    cursor: pointer;
+}
+
+.tw-pick:hover,
+.tw-pick:focus {
+    border-style: solid;
+    border-color: var(--color-teal);
+    outline: none;
+}
+
+.tw-pick--empty {
+    border-color: var(--color-brass);
+    color: #7d6220;
+}
+
+@media (max-width: 720px) {
+    .tw-role {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Fasi del progetto: "Nascondi le fatte". */
+.wo-steps-tools {
+    display: flex;
+    justify-content: flex-end;
+    margin: -4px 0 10px;
+}
+
+.wo-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.7);
+    cursor: pointer;
+    user-select: none;
+}
+
+.wo-switch__input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.wo-switch__track {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    border-radius: 999px;
+    background: rgba(18, 51, 63, 0.2);
+    transition: background 0.15s;
+}
+
+.wo-switch__track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.15s;
+}
+
+.wo-switch__input:checked + .wo-switch__track {
+    background: var(--color-teal-dark);
+}
+
+.wo-switch__input:checked + .wo-switch__track::after {
+    transform: translateX(14px);
+}
+
+.wo-switch__input:focus-visible + .wo-switch__track {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 2px;
+}
+
+.wk-phase__done {
+    margin: 0 10px 0 10px;
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-moss);
+}
+
+.wk-phase__done .icon svg {
+    width: 11px;
+    height: 11px;
+    fill: currentColor;
+}
+
+.wo-hide-done .wk-task--done {
+    display: none;
+}
+
+/* Nascoste le fatte: i gruppi tutti fatti non si vedono affatto. */
+.wo-hide-done .wk-phase.is-done {
+    display: none;
+}
+
+.wo-steps-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+}
+
+/* "Da fare": un form, le consegne o gli appuntamenti dentro la fase. */
+.tw-embed {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.tw-embed > .card.form,
+.tw-embed > section {
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: none;
+    border: 1px solid rgba(18, 51, 63, 0.1);
+}
+
+.tw-line-desc {
+    font-size: 12.5px;
+    color: rgba(18, 51, 63, 0.6);
+}
+
+.tw-item > .cal-row__dot {
+    margin: 8px 9px 0;
+}
+
+.tw-footer .acc-profile__actions {
+    margin: 0;
+}
+
+/* Data chiave fissata: cosa e' stato fatto, in alto nella fase. */
+.tw-done {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: rgba(79, 123, 92, 0.08);
+    border-left: 3px solid var(--color-moss);
+}
+
+.tw-done__row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.tw-done__icon {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-moss);
+    color: #fff;
+}
+
+.tw-done__icon--mail {
+    background: var(--color-teal-dark);
+}
+
+.tw-done__icon .icon svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+}
+
+.tw-done__title {
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--color-petrol);
+}
+
+.tw-done__mail {
+    min-width: 0;
+    flex: 1;
+}
+
+.tw-done__details {
+    margin-top: 6px;
+    font-size: 13px;
+}
+
+.tw-done__details summary {
+    cursor: pointer;
+    color: var(--color-teal-dark);
+    font-weight: 500;
+}
+
+.tw-done__body {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #fff;
+    white-space: pre-line;
+    line-height: 1.5;
+}
+
+/* Spazio di lavoro della fase: esito, file, note sulle voci, approvazione. */
+.tw-block {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(18, 51, 63, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tw-block__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.tw-block__title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-petrol);
+}
+
+.tw-block__title .icon svg {
+    width: 13px;
+    height: 13px;
+    fill: var(--color-teal-dark);
+}
+
+.tw-block__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.tw-file-input {
+    display: none;
+}
+
+.tw-files {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tw-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(18, 51, 63, 0.1);
+    background: #fff;
+    color: inherit;
+    text-decoration: none;
+}
+
+.tw-file:hover {
+    border-color: var(--color-teal);
+}
+
+.tw-file__icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(31, 85, 102, 0.1);
+    color: var(--color-teal-dark);
+    flex: 0 0 auto;
+}
+
+.tw-file__icon .icon svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+}
+
+.tw-file__text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.tw-file__name {
+    font-weight: 500;
+    font-size: 13.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tw-note-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.tw-note-open {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 0;
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font: inherit;
+    font-size: 12.5px;
+    color: var(--color-teal-dark);
+    cursor: pointer;
+}
+
+.tw-note-open .icon svg {
+    width: 10px;
+    height: 10px;
+    fill: currentColor;
+}
+
+.tw-note {
+    min-height: 38px;
+    font-size: 13px;
+    background: #fbfaf6;
+}
+
+.tw-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tw-field__label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: rgba(18, 51, 63, 0.7);
+}
+
+.tw-field .field__input {
+    max-width: 220px;
+}
+
+/* Spunta di una fase da fare nella sua pagina: una freccia, non la spunta. */
+.wk-check--open {
+    border-style: dashed;
+    color: var(--color-teal-dark);
+}
+
+.wk-check--open .icon svg {
+    opacity: 1;
+}
+
+/* "Chi la fa" nell'intestazione dell'attivita'. */
+.tw-assign-wrap {
+    gap: 6px;
+}
+
+.tw-assign {
+    appearance: none;
+    border: 1px dashed rgba(18, 51, 63, 0.25);
+    border-radius: 999px;
+    padding: 2px 24px 2px 10px;
+    background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath fill='%2312333f' d='M0 0h10L5 6z'/%3E%3C/svg%3E") no-repeat right 9px center / 7px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-petrol);
+    cursor: pointer;
+}
+
+.tw-assign:hover,
+.tw-assign:focus {
+    border-style: solid;
+    border-color: var(--color-teal);
+    outline: none;
 }

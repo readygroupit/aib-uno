@@ -57,6 +57,21 @@ if (in_array('editorial', $installed, true) && in_array('connectors', $installed
     $scheduledJobs->ensureRecurring('publish_social_posts', 5);
 }
 
+if (in_array('notifications', $installed, true)) {
+    $registry->register('send_notification_emails', \App\Job\Handler\SendNotificationEmailsHandler::class);
+    $scheduledJobs->ensureRecurring('send_notification_emails', 5);
+}
+
+if (in_array('documents', $installed, true) && in_array('connectors', $installed, true)) {
+    $registry->register('sync_documents', \App\Job\Handler\SyncDocumentsHandler::class);
+    $scheduledJobs->ensureRecurring('sync_documents', 15);
+}
+
+if (in_array('assistant', $installed, true)) {
+    $registry->register('run_assistant', \App\Job\Handler\RunAssistantHandler::class);
+    $scheduledJobs->ensureRecurring('run_assistant', 60);
+}
+
 // registrare qui gli altri handler reali del progetto, es.:
 // $registry->register('send_weekly_report', \App\Job\Handler\SendWeeklyReportHandler::class);
 

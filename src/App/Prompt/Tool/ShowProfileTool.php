@@ -142,6 +142,8 @@ final class ShowProfileTool implements PromptToolInterface
 
         return $this->container->get(ProfileHeaderComponent::class)->toData([
             'initials' => $initials,
+            'avatarUrl' => \App\Service\UserAvatarService::url($user->avatarPath),
+            'avatarAction' => '/profilo/foto',
             'name' => trim("{$user->firstName} {$user->lastName}") ?: $user->username,
             'roleLabel' => $roleLabel,
             'email' => (string) $user->email,

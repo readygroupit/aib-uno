@@ -17,7 +17,7 @@ final class WorkOrderRepository extends AbstractRepository
         $rows = $this->db->fetchAll(
             "SELECT * FROM work_orders
              WHERE status != 0
-               AND (stage IN ('da avviare', 'in corso', 'in attesa del cliente', 'in pausa')
+               AND (stage IN ('contatto', 'preventivo', 'da avviare', 'in corso', 'in attesa del cliente', 'in pausa')
                     OR (stage = 'consegnata' AND (delivered_at IS NULL OR delivered_at >= :since)))
              ORDER BY FIELD(priority, 'alta', 'normale', 'bassa'), due_date IS NULL, due_date, id",
             ['since' => $deliveredSince]
@@ -26,12 +26,19 @@ final class WorkOrderRepository extends AbstractRepository
         return array_map(static fn (array $row) => WorkOrder::fromArray($row), $rows);
     }
 
+    public function findByQuote(int $quoteId): ?WorkOrder
+    {
+        $rows = $this->findAll(['quote_id' => $quoteId], 'id');
+
+        return $rows[0] ?? null;
+    }
+
     /** @return WorkOrder[] */
     public function findByCustomer(int $customerId): array
     {
         return $this->findAll(
             ['customer_id' => $customerId],
-            "FIELD(stage, 'in attesa del cliente', 'in corso', 'da avviare', 'in pausa', 'consegnata', 'annullata'), due_date"
+            "FIELD(stage, 'in attesa del cliente', 'in corso', 'da avviare', 'preventivo', 'contatto', 'in pausa', 'consegnata', 'non acquisita', 'annullata'), due_date"
         );
     }
 

@@ -1,8 +1,11 @@
-import { registerComponent } from './registry.js';
+import { registerComponent, renderComponent } from './registry.js';
+import { toast, reloadCurrentScreen } from '../accounts-ui.js';
+import { guideParts } from '../guide.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
 import { refreshCurrentEntry } from './hero.js';
-import { openModal } from '../modal.js';
+import { openModal, confirmModal } from '../modal.js';
+import { inDrawer, handleDrawerResponse } from '../drawer.js';
 
 // Submit via fetch, non piu' nativo: un <form> vero che si manda da solo
 // causava un giro pagina COMPLETO (il browser naviga per davvero), che
@@ -412,9 +415,14 @@ function collectFieldErrors(sections) {
 // questo progetto non arriva qui: FormComponent lo scarta prima).
 function buildBox(box) {
     const children = [];
+    const guide = guideParts(box.guide, box.title || '');
     if (box.title) {
-        children.push(el('h3', { className: 'form-box__title' }, [box.title]));
+        children.push(el('h3', { className: 'form-box__title' }, [box.title, guide.button]));
+    } else if (guide.button) {
+        children.push(el('div', { className: 'form-box__guide' }, [guide.button]));
     }
+    // Cosa c'e' nel riquadro, in una riga sotto il titolo.
+    if (box.description) children.push(el('p', { className: 'form-box__desc' }, [box.description]));
     children.push(el('div', { className: 'form-box__grid' }, box.fields.map(buildField)));
 
     return el('div', { className: 'form-box form-box--' + (box.area || 'main') }, children);
@@ -440,7 +448,7 @@ function buildSectionContent(section) {
 // Tutte le sezioni restano nel DOM (i loro campi devono comunque finire
 // nella FormData all'invio, a prescindere da quale tab e' in vista) -
 // cambiare tab nasconde/mostra, non smonta/rimonta.
-function buildSections(sections) {
+function buildSections(sections, external = false) {
     // Se il salvataggio precedente ha lasciato un errore su un campo di
     // una tab diversa da quella iniziale, l'evidenziazione (.field--error)
     // sarebbe invisibile perche' la sua sezione resta display:none - si
@@ -455,7 +463,23 @@ function buildSections(sections) {
     });
 
     if (sections.length <= 1) {
-        return { sectionsEl: wrap, tabsEl: null, showSectionOf: () => {} };
+        return { sectionsEl: wrap, tabsEl: null, showSectionOf: () => {}, showSection: () => {}, initialIndex };
+    }
+
+    // Le schede le disegna la pagina (componente 'page-tabs'): qui solo
+    // mostra/nascondi, e si avvisa la pagina quando serve un'altra sezione
+    // (es. l'errore e' su un campo di "Vendita" mentre si guarda "Il servizio").
+    if (external) {
+        const show = (index) => contents.forEach((content, j) => {
+            content.style.display = j === index ? '' : 'none';
+        });
+        const showOf = (node) => {
+            const index = contents.findIndex((content) => content.contains(node));
+            if (index === -1) return;
+            show(index);
+            wrap.dispatchEvent(new CustomEvent('form:section', { bubbles: true, detail: { index } }));
+        };
+        return { sectionsEl: wrap, tabsEl: null, showSectionOf: showOf, showSection: show, initialIndex };
     }
 
     const tabButtons = sections.map((section, i) =>
@@ -484,7 +508,7 @@ function buildSections(sections) {
         if (index !== -1) showSection(index);
     };
 
-    return { sectionsEl: wrap, tabsEl, showSectionOf };
+    return { sectionsEl: wrap, tabsEl, showSectionOf, showSection, initialIndex };
 }
 
 // --- Controllo prima dell'invio ---------------------------------------
@@ -593,7 +617,7 @@ function buildContext(context, form) {
 }
 
 function renderForm(data) {
-    const { sectionsEl, tabsEl, showSectionOf } = buildSections(data.sections || []);
+    const { sectionsEl, tabsEl, showSectionOf, showSection, initialIndex } = buildSections(data.sections || [], Boolean(data.tabsExternal));
     const fieldErrors = collectFieldErrors(data.sections || []);
     const hasRequired = (data.sections || []).some((s) => (s.boxes || []).some((b) => (b.fields || []).some((f) => f.required)));
 
@@ -688,9 +712,16 @@ function renderForm(data) {
         }
 
         const confirmMessage = submitter.getAttribute('data-confirm');
-        if (confirmMessage && !window.confirm(confirmMessage)) {
+        if (confirmMessage && !submitter.dataset.confirmed) {
+            // La conferma nel modale del gestionale: se si', si rimanda il submit.
+            confirmModal({ text: confirmMessage, confirmLabel: submitter.textContent.trim() || 'Conferma' }).then((ok) => {
+                if (!ok) return;
+                submitter.dataset.confirmed = '1';
+                form.requestSubmit(submitter);
+            });
             return;
         }
+        delete submitter.dataset.confirmed;
 
         const targetAction = submitter.getAttribute('formaction') || data.action;
         submitter.disabled = true;
@@ -702,6 +733,30 @@ function renderForm(data) {
         })
             .then((res) => res.json())
             .then((responseData) => {
+                // Form dentro una pagina (es. la data nella fase): si salva e si
+                // resta qui; con errori il form si ridisegna al suo posto.
+                if (data.reloadAfterSave && !inDrawer(form)) {
+                    submitter.disabled = false;
+                    const comps = responseData.components || [];
+                    const withErrors = comps.find((c) => c.type === 'form' && (c.messageType === 'error'
+                        || (c.sections || []).some((s) => (s.boxes || []).some((b) => (b.fields || []).some((f) => f.error)))));
+                    if (withErrors) {
+                        const fresh = renderComponent({ ...withErrors, title: data.title, reloadAfterSave: true, collapsed: false, secondaryActions: [] });
+                        const holder = form.closest('.card');
+                        if (fresh && holder) holder.replaceWith(fresh);
+                        return;
+                    }
+                    const notice = comps.find((c) => c.type === 'notice');
+                    toast((notice && notice.text) || responseData.message || 'Salvato.', notice && notice.tone === 'error' ? 'error' : 'success');
+                    reloadCurrentScreen();
+                    return;
+                }
+                // Nel pannello laterale: si chiude e si aggiorna la pagina sotto.
+                if (inDrawer(form)) {
+                    submitter.disabled = false;
+                    handleDrawerResponse(responseData);
+                    return;
+                }
                 refreshCurrentEntry(responseData.components || []);
             })
             .catch(() => {
@@ -748,15 +803,20 @@ function renderForm(data) {
         return el('section', { className: 'card form form--collapsible' }, [toggle, body]);
     }
 
-    return el('section', { className: 'card form' }, [
-        data.title || contextEl
+    const guide = guideParts(data.guide, data.title || '');
+    const card = el('section', { className: 'card form' + (data.tabsExternal ? ' form--in-tabs' : '') }, [
+        data.title || contextEl || guide.button
             ? el('div', { className: 'form__header' }, [
-                  data.title ? el('h2', { className: 'card__title' }, [data.title]) : null,
+                  data.title || guide.button ? el('h2', { className: 'card__title' }, [data.title || '', guide.button]) : null,
                   contextEl,
               ])
             : null,
         form,
     ]);
+    // Per 'page-tabs': quale sezione mostrare e quale ha un errore all'apertura.
+    card.showFormSection = showSection;
+    card.firstErrorSection = fieldErrors.length ? initialIndex : null;
+    return card;
 }
 
 registerComponent('form', renderForm);

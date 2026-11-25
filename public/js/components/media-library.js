@@ -1,5 +1,6 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
+import { copyModal } from '../modal.js';
 import { icon } from '../icons.js';
 import { badge, toast } from '../accounts-ui.js';
 import { actionsRow } from '../work-ui.js';
@@ -22,7 +23,7 @@ export function copyLink(link) {
             await navigator.clipboard.writeText(absolute(link));
             toast('Link copiato.');
         } catch (err) {
-            window.prompt('Copia da qui:', absolute(link));
+            copyModal({ text: absolute(link) });
         }
     });
     return button;

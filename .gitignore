@@ -21,3 +21,6 @@ public/uploads/*
 # Anteprime dell'archivio foto e video (si rigenerano) e cartella di prova in locale.
 data/media-thumbs/
 data/media-demo/
+
+# File caricati dalle fasi in attesa del Drive (DocumentService::uploadForTask)
+/storage/

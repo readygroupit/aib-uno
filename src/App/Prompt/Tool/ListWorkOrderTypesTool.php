@@ -106,9 +106,10 @@ final class ListWorkOrderTypesTool extends AbstractListEntityTool
         return "Tipi di commessa (modelli con le fasi gia' pronte: sito, shooting, campagna...).";
     }
 
+    /** Fuori dal menu: i processi si definiscono dalla pagina del servizio (Vendite, Servizi). */
     public function menuLabel(): ?string
     {
-        return 'Tipi di commessa';
+        return null;
     }
 
     public function menuSection(): ?string

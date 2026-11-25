@@ -62,11 +62,39 @@ final class CustomersController extends AbstractEntityController
     }
 
     /** 'export' non e' fra i 4 casi standard di AbstractEntityController: stesso permesso di 'index', e' solo un altro modo di leggere la stessa lista. */
+    /** La data per risentirlo, se manca: dalla temperatura (CustomerFollowUpService). */
+    protected function afterCreate(int $id): void
+    {
+        $this->container->get(\App\Customers\CustomerFollowUpService::class)->propose($id);
+    }
+
+    protected function afterUpdate(int $id, \App\Model\AbstractModel $before): ?string
+    {
+        $changed = $before instanceof \App\Model\Customer && $this->repository()->find($id)?->temperature !== $before->temperature;
+        $date = $this->container->get(\App\Customers\CustomerFollowUpService::class)->propose($id, $changed);
+
+        return $date !== null ? 'Salvato: da risentire il ' . date('d/m/Y', strtotime($date)) . '.' : null;
+    }
+
+    /** Un cliente ha un nome: ragione sociale, oppure nome o cognome. */
+    protected function crossFieldErrors(array $data): array
+    {
+        if (!array_key_exists('company_name', $data) && !array_key_exists('first_name', $data) && !array_key_exists('last_name', $data)) {
+            return [];
+        }
+        if (trim((string) ($data['company_name'] ?? '')) === '' && trim((string) ($data['first_name'] ?? '')) === '' && trim((string) ($data['last_name'] ?? '')) === '') {
+            return ['company_name' => 'Scrivi la ragione sociale, oppure nome e cognome per un privato.'];
+        }
+
+        return [];
+    }
+
     protected function requiredPermissionForAction(string $action): ?string
     {
         return match ($action) {
             'export' => 'customers.view',
             'portalLink' => 'customers.edit',
+            'missing' => 'customers.edit',
             default => parent::requiredPermissionForAction($action),
         };
     }
@@ -76,6 +104,32 @@ final class CustomersController extends AbstractEntityController
      * senza password), con un messaggio pronto. ?nuovo=1 lo sostituisce:
      * il vecchio smette di funzionare.
      */
+    /**
+     * I dati del cliente che servono a preventivi e fatture (email,
+     * indirizzo, partita IVA...), da completare nel pannello laterale senza
+     * lasciare il preventivo. Si salva con il form normale del cliente.
+     */
+    public function missingAction(): ?string
+    {
+        $customer = $this->repository()->find((int) $this->param('id'));
+        if ($customer === null) {
+            $this->redirect('/clienti');
+
+            return null;
+        }
+        $form = $this->container->get(EditCustomerTool::class)->formWithOnly(
+            $customer,
+            ['email', 'address', 'postal_code', 'municipality_id', 'vat_number', 'sdi_code', 'pec'],
+            'Dati di ' . $customer->displayName() . ' per preventivi e fatture'
+        );
+        $form['guide'] = [
+            'text' => "Servono per mandare il preventivo e poi per la fattura: email a cui mandarlo, indirizzo e partita IVA (o codice fiscale, per un privato).",
+            'tip' => 'Gli altri dati del cliente sono nella sua scheda, in "Dati".',
+        ];
+
+        return $this->renderPage([$form], ['title' => 'Dati del cliente']);
+    }
+
     public function portalLinkAction(): void
     {
         $customer = $this->repository()->find((int) $this->param('id'));

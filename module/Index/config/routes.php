@@ -68,19 +68,22 @@ use Index\Controller\WizardController;
  *
  * @return array<string, array{path: string, controller: string, action: string}>
  */
-function entityRoutes(string $name, string $path, string $controllerClass): array
-{
-    return [
-        $name => ['path' => $path, 'controller' => $controllerClass, 'action' => 'index'],
-        "{$name}-new" => ['path' => "{$path}/nuovo", 'controller' => $controllerClass, 'action' => 'new'],
-        // Router::compile() ancora il pattern con '^...$' (match sull'intero
-        // path) - a differenza di 'nuovo' sopra, l'ordine qui non conta:
-        // ':id/elimina' ha un segmento in piu' di ':id' da solo, i due
-        // pattern non possono mai confondersi a prescindere da chi viene
-        // prima.
-        "{$name}-delete" => ['path' => "{$path}/:id/elimina", 'controller' => $controllerClass, 'action' => 'delete'],
-        "{$name}-edit" => ['path' => "{$path}/:id", 'controller' => $controllerClass, 'action' => 'edit'],
-    ];
+// Protetta: le rotte si leggono anche per la guida delle pagine (App\Help\PageGuideService).
+if (!function_exists('entityRoutes')) {
+    function entityRoutes(string $name, string $path, string $controllerClass): array
+    {
+        return [
+            $name => ['path' => $path, 'controller' => $controllerClass, 'action' => 'index'],
+            "{$name}-new" => ['path' => "{$path}/nuovo", 'controller' => $controllerClass, 'action' => 'new'],
+            // Router::compile() ancora il pattern con '^...$' (match sull'intero
+            // path) - a differenza di 'nuovo' sopra, l'ordine qui non conta:
+            // ':id/elimina' ha un segmento in piu' di ':id' da solo, i due
+            // pattern non possono mai confondersi a prescindere da chi viene
+            // prima.
+            "{$name}-delete" => ['path' => "{$path}/:id/elimina", 'controller' => $controllerClass, 'action' => 'delete'],
+            "{$name}-edit" => ['path' => "{$path}/:id", 'controller' => $controllerClass, 'action' => 'edit'],
+        ];
+    }
 }
 
 return [
@@ -140,6 +143,7 @@ return [
         'controller' => ProfileController::class,
         'action' => 'edit',
     ],
+    'profile-avatar' => ['path' => '/profilo/foto', 'controller' => ProfileController::class, 'action' => 'avatar'],
     'profile-password' => [
         'path' => '/profilo/password',
         'controller' => ProfileController::class,
@@ -222,10 +226,15 @@ return [
         'action' => 'export',
     ],
     // Anche questi prima di '/clienti/:id', per lo stesso motivo.
+    // Un'idea della roadmap diventa un progetto (prima delle rotte del diario).
+    'customer-note-to-project' => ['path' => '/clienti/diario/:id/progetto', 'controller' => WorkOrdersController::class, 'action' => 'fromIdea'],
+    ...entityRoutes('customer_notes', '/clienti/diario', \Index\Controller\CustomerNotesController::class),
+    ...entityRoutes('customer_profiles', '/clienti/profilo', \Index\Controller\CustomerProfilesController::class),
     ...entityRoutes('customer_contacts', '/clienti/referenti', CustomerContactsController::class),
     ...entityRoutes('customer_team_members', '/clienti/squadra', CustomerTeamMembersController::class),
     ...entityRoutes('customer_touchpoints', '/clienti/contatti', CustomerTouchpointsController::class),
     'client-health' => ['path' => '/clienti/temperatura', 'controller' => CustomerTouchpointsController::class, 'action' => 'index'],
+    'customers-missing' => ['path' => '/clienti/:id/dati-mancanti', 'controller' => CustomersController::class, 'action' => 'missing'],
     'customers-portal-link' => ['path' => '/clienti/:id/area-cliente', 'controller' => CustomersController::class, 'action' => 'portalLink'],
     ...entityRoutes('customers', '/clienti', CustomersController::class),
     ...entityRoutes('customer_services', '/servizi-clienti', CustomerServicesController::class),
@@ -291,10 +300,62 @@ return [
     'editorial-schedule' => ['path' => '/piano-editoriale/:id/programma', 'controller' => EditorialController::class, 'action' => 'schedule'],
     ...entityRoutes('tasks', '/attivita', TasksController::class),
     'tasks-toggle' => ['path' => '/attivita/:id/fatta', 'controller' => TasksController::class, 'action' => 'toggle'],
+    'tasks-assign' => ['path' => '/attivita/:id/assegna', 'controller' => TasksController::class, 'action' => 'assign'],
+    'tasks-outcome' => ['path' => '/attivita/:id/esito', 'controller' => TasksController::class, 'action' => 'outcome'],
+    'tasks-item-note' => ['path' => '/attivita/:id/nota-voce', 'controller' => TasksController::class, 'action' => 'itemNote'],
+    'tasks-upload' => ['path' => '/attivita/:id/file', 'controller' => TasksController::class, 'action' => 'upload'],
+    'tasks-client-approved' => ['path' => '/attivita/:id/approvato-dal-cliente', 'controller' => TasksController::class, 'action' => 'clientApproved'],
+    'tasks-check' => ['path' => '/attivita/:id/punto', 'controller' => TasksController::class, 'action' => 'check'],
+    'tasks-approve' => ['path' => '/attivita/:id/approva', 'controller' => TasksController::class, 'action' => 'approve'],
+    'tasks-reject' => ['path' => '/attivita/:id/rimanda', 'controller' => TasksController::class, 'action' => 'reject'],
+    'tasks-skip' => ['path' => '/attivita/:id/salta', 'controller' => TasksController::class, 'action' => 'skip'],
+    'tasks-briefing' => ['path' => '/attivita/:id/briefing', 'controller' => TasksController::class, 'action' => 'briefing'],
+    'action-plan-execute' => ['path' => '/prompt/piano/:id/esegui', 'controller' => \Index\Controller\ActionPlansController::class, 'action' => 'execute'],
+    'action-plan-cancel' => ['path' => '/prompt/piano/:id/annulla', 'controller' => \Index\Controller\ActionPlansController::class, 'action' => 'cancel'],
+    'documents' => ['path' => '/documenti', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'index'],
+    'documents-search' => ['path' => '/documenti/cerca', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'search'],
+    'documents-sync' => ['path' => '/documenti/aggiorna', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'sync'],
+    'documents-folder' => ['path' => '/documenti/cartella/:id', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'folder'],
+    'documents-folder-new' => ['path' => '/documenti/cartella/:id/nuova', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'newFolder'],
+    'documents-folder-upload' => ['path' => '/documenti/cartella/:id/carica', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'upload'],
+    'documents-folder-rename' => ['path' => '/documenti/cartella/:id/rinomina', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'rename'],
+    'documents-folder-trash' => ['path' => '/documenti/cartella/:id/elimina', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'trashFolder'],
+    'documents-file-download' => ['path' => '/documenti/file/:id/scarica', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'download'],
+    'documents-file-trash' => ['path' => '/documenti/file/:id/cestino', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'trashFile'],
+    'documents-project' => ['path' => '/documenti/progetto/:id/cartelle', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'projectFolders'],
+    'documents-customer' => ['path' => '/documenti/cliente/:id/cartella', 'controller' => \Index\Controller\DocumentsController::class, 'action' => 'customerFolder'],
+    ...entityRoutes('documents-file', '/documenti/file', \Index\Controller\DocumentsController::class),
+    'assistant-postpone' => ['path' => '/assistente/rimanda', 'controller' => \Index\Controller\AssistantController::class, 'action' => 'postpone'],
+    ...entityRoutes('seasonal_events', '/assistente/stagioni', \Index\Controller\SeasonalEventsController::class),
+    'assistant' => ['path' => '/assistente', 'controller' => \Index\Controller\AssistantController::class, 'action' => 'index'],
+    'assistant-rules' => ['path' => '/assistente/regole', 'controller' => \Index\Controller\AssistantController::class, 'action' => 'rules'],
+    'assistant-prepare' => ['path' => '/assistente/prepara', 'controller' => \Index\Controller\AssistantController::class, 'action' => 'prepare'],
+    'assistant-dismiss' => ['path' => '/assistente/azioni/:id/scarta', 'controller' => \Index\Controller\AssistantController::class, 'action' => 'dismiss'],
+    'assistant-action' => ['path' => '/assistente/azioni/:id', 'controller' => \Index\Controller\AssistantController::class, 'action' => 'edit'],
+    'notifications' => ['path' => '/avvisi', 'controller' => \Index\Controller\NotificationsController::class, 'action' => 'index'],
+    'page-guide' => ['path' => '/guida-pagina', 'controller' => \Index\Controller\HelpController::class, 'action' => 'page'],
+    'notifications-count' => ['path' => '/avvisi/conteggio', 'controller' => \Index\Controller\NotificationsController::class, 'action' => 'count'],
+    'notifications-read-all' => ['path' => '/avvisi/tutti-letti', 'controller' => \Index\Controller\NotificationsController::class, 'action' => 'readAll'],
+    'notifications-preferences' => ['path' => '/avvisi/preferenze', 'controller' => \Index\Controller\NotificationsController::class, 'action' => 'preferences'],
+    'notifications-open' => ['path' => '/avvisi/:id', 'controller' => \Index\Controller\NotificationsController::class, 'action' => 'open'],
     // Le fasi dei modelli prima di '/tipi-commessa/:id' (first-match-wins).
     ...entityRoutes('work_order_type_steps', '/tipi-commessa/fasi', WorkOrderTypeStepsController::class),
+    ...entityRoutes('work_order_type_roles', '/tipi-commessa/ruoli', \Index\Controller\WorkOrderTypeRolesController::class),
+    ...entityRoutes('work_order_type_milestones', '/tipi-commessa/date', \Index\Controller\WorkOrderTypeMilestonesController::class),
+    ...entityRoutes('work_order_type_deliverables', '/tipi-commessa/consegne', \Index\Controller\WorkOrderTypeDeliverablesController::class),
     ...entityRoutes('work_order_types', '/tipi-commessa', WorkOrderTypesController::class),
+    // Le parti del progetto prima di '/commesse/:id' (first-match-wins).
+    // La fase "Comporre la squadra": prima delle rotte generiche di squadra e commesse.
+    'work-order-team-assign' => ['path' => '/commesse/:id/squadra/assegna', 'controller' => \Index\Controller\WorkOrderMembersController::class, 'action' => 'assign'],
+    'work-order-team-remove' => ['path' => '/commesse/squadra/:id/togli', 'controller' => \Index\Controller\WorkOrderMembersController::class, 'action' => 'remove'],
+    ...entityRoutes('work_order_members', '/commesse/squadra', \Index\Controller\WorkOrderMembersController::class),
+    ...entityRoutes('work_order_milestones', '/commesse/date', \Index\Controller\WorkOrderMilestonesController::class),
+    'work-order-deliverables-toggle' => ['path' => '/commesse/consegne/:id/pronto', 'controller' => \Index\Controller\WorkOrderDeliverablesController::class, 'action' => 'toggle'],
+    ...entityRoutes('work_order_deliverables', '/commesse/consegne', \Index\Controller\WorkOrderDeliverablesController::class),
+    ...entityRoutes('work_order_change_requests', '/commesse/modifiche', \Index\Controller\WorkOrderChangeRequestsController::class),
     ...entityRoutes('work_orders', '/commesse', WorkOrdersController::class),
+    'work-orders-quote' => ['path' => '/commesse/:id/preventivo', 'controller' => WorkOrdersController::class, 'action' => 'quote'],
+    'work-orders-lost' => ['path' => '/commesse/:id/non-acquisita', 'controller' => WorkOrdersController::class, 'action' => 'lost'],
     'work-orders-wait' => ['path' => '/commesse/:id/attesa', 'controller' => WorkOrdersController::class, 'action' => 'wait'],
     'work-orders-resume' => ['path' => '/commesse/:id/riprendi', 'controller' => WorkOrdersController::class, 'action' => 'resume'],
     'work-orders-pause' => ['path' => '/commesse/:id/pausa', 'controller' => WorkOrdersController::class, 'action' => 'pause'],
@@ -312,6 +373,7 @@ return [
     'media-analyze' => ['path' => '/materiali/:id/analizza', 'controller' => MediaController::class, 'action' => 'analyze'],
     ...entityRoutes('catalog', '/catalogo', CatalogController::class),
     ...entityRoutes('services', '/servizi', ServicesController::class),
+    'services-process' => ['path' => '/servizi/:id/processo', 'controller' => ServicesController::class, 'action' => 'process'],
     ...entityRoutes('interventions', '/interventi', InterventionsController::class),
     ...entityRoutes('blog', '/blog', BlogController::class),
     ...entityRoutes('campaigns', '/campagne', CampaignsController::class),

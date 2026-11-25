@@ -1,0 +1,28 @@
+.kn-knowledge, .kn-briefing { display: flex; flex-direction: column; gap: 16px; }
+.kn-hint { margin: 0 0 8px; font-size: 13px; color: #5b6b72; white-space: pre-line; }
+.kn-notes { list-style: none; margin: 0; padding: 0; }
+.kn-note { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: var(--hairline); }
+.kn-notes li:first-child { border-top: none; }
+.kn-note__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kn-note__title { font-weight: 600; color: var(--color-petrol); text-decoration: none; }
+.kn-note__title:hover { text-decoration: underline; }
+.kn-note__body { font-size: 13px; color: #36474e; white-space: pre-line; }
+.kn-note__meta { font-size: 12px; color: #5b6b72; }
+.kn-profile { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 6px 16px; margin: 0; }
+.kn-profile dt { font-weight: 600; color: var(--color-teal-dark); font-size: 13px; }
+.kn-profile dd { margin: 0; white-space: pre-line; }
+.kn-question { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.kn-briefing__actions { gap: 8px; }
+@media (max-width: 640px) { .kn-profile { grid-template-columns: 1fr; } }
+/* Cosa ha chiesto il cliente (informazioni per il preventivo). */
+.kn-quote-brief { border-left: 3px solid var(--color-brass); }
+.kn-quote-brief .card__title { display: flex; align-items: center; gap: 8px; }
+.kn-quote-brief .card__title > .icon { color: var(--color-brass); }
+.kn-quote-brief .card__title > .icon svg { width: 15px; height: 15px; fill: currentColor; }
+.kn-quote-brief .kn-hint { margin: -4px 0 12px; }
+.kn-quote-brief .acc-section__head { flex-wrap: wrap; gap: 8px; }
+/* Roadmap: il progetto nato dall'idea e "Diventa un progetto". */
+.kn-note__side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: 0 0 auto; }
+.kn-note__project { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12.5px; font-weight: 600; color: var(--color-teal-dark); text-decoration: none; }
+.kn-note__project .icon svg { width: 12px; height: 12px; fill: currentColor; }
+.kn-note__stage { padding: 0 7px; border-radius: 999px; background: rgba(31, 85, 102, 0.1); font-weight: 500; }

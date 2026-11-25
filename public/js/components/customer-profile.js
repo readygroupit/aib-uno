@@ -1,4 +1,5 @@
 import { registerComponent } from './registry.js';
+import { guideParts } from '../guide.js';
 import { el } from '../dom.js';
 import { icon } from '../icons.js';
 import { badge, suggestionBox, avatar, installmentRow, actionButton, shortList } from '../accounts-ui.js';
@@ -25,6 +26,8 @@ function headerCard(c, data) {
             ? badge(`${c.relationship} chiave`, 'warning', 'star')
             : badge(c.relationship, c.relationshipKey === 'cliente' ? 'strong' : 'accent'),
         c.importance && !c.isKey ? badge(c.importance, 'neutral') : null,
+        // Com'e' il cliente: a che punto, caldo o freddo, com'e' da seguire, quando risentirlo.
+        ...(c.qualification || []).map((q) => badge(q.label, q.tone, q.icon || null)),
     ].filter(Boolean);
 
     return el('section', { className: 'card acc-profile__head' }, [
@@ -32,7 +35,7 @@ function headerCard(c, data) {
             avatar(c.initials, RELATIONSHIP_VARIANT[c.relationshipKey] || 'client', 'xl'),
             el('div', { className: 'acc-profile__titles' }, [
                 el('div', { className: 'acc-profile__tags' }, tags),
-                el('h1', { className: 'acc-profile__name' }, [c.name]),
+                el('h1', { className: 'acc-profile__name wo-title' }, [c.name, guideParts(data.headGuide, c.name).button]),
                 el('div', { className: 'acc-profile__facts' }, facts),
             ]),
             el('div', { className: 'acc-profile__actions' }, (data.actions || []).map((a) => (a.action
@@ -97,9 +100,12 @@ function serviceCard(s, canRenew = true) {
     ]);
 }
 
-function section(title, children, extra = null) {
+// Un riquadro della scheda; con la guida "i" se il server la manda (data.guides).
+let currentGuides = {};
+function section(title, children, extra = null, guideKey = null) {
+    const g = guideParts(guideKey ? currentGuides[guideKey] : null, title);
     return el('section', { className: 'card acc-section' }, [
-        el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title' }, [title]), extra]),
+        el('div', { className: 'acc-section__head' }, [el('h2', { className: 'card__title wo-title' }, [title, g.button]), extra]),
         ...children,
     ]);
 }
@@ -108,14 +114,18 @@ function renderCustomerProfile(data) {
     const c = data.customer;
     // Senza data.can (vecchi dati) tutto come prima; con, solo i pulsanti permessi.
     const can = (key) => !data.can || data.can[key] !== false;
-    const blocks = [headerCard(c, data)];
+    // La pagina a schede manda piu' volte questo componente, ognuno con i
+    // suoi riquadri (data.only); senza, tutto come prima.
+    const show = (key) => !data.only || data.only.includes(key);
+    currentGuides = data.guides || {};
+    const blocks = show('head') ? [headerCard(c, data)] : [];
 
-    if (data.showBilling) {
+    if (data.showBilling && show('kpi')) {
         blocks.push(kpiRow(c));
     }
 
     // Temperatura: com'e' messo il rapporto e gli ultimi contatti (se il pacchetto c'e').
-    if (data.health) {
+    if (data.health && show('health')) {
         const h = data.health.health;
         blocks.push(section('Temperatura', [
             h ? el('div', { className: 'ch-profile' }, [
@@ -131,11 +141,11 @@ function renderCustomerProfile(data) {
             data.health.touchpoints.length
                 ? shortList(data.health.touchpoints.map(touchpointRow), { className: 'ch-touches' })
                 : el('p', { className: 'acc-empty' }, ['Nessun contatto registrato.']),
-        ], can('logTouchpoint') ? el('a', { className: 'btn btn--ghost btn--small', href: data.health.logHref }, [icon('phone'), "Com'e' andata"]) : null));
+        ], can('logTouchpoint') ? el('a', { className: 'btn btn--ghost btn--small', href: data.health.logHref }, [icon('phone'), "Com'e' andata"]) : null, 'health'));
     }
 
     // Commesse (se il pacchetto c'e'): prima quelle che aspettano o sono in corso.
-    if (data.workOrders) {
+    if (data.workOrders && show('workOrders')) {
         blocks.push(section('Commesse', data.workOrders.length
             ? [shortList(data.workOrders.map((w) => el('a', { className: 'acc-line wk-order-line', href: w.href }, [
                 el('span', { className: 'acc-line__title' }, [w.title, badge(w.stageLabel, w.stageTone)]),
@@ -145,11 +155,11 @@ function renderCustomerProfile(data) {
                     w.due ? el('span', { className: `acc-line__tag acc-line__tag--${w.due.tone}` }, [w.active ? `consegna ${w.due.date}` : w.due.when]) : null,
                 ]),
             ])))]
-            : [el('p', { className: 'acc-empty' }, ['Nessuna commessa.', can('newWorkOrder') ? ' ' : null, can('newWorkOrder') ? el('a', { href: data.newWorkOrderHref }, ['Apri la prima']) : null])],
-        can('newWorkOrder') ? el('a', { className: 'btn btn--ghost btn--small', href: data.newWorkOrderHref }, [icon('plus'), 'Commessa']) : null));
+            : [el('p', { className: 'acc-empty' }, ['Nessuna commessa.', can('newWorkOrder') ? ' ' : null, can('newWorkOrder') ? el('a', { href: data.newWorkOrderHref }, ['Avvia il primo servizio']) : null])],
+        can('newWorkOrder') ? el('a', { className: 'btn btn--ghost btn--small', href: data.newWorkOrderHref }, [icon('plus'), 'Avvia un servizio']) : null, 'workOrders'));
     }
 
-    if (data.appointments) {
+    if (data.appointments && show('appointments')) {
         blocks.push(section('Prossimi appuntamenti', data.appointments.length
             ? [shortList(data.appointments.map((a) => el('a', { className: 'cal-row', href: a.href }, [
                 el('span', { className: `cal-row__dot cal-dot--${a.color}` }),
@@ -160,35 +170,35 @@ function renderCustomerProfile(data) {
                 ]),
             ])))]
             : [el('p', { className: 'acc-empty' }, ['Nessun appuntamento in programma.'])],
-        can('newAppointment') ? el('a', { className: 'btn btn--ghost btn--small', href: data.newAppointmentHref }, [icon('plus'), 'Appuntamento']) : null));
+        can('newAppointment') ? el('a', { className: 'btn btn--ghost btn--small', href: data.newAppointmentHref }, [icon('plus'), 'Appuntamento']) : null, 'appointments'));
     }
 
-    if (data.showBilling) {
+    if (data.showBilling && show('services')) {
         const newServiceHref = `/servizi-clienti/nuovo?customer_id=${c.id}`;
         blocks.push(section('Servizi', data.services.length
             ? [el('div', { className: 'acc-services' }, data.services.map((s) => serviceCard(s, can('renewService'))))]
             : [el('p', { className: 'acc-empty' }, ['Nessun servizio ancora.', can('newService') ? ' ' : null, can('newService') ? el('a', { href: newServiceHref }, ['Aggiungi il primo']) : null])],
-        can('newService') ? el('a', { className: 'btn btn--ghost btn--small', href: newServiceHref }, [icon('plus'), 'Nuovo servizio']) : null));
+        can('newService') ? el('a', { className: 'btn btn--ghost btn--small', href: newServiceHref }, [icon('plus'), 'Nuovo servizio']) : null, 'services'));
 
         blocks.push(section('Pagamenti', data.installments.length
             ? [shortList(data.installments.map((i) => installmentRow(i, { showCustomer: false })))]
             : [el('p', { className: 'acc-empty' }, ['Nessun pagamento in programma.'])],
-        can('newInstallment') ? el('a', { className: 'btn btn--ghost btn--small', href: `/scadenzario/nuovo?customer_id=${c.id}` }, [icon('plus'), 'Incasso a parte']) : null));
+        can('newInstallment') ? el('a', { className: 'btn btn--ghost btn--small', href: `/scadenzario/nuovo?customer_id=${c.id}` }, [icon('plus'), 'Incasso a parte']) : null, 'installments'));
     }
 
     // La squadra interna: chi segue il cliente e per cosa (propone a chi assegnare contenuti e richieste).
     const teamHref = `/clienti/squadra/nuovo?customer_id=${c.id}`;
-    blocks.push(section('Squadra interna', (data.team || []).length
+    if (show('team')) blocks.push(section('Squadra interna', (data.team || []).length
         ? [el('div', { className: 'acc-chips' }, data.team.map((m) => el('a', { className: 'acc-chip', href: m.href, title: m.notes || '' }, [
             el('strong', {}, [m.name]), ` · ${m.role}`,
         ])))]
         : [el('p', { className: 'acc-empty' }, can('newTeamMember')
             ? ['Chi segue questo cliente? ', el('a', { href: teamHref }, ['Indica la squadra']), ': contenuti e richieste si assegnano da soli.']
             : ['Nessuna squadra indicata.'])],
-    can('newTeamMember') ? el('a', { className: 'btn btn--ghost btn--small', href: teamHref }, [icon('plus'), 'Persona']) : null));
+    can('newTeamMember') ? el('a', { className: 'btn btn--ghost btn--small', href: teamHref }, [icon('plus'), 'Persona']) : null, 'team'));
 
     const contactsHref = `/clienti/referenti/nuovo?customer_id=${c.id}`;
-    blocks.push(section('Referenti', data.contacts.length
+    if (show('contacts')) blocks.push(section('Referenti', data.contacts.length
         ? [el('div', { className: 'acc-contacts' }, data.contacts.map((p) => el('a', { className: 'acc-contact', href: p.href }, [
             avatar(p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase(), 'person', 'sm'),
             el('span', { className: 'acc-contact__text' }, [
@@ -199,9 +209,9 @@ function renderCustomerProfile(data) {
         : [el('p', { className: 'acc-empty' }, can('newContact')
             ? ['Nessun referente. Chi decide per questo cliente? ', el('a', { href: contactsHref }, ['Aggiungilo'])]
             : ['Nessun referente.'])],
-    can('newContact') ? el('a', { className: 'btn btn--ghost btn--small', href: contactsHref }, [icon('plus'), 'Referente']) : null));
+    can('newContact') ? el('a', { className: 'btn btn--ghost btn--small', href: contactsHref }, [icon('plus'), 'Referente']) : null, 'contacts'));
 
-    if (data.brought.length) {
+    if (data.brought.length && show('brought')) {
         blocks.push(section(`Clienti portati (${data.brought.length})`, [
             el('div', { className: 'acc-chips' }, data.brought.map((b) => el('a', { className: 'acc-chip', href: b.href }, [b.name]))),
         ]));

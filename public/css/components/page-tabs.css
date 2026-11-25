@@ -1,0 +1,602 @@
+/*
+ * Schede di pagina (page-tabs), mini guida (guide.js) e linea del tempo
+ * del processo (type-steps.js). I colori sono quelli della palette
+ * (tokens.css): ogni parte ha sempre lo stesso colore e la stessa icona.
+ */
+
+/* Colore per tono: ogni elemento colorato legge --tone. */
+.ptabs__tab--lilac, .tl__item--lilac, .svc-fact--lilac { --tone: var(--color-lilac); --tone-bg: rgba(139, 131, 173, 0.14); }
+.ptabs__tab--brass, .tl__item--brass, .svc-fact--brass { --tone: var(--color-brass); --tone-bg: rgba(185, 147, 51, 0.15); }
+.ptabs__tab--teal, .tl__item--teal, .svc-fact--teal { --tone: var(--color-teal-dark); --tone-bg: rgba(31, 85, 102, 0.12); }
+.ptabs__tab--moss, .tl__item--moss, .svc-fact--moss { --tone: var(--color-moss); --tone-bg: rgba(79, 123, 92, 0.14); }
+.ptabs__tab--petrol, .svc-fact--petrol { --tone: var(--color-petrol); --tone-bg: rgba(18, 51, 63, 0.08); }
+.svc-fact--danger { --tone: var(--color-danger); --tone-bg: var(--color-danger-bg); }
+
+/* --- Intestazione del servizio --------------------------------------- */
+.svc-head .acc-profile__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.svc-fact {
+    white-space: nowrap;
+    background: var(--tone-bg);
+    color: var(--tone);
+    border-radius: 999px;
+    padding: 3px 10px 3px 8px;
+    font-weight: 500;
+}
+
+.svc-fact .icon svg {
+    fill: currentColor;
+}
+
+/* --- Schede di pagina ------------------------------------------------ */
+.ptabs {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ptabs,
+.ptabs__panel,
+.ptabs__content {
+    min-width: 0;
+}
+
+/* Il riquadro delle schede: la barra e, sotto, cosa c'e' nella scheda aperta. */
+.ptabs__nav.card {
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.ptabs__bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.ptabs__bar::-webkit-scrollbar {
+    display: none;
+}
+
+.ptabs__tab {
+    appearance: none;
+    border: none;
+    background: none;
+    flex: 1 1 0;
+    min-width: max-content;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 14px;
+    color: rgba(18, 51, 63, 0.6);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.ptabs__tab:hover {
+    background: rgba(18, 51, 63, 0.04);
+    color: var(--color-petrol);
+}
+
+.ptabs__tab:focus-visible {
+    outline: 2px solid var(--tone);
+    outline-offset: 2px;
+}
+
+.ptabs__tab.is-active {
+    background: var(--tone-bg);
+    color: var(--color-petrol);
+}
+
+.ptabs__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--tone-bg);
+    color: var(--tone);
+}
+
+.ptabs__tab.is-active .ptabs__icon {
+    background: var(--tone);
+    color: #fff;
+}
+
+.ptabs__icon .icon svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+.ptabs__count {
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 20px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(18, 51, 63, 0.08);
+    color: rgba(18, 51, 63, 0.7);
+}
+
+.ptabs__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.ptabs__panel[hidden] {
+    display: none;
+}
+
+.ptabs__label--short {
+    display: none;
+}
+
+.ptabs__form:empty {
+    display: none;
+}
+
+.ptabs__content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* --- Mini guida -------------------------------------------------------- */
+.guide-button {
+    appearance: none;
+    border: none;
+    background: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    color: var(--color-teal);
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.guide-button:hover {
+    background: rgba(95, 138, 134, 0.16);
+    color: var(--color-teal-dark);
+}
+
+.guide-button:focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 1px;
+}
+
+.guide-button .icon svg {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
+}
+
+.modal__panel--guide {
+    max-width: 520px;
+    border-top: 3px solid var(--color-teal);
+}
+
+.modal__panel--guide .modal__title::before {
+    content: "i";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin-right: 8px;
+    border-radius: 50%;
+    background: var(--color-teal);
+    color: #fff;
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 13px;
+    vertical-align: 2px;
+}
+
+.modal__panel--guide .modal__body {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--color-petrol);
+}
+
+.guide__text {
+    margin: 0;
+}
+
+.guide__steps {
+    margin: 10px 0 0;
+    padding-left: 22px;
+}
+
+.guide__steps li + li {
+    margin-top: 4px;
+}
+
+.guide__tip {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: rgba(185, 147, 51, 0.12);
+    color: rgba(18, 51, 63, 0.85);
+}
+
+.guide__tip .icon {
+    color: var(--color-brass);
+    margin-top: 2px;
+}
+
+.guide__tip .icon svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+/* Riga che dice cosa c'e' in un riquadro o in una parte del processo. */
+.form-box__desc,
+.tl__desc {
+    margin: -8px 0 14px;
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.6);
+}
+
+.tl__desc {
+    margin: 0 0 10px;
+}
+
+.form-box__title .guide-button,
+.card__title .guide-button {
+    margin-left: 4px;
+}
+
+.form-box__guide {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Il form dentro una scheda: niente intestazione vuota. */
+.form--in-tabs .form__header:empty {
+    display: none;
+}
+
+/* --- Linea del tempo del processo ----------------------------------- */
+.tl {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* La linea: passa dietro ai cerchietti, dal primo all'ultimo. */
+.tl::before {
+    content: "";
+    position: absolute;
+    left: 19px;
+    top: 22px;
+    bottom: 22px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--color-lilac), var(--color-brass), var(--color-teal-dark), var(--color-moss));
+    opacity: 0.35;
+    border-radius: 2px;
+}
+
+.tl__item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+}
+
+.tl__marker {
+    position: relative;
+    z-index: 1;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-panel);
+    color: var(--tone);
+    border: 2px solid var(--tone);
+    box-shadow: 0 0 0 4px var(--color-canvas);
+    transition: background 0.15s, color 0.15s;
+}
+
+.tl__item.is-open .tl__marker {
+    background: var(--tone);
+    color: #fff;
+}
+
+.tl__marker .icon svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.tl__card {
+    background: var(--color-panel);
+    border: var(--hairline);
+    border-left: 3px solid var(--tone);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 6px 14px;
+    min-width: 0;
+}
+
+.tl__head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+}
+
+.tl__toggle {
+    appearance: none;
+    border: none;
+    background: none;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    cursor: pointer;
+    text-align: left;
+    color: var(--color-petrol);
+}
+
+.tl__toggle:focus-visible {
+    outline: 2px solid var(--tone);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+.tl__title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 15.5px;
+    white-space: nowrap;
+}
+
+.tl__count {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--tone-bg);
+    color: var(--tone);
+}
+
+.tl__summary {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: rgba(18, 51, 63, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tl__chevron {
+    display: inline-flex;
+    color: rgba(18, 51, 63, 0.45);
+    transition: transform 0.2s;
+}
+
+.tl__chevron .icon svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+}
+
+.tl__item.is-open .tl__chevron {
+    transform: rotate(180deg);
+}
+
+.tl__body {
+    padding: 4px 0 10px;
+}
+
+.tl__body[hidden] {
+    display: none;
+}
+
+/* Da telefono: schede alla pari con l'icona sopra e il nome corto;
+   intestazione in colonna; linea e cerchietti piu' piccoli, il riassunto
+   di ogni parte va sotto il titolo. */
+@media (max-width: 720px) {
+    .ptabs__bar {
+        gap: 4px;
+    }
+
+    .ptabs__tab {
+        flex: 1 1 0;
+        min-width: 0;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 4px;
+        font-size: 12.5px;
+        position: relative;
+    }
+
+    .ptabs__label {
+        display: none;
+    }
+
+    /* Con tante schede (es. il progetto) le etichette si stringono. */
+    .ptabs__bar:has(> :nth-child(5)) .ptabs__tab {
+        font-size: 11.5px;
+        padding: 8px 2px;
+    }
+
+    .ptabs__label--short {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .ptabs__count {
+        position: absolute;
+        top: 4px;
+        right: 6px;
+        padding: 0 5px;
+        font-size: 10px;
+    }
+
+
+    .svc-head .acc-profile__identity {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+
+    .svc-head .acc-profile__actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tl::before {
+        left: 15px;
+    }
+
+    .tl__item {
+        grid-template-columns: 32px minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .tl__marker {
+        width: 32px;
+        height: 32px;
+        margin-top: 4px;
+    }
+
+    .tl__marker .icon svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    .tl__card {
+        padding: 4px 10px;
+    }
+
+    .tl__toggle {
+        flex-wrap: wrap;
+        row-gap: 2px;
+    }
+
+    .tl__summary {
+        flex-basis: 100%;
+        order: 3;
+    }
+
+    .tl__add {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tl__chevron,
+    .tl__marker,
+    .ptabs__tab {
+        transition: none;
+    }
+}
+
+/* "Come funziona questa pagina": sempre in basso a destra. */
+.page-help {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 16px 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-petrol);
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px -12px rgba(18, 51, 63, 0.6);
+    cursor: pointer;
+}
+
+.page-help .icon svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.page-help:hover {
+    background: var(--color-teal-dark);
+}
+
+.page-help:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.page-help:disabled {
+    opacity: 0.7;
+}
+
+html.has-drawer .page-help {
+    display: none;
+}
+
+/* Il promemoria delle ore compare nello stesso angolo: finche' c'e', il pulsante si toglie. */
+body:has(.wl-nudge.is-visible) .page-help {
+    opacity: 0;
+    pointer-events: none;
+}
+
+@media (max-width: 720px) {
+    .page-help {
+        width: 44px;
+        padding: 0;
+        justify-content: center;
+        right: 14px;
+        bottom: 14px;
+    }
+
+    .page-help__label {
+        display: none;
+    }
+}
+
+@media print {
+    .page-help {
+        display: none;
+    }
+}

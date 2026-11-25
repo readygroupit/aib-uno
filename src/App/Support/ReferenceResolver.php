@@ -66,6 +66,11 @@ final class ReferenceResolver
             'columns' => ['title'],
             'permission' => 'work_orders.view',
         ],
+        'quotes' => [
+            'repository' => \App\Repository\QuoteRepository::class,
+            'columns' => ['quote_number', 'title'],
+            'permission' => 'quotes.view',
+        ],
         'customer_services' => [
             'repository' => CustomerServiceRepository::class,
             'columns' => ['title'],

@@ -297,7 +297,13 @@ abstract class AbstractEntityController extends AuthController
             if ($value === '') {
                 // 'base' da solo non basta - vedi la stessa nota in
                 // App\Prompt\Tool\AbstractEditEntityTool::fieldsFromManifest().
-                if (($definition['base'] ?? false) && !($definition['nullable'] ?? false)) {
+                // 'required' => true lo rende obbligatorio anche se la colonna
+                // ammette NULL; con 'showIf' solo quando il campo si vede.
+                $required = (($definition['base'] ?? false) && !($definition['nullable'] ?? false)) || ($definition['required'] ?? false);
+                if ($required && isset($definition['showIf'])) {
+                    $required = in_array((string) $this->requestValue((string) $definition['showIf']['field']), array_map('strval', $definition['showIf']['in'] ?? []), true);
+                }
+                if ($required) {
                     $fieldErrors[$key] = ($definition['label'] ?? $key) . " e' obbligatorio.";
                 }
                 continue;

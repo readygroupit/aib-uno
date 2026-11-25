@@ -72,6 +72,19 @@ return [
     // 'provider' sceglie quale dei due usare. Le chiavi NON stanno qui (GitHub
     // blocca i push con segreti): vanno in config/autoload/secrets.php, fuori
     // da git, vedi secrets.php.dist.
+    // Invio email (MailService): con 'smtp.host' compilato si spedisce via
+    // SMTP (PHPMailer, come nei progetti core/readyecommerce); vuoto, con la
+    // mail() del server. Utente e password in secrets.php, mai qui.
+    'mail' => [
+        'from' => ['address' => '', 'name' => ''],
+        'smtp' => [
+            'host' => '',
+            'port' => 587,
+            'secure' => 'tls',
+            'username' => '',
+            'password' => '',
+        ],
+    ],
     'ai' => [
         'provider' => 'openai',
         'openai' => [

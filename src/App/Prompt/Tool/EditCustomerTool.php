@@ -60,7 +60,7 @@ final class EditCustomerTool extends AbstractEditEntityTool
         // I pulsanti si vedono solo a chi puo' usarli (prima davano "Accesso negato").
         $can = array_map(fn (string $permission) => $this->auth->hasPermission($permission), self::BUTTON_PERMISSIONS);
 
-        return [$this->profile->toData([
+        $components = [$this->profile->toData([
             'url' => '/clienti/' . $model->id,
             'customer' => $data['row'] + [
                 'email' => $model->email,
@@ -69,6 +69,14 @@ final class EditCustomerTool extends AbstractEditEntityTool
                 'since' => $model->customerSince !== null ? \App\Support\ItalianFormat::longDate($model->customerSince) : null,
                 'referralPercent' => $model->referralPercent,
                 'referralTerms' => $model->referralTerms,
+                // Com'e' il cliente, in testa alla scheda.
+                'qualification' => array_values(array_filter([
+                    // "cliente" lo dice gia' il tipo di rapporto: si mostra solo potenziale, in trattativa, ex cliente.
+                    $model->commercialStage && $model->commercialStage !== 'cliente' ? ['label' => (string) $model->commercialStage, 'tone' => $model->commercialStage === 'in trattativa' ? 'info' : 'neutral'] : null,
+                    $model->temperature ? ['label' => (string) $model->temperature, 'tone' => match ((string) $model->temperature) { 'caldo' => 'danger', 'tiepido' => 'warning', default => 'info' }, 'icon' => 'temperature-half'] : null,
+                    $model->temperament && $model->temperament !== 'normale' ? ['label' => 'da seguire: ' . $model->temperament, 'tone' => in_array($model->temperament, ['esigente', 'difficile'], true) ? 'warning' : 'success'] : null,
+                    $model->nextContactDate ? ['label' => 'risentirlo ' . \App\Support\ItalianFormat::shortDate((string) $model->nextContactDate, date('Y-m-d')), 'tone' => (string) $model->nextContactDate <= date('Y-m-d') ? 'danger' : 'neutral', 'icon' => 'calendar'] : null,
+                ])),
             ],
             'services' => $data['services'],
             'installments' => $data['installments'],
@@ -92,6 +100,80 @@ final class EditCustomerTool extends AbstractEditEntityTool
                 $billing && $can['portal'] ? ['label' => 'Area cliente', 'action' => '/clienti/' . $model->id . '/area-cliente', 'variant' => 'ghost', 'icon' => 'link'] : null,
             ])),
         ])];
+        if (\App\Documents\DocumentService::isInstalled() && $this->auth->hasPermission('documents.view')
+            && ($documents = $this->container->get(\App\Documents\DocumentService::class)->summaryFor(null, (int) $model->id)) !== null) {
+            $components[] = $documents;
+        }
+        // Quello che sappiamo del cliente (profilo, roadmap, diario): lo usa anche l'assistente.
+        if (\App\Knowledge\KnowledgeService::isInstalled() && $this->auth->hasPermission('client_knowledge.view')) {
+            $components[] = $this->container->get(\App\Knowledge\KnowledgeService::class)->forCustomer((int) $model->id);
+        }
+
+        return $components;
+    }
+
+    /**
+     * Il cliente: in testa chi e' e le azioni; sotto le schede "Lavori"
+     * (progetti, appuntamenti), "Rapporto" (temperatura, diario e profilo),
+     * "Persone" (squadra interna, referenti), "Servizi e pagamenti",
+     * "Documenti" e "Dati" (il form). Le schede vuote non ci sono.
+     */
+    public function buildPage(AbstractModel $model, ?string $message = null, ?string $messageType = null, array $fieldErrors = []): array
+    {
+        if (!$model instanceof Customer || $model->id === null) {
+            return parent::buildPage($model, $message, $messageType, $fieldErrors);
+        }
+        $detail = $this->detailComponents($model);
+        $profile = array_shift($detail);
+        $profile['guides'] = [
+            'workOrders' => "I progetti del cliente, prima quelli in corso o che aspettano. \"Avvia un servizio\" apre un progetto nuovo con il processo del servizio.",
+            'appointments' => 'Gli appuntamenti in programma con il cliente.',
+            'health' => "Come va il rapporto: si misura dai contatti e dai servizi attivi. Dopo una telefonata o un incontro, \"Com'e' andata\" lo registra.",
+            'team' => "Chi segue il cliente in agenzia e per cosa: contenuti e richieste si assegnano da soli a queste persone.",
+            'contacts' => "Le persone del cliente con cui parlate. \"decide\" indica chi prende le decisioni.",
+            'services' => 'I servizi attivi del cliente e le prossime scadenze.',
+            'installments' => 'I pagamenti in programma, dalle rate dei servizi.',
+        ];
+        $profile['headGuide'] = [
+            'title' => 'La scheda del cliente',
+            'text' => "In alto chi e' il cliente e le azioni del momento; sotto, il suo lavoro diviso in schede.",
+            'steps' => ['Lavori: progetti e appuntamenti.', 'Rapporto: com\'e\' messo il rapporto, il diario e cosa sappiamo di lui.', 'Persone: chi lo segue da noi e i suoi referenti.', 'Dati: anagrafica, fatturazione e pagamento.'],
+            'tip' => 'Referenti e persone si aggiungono nel pannello laterale, senza lasciare la scheda.',
+        ];
+        $part = static fn (array $only) => ['only' => $only] + $profile;
+        $byType = static fn (string $type) => array_values(array_filter($detail, static fn (array $c) => ($c['type'] ?? '') === $type));
+
+        $tabs = [];
+        $active = is_array($profile['workOrders'] ?? null) ? count(array_filter($profile['workOrders'], static fn (array $w) => !empty($w['active']))) : 0;
+        if (($profile['workOrders'] ?? null) !== null || ($profile['appointments'] ?? null) !== null || !empty($profile['recap'])) {
+            $tabs[] = ['key' => 'lavori', 'label' => 'Lavori', 'icon' => 'list-check', 'color' => 'teal', 'count' => $active > 0 ? $active : null, 'components' => [$part(['recap', 'workOrders', 'appointments'])]];
+        }
+        // Com'e' il cliente (a che punto, caldo o freddo, importanza, com'e' da
+        // seguire, quando risentirlo): si segna qui, in cima al Rapporto.
+        $qualification = $this->formWithOnly($model, ['commercial_stage', 'temperature', 'importance', 'temperament', 'next_contact_date', 'next_contact_note'], "Com'e' il cliente");
+        $qualification['reloadAfterSave'] = true;
+        $qualification['submitLabel'] = 'Salva';
+        $qualification['guide'] = [
+            'text' => "Come sta andando con questo cliente. L'assistente lo usa per ricordarti quando risentirlo e con che tono scrivere.",
+            'steps' => ['A che punto e\': potenziale, in trattativa, cliente, ex cliente.', 'Quanto e\' caldo: caldo (pronto a comprare), tiepido, freddo.', 'Importanza: chiave (ottimo cliente), abituale, occasionale.', 'Com\'e\' da seguire: facile, normale, esigente, difficile.', 'Risentirlo il: la data in cui l\'assistente te lo ricorda, con il perche\'.'],
+        ];
+        $relation = [$qualification];
+        if (($profile['health'] ?? null) !== null) {
+            $relation[] = $part(['health']);
+        }
+        $relation = [...$relation, ...$byType('customer-knowledge')];
+        if ($relation !== []) {
+            $tabs[] = ['key' => 'rapporto', 'count' => null, 'label' => 'Rapporto', 'icon' => 'temperature-half', 'color' => 'brass', 'components' => $relation];
+        }
+        $tabs[] = ['key' => 'persone', 'label' => 'Persone', 'icon' => 'users', 'color' => 'lilac', 'count' => count($profile['contacts'] ?? []) ?: null, 'components' => [$part(['team', 'contacts', 'brought'])]];
+        if (!empty($profile['showBilling'])) {
+            $tabs[] = ['key' => 'servizi', 'label' => 'Servizi e pagamenti', 'short' => 'Servizi', 'icon' => 'coins', 'color' => 'moss', 'components' => [$part(['kpi', 'services'])]];
+        }
+        if (($documents = $byType('document-summary')) !== []) {
+            $tabs[] = ['key' => 'documenti', 'label' => 'Documenti', 'short' => 'File', 'icon' => 'folder', 'color' => 'petrol', 'components' => $documents];
+        }
+
+        return $this->tabbedPage($model, $part(['head']), $tabs, $message, $messageType, $fieldErrors, ['key' => 'dati', 'label' => 'Dati', 'icon' => 'pen']);
     }
 
     protected function formTitleBelowDetail(): ?string

@@ -17,7 +17,7 @@ final class Router
 
     public function match(string $path): ?array
     {
-        foreach ($this->routes as $route) {
+        foreach ($this->routes as $name => $route) {
             $pattern = $this->compile($route['path']);
             if (preg_match($pattern, $path, $matches) === 1) {
                 $params = array_filter(
@@ -27,6 +27,8 @@ final class Router
                 );
 
                 return [
+                    // Il nome della rotta (es. 'tasks-edit'): serve alla guida della pagina.
+                    'name' => is_string($name) ? $name : null,
                     'controller' => $route['controller'],
                     'action' => $route['action'],
                     'params' => $params,

@@ -1,5 +1,6 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
+import { confirmModal } from '../modal.js';
 import { icon } from '../icons.js';
 
 // Pagina "Importa dati" (vedi SheetImportComponent / ImportController):
@@ -49,7 +50,7 @@ function renderSheetImport(data) {
             status.textContent = 'Collega prima Google Sheets dalla Configurazione, oppure scegli un file Excel.';
             return;
         }
-        if (removeDemo.checked && !window.confirm('Tolgo i dati demo (contatti, pratiche, rimborsi, documenti, messaggi degli agenti) prima di importare. Procedo?')) {
+        if (removeDemo.checked && !(await confirmModal({ text: 'Tolgo i dati demo (contatti, pratiche, rimborsi, documenti, messaggi degli agenti) prima di importare. Procedo?', confirmLabel: 'Togli e importa' }))) {
             return;
         }
         const body = new FormData();

@@ -124,10 +124,33 @@ final class QuoteOverviewService
                 (float) $quote->totalYearly > 0 ? ['label' => 'Ricorrente', 'value' => F::euro((float) $quote->totalYearly) . " all'anno + IVA"] : null,
             ])),
             'problems' => $quote->isEditable() ? $this->container->get(QuoteService::class)->problems($quote) : [],
+            'fixes' => $quote->isEditable() ? $this->fixes($quote) : [],
             'editable' => $quote->isEditable(),
             'newLineHref' => $quote->isEditable() ? '/preventivi/righe/nuovo?quote_id=' . $quote->id . '&quantity=1&billing_type=una%20tantum&payment_plan=unica%20soluzione&position=' . (count($lines) + 1) : null,
             'actions' => $actions,
         ];
+    }
+
+    /**
+     * Per ogni cosa che manca, dove si sistema: i dati del cliente (nel
+     * pannello laterale, senza lasciare il preventivo), le schede della pagina.
+     */
+    private function fixes(Quote $quote): array
+    {
+        $byArea = $this->container->get(QuoteService::class)->problemsByArea($quote);
+        $auth = $this->container->get(\App\Service\AuthService::class);
+        $fixes = [];
+        if ($byArea['customer'] !== [] && $quote->customerId !== null && $auth->hasPermission('customers.edit')) {
+            $fixes[] = ['label' => 'Completa i dati del cliente', 'href' => '/clienti/' . $quote->customerId . '/dati-mancanti', 'icon' => 'user'];
+        }
+        if ($byArea['quote'] !== []) {
+            $fixes[] = ['label' => 'Scadenza e pagamento', 'href' => '#dati', 'icon' => 'pen'];
+        }
+        if ($byArea['lines'] !== []) {
+            $fixes[] = ['label' => 'Vai alle righe', 'href' => '#righe', 'icon' => 'list-check'];
+        }
+
+        return $fixes;
     }
 
     private function lineData(QuoteLine $line, bool $editable): array
@@ -140,6 +163,10 @@ final class QuoteOverviewService
             'details' => $line->details,
             'quantity' => $qty != 1 ? rtrim(rtrim(number_format($qty, 2, ',', ''), '0'), ',') . ' x ' . F::euro((float) $line->unitPrice) : null,
             'amount' => F::euro($line->amount()) . ($line->isRecurring() ? ' ' . (self::PERIOD_LABELS[$line->recurrence] ?? '') : ''),
+            // Per la stampa: quantita' e prezzo a se'.
+            'qty' => rtrim(rtrim(number_format($qty, 2, ',', ''), '0'), ','),
+            'unitPrice' => F::euro((float) $line->unitPrice),
+            'period' => $line->isRecurring() ? (self::PERIOD_LABELS[$line->recurrence] ?? null) : null,
             'plan' => $line->paymentPlan && $line->paymentPlan !== 'unica soluzione'
                 ? ($line->paymentPlan === 'rate' ? ($line->installmentsCount ?: 1) . ' rate' : 'acconto ' . rtrim(rtrim(number_format((float) ($line->depositPercent ?? 50), 2, ',', ''), '0'), ',') . '% e saldo')
                 : null,

@@ -1,0 +1,16 @@
+CREATE TABLE `seasonal_events` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `status` TINYINT NOT NULL DEFAULT 1,
+  `name` VARCHAR(80) NOT NULL,
+  `month` SMALLINT UNSIGNED NULL,
+  `day` SMALLINT UNSIGNED NULL,
+  `easter_offset` SMALLINT NULL,
+  `lead_days` SMALLINT UNSIGNED NOT NULL,
+  `keywords` VARCHAR(500) NOT NULL,
+  `idea` TEXT NULL,
+  `is_enabled` TINYINT(1) NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  `created_by` INT UNSIGNED NULL,
+  `updated_at` DATETIME NULL,
+  `updated_by` INT UNSIGNED NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

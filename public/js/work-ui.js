@@ -2,6 +2,7 @@ import { el } from './dom.js';
 import { icon } from './icons.js';
 import { openModal, closeModal } from './modal.js';
 import { runAction } from './accounts-ui.js';
+import { openInPanel } from './components/hero.js';
 
 /**
  * Pezzi in comune tra commesse e attivita': la riga di un'attivita' da
@@ -82,14 +83,21 @@ export function actionsRow(actions) {
  * quando, chi, quanto. Spuntata resta visibile, barrata, fino al giorno dopo.
  */
 export function taskRow(item, { showContext = true, showWho = true } = {}) {
+    // Una fase con dati da inserire (data, risposte, squadra...) non si
+    // spunta da qui: il clic apre la fase, dove si fa quello che serve.
+    const opens = Boolean(item.openHref && !item.done);
     const check = el('button', {
         type: 'button',
-        className: 'wk-check' + (item.done ? ' is-done' : ''),
-        title: item.done ? 'Riapri' : 'Segna come fatta',
-        'aria-label': item.done ? 'Riapri' : 'Segna come fatta',
-    }, [icon('check')]);
+        className: 'wk-check' + (item.done ? ' is-done' : '') + (opens ? ' wk-check--open' : ''),
+        title: item.done ? 'Riapri' : (opens ? 'Apri la fase: c\u2019e\u2019 qualcosa da inserire' : 'Segna come fatta'),
+        'aria-label': item.done ? 'Riapri' : (opens ? `Apri la fase ${item.title}` : 'Segna come fatta'),
+    }, [icon(opens ? 'arrow-right' : 'check')]);
     check.addEventListener('click', (e) => {
         e.preventDefault();
+        if (opens) {
+            openInPanel(item.openHref);
+            return;
+        }
         runAction(item.toggleAction, { button: check });
     });
 

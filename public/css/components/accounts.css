@@ -926,8 +926,16 @@ a.acc-fact:hover,
         display: none;
     }
 
+    /* Da telefono l'intestazione va in colonna: titolo e dati a tutta
+       larghezza, i pulsanti sotto (non schiacciano piu' il titolo). */
     .acc-profile__identity {
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+
+    .acc-profile__identity > :not(.acc-profile__titles):not(.acc-avatar) {
+        align-self: flex-start;
     }
 
     .acc-profile__kpis {

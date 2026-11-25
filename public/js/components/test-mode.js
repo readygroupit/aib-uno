@@ -1,5 +1,6 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
+import { confirmModal } from '../modal.js';
 import { icon } from '../icons.js';
 import { toast } from '../accounts-ui.js';
 
@@ -18,7 +19,7 @@ function renderTestMode(data) {
         const save = el('button', { type: 'button', className: 'btn btn--primary' }, ['Salva']);
 
         save.addEventListener('click', async () => {
-            if (!enabled.checked && current.enabled && !window.confirm('Spegnere la modalita\' prova? Da adesso email, WhatsApp, pagamenti, fatture e social partono davvero.')) {
+            if (!enabled.checked && current.enabled && !(await confirmModal({ title: 'Modalita\' prova', text: 'Spegnere la modalita\' prova? Da adesso email, WhatsApp, pagamenti, fatture e social partono davvero.', confirmLabel: 'Spegni' }))) {
                 return;
             }
             save.disabled = true;

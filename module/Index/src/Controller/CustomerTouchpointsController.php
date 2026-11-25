@@ -76,6 +76,10 @@ final class CustomerTouchpointsController extends AbstractEntityController
     protected function afterCreate(int $id): void
     {
         $touchpoint = $this->repository()->find($id);
+        // Un contatto c'e' stato: la prossima data e' il suo "prossimo passo", o si ripropone dalla temperatura.
+        if ($touchpoint instanceof CustomerTouchpoint) {
+            $this->container->get(\App\Customers\CustomerFollowUpService::class)->contacted((int) $touchpoint->customerId, $touchpoint->nextDate, $touchpoint->nextStep);
+        }
         if (!$touchpoint instanceof CustomerTouchpoint || $touchpoint->nextDate === null || trim((string) $touchpoint->nextStep) === '' || !in_array('tasks', PackageCatalogService::installedNames(), true)) {
             return;
         }

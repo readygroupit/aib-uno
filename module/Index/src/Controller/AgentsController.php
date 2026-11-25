@@ -18,11 +18,22 @@ final class AgentsController extends AuthController
 {
     protected function requiredPermissionForAction(string $action): ?string
     {
+        // Senza gli agenti dimostrativi (pacchetto 'agents', Assilevi) /agenti e'
+        // la pagina degli agenti dell'assistente: la vede chiunque sia collegato.
+        if ($action === 'index' && !in_array('agents', \App\Package\PackageCatalogService::installedNames(), true)) {
+            return null;
+        }
+
         return in_array($action, ['index', 'feed'], true) ? 'agents.view' : 'agents.edit';
     }
 
     public function indexAction(): ?string
     {
+        if (!in_array('agents', \App\Package\PackageCatalogService::installedNames(), true)) {
+            $this->redirect('/assistente');
+
+            return null;
+        }
         $components = $this->container->get(ShowAgentsTool::class)->execute([]);
 
         return $this->renderPage($components, ['title' => 'Agenti']);

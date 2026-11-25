@@ -10,4 +10,6 @@ final class WorkOrderType extends AbstractModel
     public ?string $description = null;
     public ?int $defaultDays = null;
     public ?string $stage = null;
+    public ?int $serviceId = null;
+    public ?string $folderTemplate = null;
 }

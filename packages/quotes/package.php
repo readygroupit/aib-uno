@@ -217,6 +217,7 @@ return [
                     'input' => 'textarea',
                 ],
                 'quantity' => [
+                    'required' => true,
                     'sql' => 'DECIMAL(10,2)',
                     'label' => 'Quantita\'',
                     'defaultRequired' => true,
@@ -232,12 +233,14 @@ return [
                     'help' => 'Per un servizio ricorrente: il prezzo di ogni periodo (mese, anno...).',
                 ],
                 'billing_type' => [
+                    'required' => true,
                     'sql' => 'VARCHAR(20)',
                     'label' => 'Tipo',
                     'defaultRequired' => true,
                     'options' => ['una tantum', 'ricorrente'],
                 ],
                 'recurrence' => [
+                    'required' => true,
                     'sql' => 'VARCHAR(20)',
                     'label' => 'Ogni quanto',
                     'defaultRequired' => true,

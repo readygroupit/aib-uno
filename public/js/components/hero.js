@@ -1,6 +1,9 @@
 import { el } from '../dom.js';
+import { isDrawerUrl, openDrawer } from '../drawer.js';
+import { ensurePageHelp } from '../page-help.js';
 import { icon } from '../icons.js';
 import { mountComponents } from './registry.js';
+import { personAvatar } from '../avatars.js';
 import { attachDictation } from '../speech.js';
 import { openGuide, onSetupChange, setupIsPending } from '../onboarding.js';
 import { homeGreeting, homeShortLine, HOME_SUGGESTIONS } from '../greetings.js';
@@ -120,6 +123,8 @@ function renderResultsEntry(panel, entry) {
     }
 
     mountComponents(panel, entry.components);
+    // "Come funziona questa pagina": lo stesso pulsante su ogni pagina.
+    ensurePageHelp();
 }
 
 // Bolla di risposta lato assistente: avatar (il logo quadrato vero
@@ -300,6 +305,11 @@ function interceptResultLinks(panel) {
         const url = new URL(link.href, window.location.href);
         if (url.origin !== window.location.origin || url.pathname === '/logout' || url.hash && url.pathname === window.location.pathname) return;
         e.preventDefault();
+        // Gli elementi "figli" (righe, fasi, referenti...) nel pannello laterale.
+        if (isDrawerUrl(url.pathname, url.search)) {
+            openDrawer(url.pathname + url.search, link);
+            return;
+        }
         openInPanel(url.pathname + url.search);
     });
 }
@@ -596,7 +606,9 @@ export function mountPromptShell(root, initialComponents) {
     if (window.UNO_USER) {
         profileMenuChildren.push(
             el('div', { className: 'hero__profile-identity' }, [
-                el('span', { className: 'hero__profile-identity-avatar' }, [window.UNO_USER.initials || '']),
+                window.UNO_USER.avatar
+                    ? personAvatar({ avatar: window.UNO_USER.avatar, initials: window.UNO_USER.initials }, 40)
+                    : el('span', { className: 'hero__profile-identity-avatar' }, [window.UNO_USER.initials || '']),
                 el('div', { className: 'hero__profile-identity-text' }, [
                     el('span', { className: 'hero__profile-identity-name' }, [window.UNO_USER.name || '']),
                     el('span', { className: 'hero__profile-identity-role' }, [window.UNO_USER.role || '']),
@@ -639,7 +651,7 @@ export function mountPromptShell(root, initialComponents) {
                 }
             },
         },
-        [icon('user')]
+        [window.UNO_USER && window.UNO_USER.avatar ? personAvatar({ avatar: window.UNO_USER.avatar, initials: window.UNO_USER.initials }, 26) : icon('user')]
     );
 
     // "Esegui": nascosto per ora (segnalato dall'utente - Invio da
@@ -672,10 +684,31 @@ export function mountPromptShell(root, initialComponents) {
     );
     onSetupChange((state) => { setupAlertButton.hidden = !setupIsPending(state); });
 
+    // Avvisi ai colleghi (pacchetto notifications): il numero dei non
+    // letti arriva da /avvisi/conteggio, non dal layout - nessuna query in
+    // piu' su ogni pagina per chi non ne ha.
+    const noticeBadge = el('span', { className: 'hero__badge', hidden: '' }, ['']);
+    const noticeButton = window.UNO_NOTIFICATIONS
+        ? el('a', { className: 'hero__icon-btn hero__icon-btn--badge', href: '/avvisi', title: 'Avvisi' }, [icon('bell'), noticeBadge])
+        : null;
+    if (noticeButton) {
+        fetch('/avvisi/conteggio', { headers: { Accept: 'application/json' } })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => {
+                if (d && d.unread > 0) {
+                    noticeBadge.textContent = d.unread > 99 ? '99+' : String(d.unread);
+                    noticeBadge.hidden = false;
+                    noticeButton.title = d.unread === 1 ? '1 avviso nuovo' : `${d.unread} avvisi nuovi`;
+                }
+            })
+            .catch(() => {});
+    }
+
     const toolbar = el('div', { className: 'hero__toolbar' }, [
         homeButton,
         menuButton,
         el('div', { className: 'hero__profile-dropdown' }, [profileButton, profileMenu]),
+        noticeButton,
         setupAlertButton,
         el('div', { className: 'hero__toolbar-spacer' }),
         executeButton,
@@ -757,6 +790,20 @@ export function mountPromptShell(root, initialComponents) {
     // hero.css .has-history) invece di essere centrato in grande solo la
     // prima volta.
     const isHomePage = window.location.pathname === '/';
+    // Contenuti "sotto la ricerca" (homeBelow, es. i colleghi digitali
+    // dell'assistente): la home resta quella centrata, con loro sotto la
+    // casella; spariscono alla prima richiesta, quando parte la cronologia.
+    const belowHero = isHomePage && Array.isArray(initialComponents) && initialComponents.length > 0
+        && initialComponents.every((c) => c && c.homeBelow);
+    if (belowHero) {
+        const homeBelow = el('div', { className: 'home-below' });
+        root.appendChild(homeBelow);
+        mountComponents(homeBelow, initialComponents);
+        const summary = initialComponents.find((c) => c.summary)?.summary;
+        const line2 = greeting.querySelector('.hero__greeting-line2');
+        if (summary && line2) line2.textContent = summary;
+        initialComponents = [];
+    }
     const hasInitialContent = Array.isArray(initialComponents) && initialComponents.length > 0;
 
     if (hasInitialContent) {

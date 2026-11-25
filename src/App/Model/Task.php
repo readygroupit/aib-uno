@@ -23,6 +23,10 @@ final class Task extends AbstractModel
     public ?string $checklist = null;
     public ?string $recurrence = null;
     public ?int $sourceStepId = null;
+    public ?int $iteration = null;
+    public ?string $outcome = null;
+    public ?string $outcomeDate = null;
+    public ?string $itemNotes = null;
 
     public function isOpen(): bool
     {

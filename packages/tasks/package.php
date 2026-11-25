@@ -110,6 +110,13 @@ return [
                     'defaultRequired' => true,
                     'format' => 'integer',
                 ],
+                // Il giro di una fase che si ripete (correzioni, modifiche del cliente).
+                'iteration' => [
+                    'sql' => 'SMALLINT UNSIGNED',
+                    'label' => 'Giro',
+                    'defaultRequired' => true,
+                    'format' => 'integer',
+                ],
                 'recurrence' => [
                     'sql' => 'VARCHAR(20)',
                     'label' => 'Si ripete',
@@ -137,6 +144,27 @@ return [
                     'nullable' => true,
                     'format' => 'integer',
                     'help' => "L'id della riga specifica dentro 'Tipo entita collegata' (es. il contatto numero 12).",
+                ],
+                'outcome' => [
+                    'sql' => 'TEXT',
+                    'label' => 'Esito e note',
+                    'base' => true,
+                    'nullable' => true,
+                    'input' => 'textarea',
+                    'help' => "Cosa e' emerso o cosa si e' deciso (si scrive dalla scheda Da fare).",
+                ],
+                'outcome_date' => [
+                    'sql' => 'DATE',
+                    'label' => "Data dell'esito",
+                    'base' => true,
+                    'nullable' => true,
+                    'format' => 'date',
+                ],
+                'item_notes' => [
+                    'sql' => 'TEXT',
+                    'label' => 'Note sulle voci',
+                    'base' => true,
+                    'nullable' => true,
                 ],
             ],
 

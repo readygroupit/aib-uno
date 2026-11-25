@@ -68,6 +68,11 @@ final class FormComponent extends AbstractComponent
             // Per chi si sta lavorando (es. il cliente): in testa al form,
             // segue il campo 'key' se lo si cambia.
             'context' => $config['context'] ?? null,
+            // La mini guida del form (icona "i" accanto al titolo), vedi public/js/guide.js.
+            'guide' => $config['guide'] ?? null,
+            // Le sezioni del form le mostra la pagina, come schede sue
+            // (vedi il componente 'page-tabs'): il form non disegna le sue tab.
+            'tabsExternal' => (bool) ($config['tabsExternal'] ?? false),
             'csrfToken' => Csrf::token(),
         ];
     }
@@ -97,6 +102,8 @@ final class FormComponent extends AbstractComponent
 
                 $boxes[] = [
                     'title' => $box['title'] ?? null,
+                    'guide' => $box['guide'] ?? null,
+                    'description' => $box['description'] ?? null,
                     'area' => $box['area'] ?? 'main',
                     'fields' => $resolved,
                 ];
@@ -106,7 +113,7 @@ final class FormComponent extends AbstractComponent
                 continue;
             }
 
-            $sections[] = ['label' => $section['label'] ?? null, 'boxes' => $boxes];
+            $sections[] = ['label' => $section['label'] ?? null, 'key' => $section['key'] ?? null, 'boxes' => $boxes];
         }
 
         return $sections !== [] ? $sections : $this->implicitSection($allFields);

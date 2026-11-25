@@ -1,0 +1,162 @@
+/*
+ * Pannello laterale (drawer.js): gli elementi "figli" di una pagina si
+ * modificano qui, sopra la pagina. Da computer scorre da destra, da
+ * telefono occupa tutto lo schermo.
+ */
+.drawer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    justify-content: flex-end;
+    background: rgba(18, 51, 63, 0);
+    transition: background 0.2s;
+}
+
+.drawer-overlay.is-open {
+    background: rgba(18, 51, 63, 0.28);
+}
+
+.drawer {
+    width: min(560px, 100%);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-canvas);
+    box-shadow: -24px 0 60px -30px rgba(18, 51, 63, 0.5);
+    transform: translateX(100%);
+    transition: transform 0.22s ease-out;
+}
+
+.drawer-overlay.is-open .drawer {
+    transform: translateX(0);
+}
+
+.drawer__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px;
+    background: var(--color-panel);
+    border-bottom: var(--hairline);
+}
+
+.drawer__title {
+    flex: 0 1 auto;
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-petrol);
+}
+
+.drawer__close {
+    margin-left: auto;
+    appearance: none;
+    border: none;
+    background: rgba(18, 51, 63, 0.06);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-petrol);
+    cursor: pointer;
+}
+
+.drawer__close:hover {
+    background: rgba(18, 51, 63, 0.12);
+}
+
+.drawer__close:focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 2px;
+}
+
+.drawer__close .icon svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+.drawer__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Titolo e guida sono gia' nella testata del pannello. */
+.drawer .form__header > .card__title {
+    display: none;
+}
+
+.drawer .form__header:not(:has(> :not(.card__title))) {
+    display: none;
+}
+
+.drawer__guide:empty {
+    display: none;
+}
+
+/* Nel pannello il form non e' una card dentro la card: riquadri a tutta
+   larghezza, le due colonne una sotto l'altra. */
+.drawer .card.form {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.drawer .form-section--split {
+    display: flex;
+    flex-direction: column;
+}
+
+.drawer .form-section__main,
+.drawer .form-section__sidebar,
+.drawer .form-box {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+/* "Salva" sempre in vista, attaccato al fondo del pannello. */
+.drawer__body {
+    padding-bottom: 0;
+}
+
+.drawer .form__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 14px -16px 0;
+    padding: 12px 16px;
+    background: var(--color-panel);
+    border-top: var(--hairline);
+}
+
+html.has-drawer,
+html.has-drawer body {
+    overflow: hidden;
+}
+
+@media (max-width: 720px) {
+    .drawer {
+        width: 100%;
+    }
+
+    .drawer__head {
+        padding: 14px 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .drawer,
+    .drawer-overlay {
+        transition: none;
+    }
+}

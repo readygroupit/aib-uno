@@ -32,9 +32,11 @@ final class WorkOrderService
     private WorkOrderTypeRepository $types;
     private WorkOrderTypeStepRepository $steps;
     private TaskRepository $tasks;
+    private Container $container;
 
     public function __construct(Container $container)
     {
+        $this->container = $container;
         $this->orders = $container->get(WorkOrderRepository::class);
         $this->types = $container->get(WorkOrderTypeRepository::class);
         $this->steps = $container->get(WorkOrderTypeStepRepository::class);
@@ -61,29 +63,23 @@ final class WorkOrderService
         $type = $this->types->find((int) $order->workOrderTypeId);
         $steps = $this->steps->findByType((int) $order->workOrderTypeId);
         $start = $order->startDate ?? date('Y-m-d');
+        $process = $this->container->get(ProcessService::class);
+        // Prima la squadra: ogni fase va a chi ha il suo ruolo.
+        $process->seed($order);
 
         $lastOffset = 0;
         foreach ($steps as $index => $step) {
-            $offset = (int) ($step->offsetDays ?? 0);
-            $lastOffset = max($lastOffset, $offset);
-            $this->tasks->insert([
-                'title' => $step->title,
-                'description' => $step->description,
-                'checklist' => $step->checklist,
-                'position' => $step->position ?? ($index + 1),
-                'planned_date' => Workdays::adjust(date('Y-m-d', strtotime("{$start} +{$offset} days"))),
-                'estimated_minutes' => $step->estimatedMinutes,
-                'waits_for_client' => (int) ($step->waitsForClient ?? 0),
-                'assigned_user_id' => $order->ownerUserId,
-                'priority' => $order->priority ?? 'normale',
-                'stage' => 'da fare',
-                'entity_type' => self::ENTITY,
-                'entity_id' => $workOrderId,
-                'source_step_id' => $step->id,
-            ]);
+            // Senza giorno previsto la data la danno le date chiave (es. la Brand Identity non ha tempi standard).
+            $planned = null;
+            if ($step->offsetDays !== null) {
+                $offset = (int) $step->offsetDays;
+                $lastOffset = max($lastOffset, $offset);
+                $planned = Workdays::adjust(date('Y-m-d', strtotime("{$start} +{$offset} days")));
+            }
+            $this->tasks->insert($process->taskData($order, $step, (int) ($step->position ?? ($index + 1)), 1, null, $planned));
         }
 
-        if ($order->dueDate === null) {
+        if ($order->dueDate === null && ($lastOffset > 0 || ($type instanceof WorkOrderType && $type->defaultDays !== null))) {
             $days = $type instanceof WorkOrderType && $type->defaultDays !== null ? (int) $type->defaultDays : $lastOffset + 2;
             $this->orders->update($workOrderId, ['due_date' => Workdays::adjust(date('Y-m-d', strtotime("{$start} +{$days} days")))]);
         }
@@ -202,6 +198,10 @@ final class WorkOrderService
             'waiting_since' => null,
             'last_activity_at' => date('Y-m-d H:i:s'),
         ]);
+        // L'idea della roadmap da cui era nato: fatta.
+        if (\App\Knowledge\KnowledgeService::isInstalled()) {
+            $this->container->get(\App\Knowledge\KnowledgeService::class)->syncRoadmap($workOrderId, 'fatta');
+        }
     }
 
     /** Ricorda solo quando il cliente e' stato sollecitato: il messaggio lo manda ancora l'operatore. */

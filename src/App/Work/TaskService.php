@@ -50,12 +50,66 @@ final class TaskService
             $this->workOrders->replan((int) $task->entityId);
         }
         $this->afterChange($task);
+        if ($this->workOrders !== null) {
+            $this->container->get(ProcessService::class)->afterTaskDone($task);
+        }
         // L'attivita' di una richiesta del cliente fatta: e' fatta anche la richiesta.
         if ($task->entityType === 'client_requests' && $task->entityId !== null && in_array('client_requests', PackageCatalogService::installedNames(), true)) {
             $this->container->get(\App\ClientRequests\ClientRequestService::class)->markDoneFromTask((int) $task->entityId);
         }
 
         return $next;
+    }
+
+    /**
+     * Spunta (o toglie la spunta a) un punto della checklist di un'attivita'.
+     * Il punto fatto si segna con "[x] " davanti, nello stesso testo.
+     *
+     * @return bool|null il nuovo stato del punto; null se il punto non c'e'
+     */
+    public function toggleChecklistItem(int $taskId, int $index): ?bool
+    {
+        $task = $this->tasks->find($taskId);
+        if (!$task instanceof Task) {
+            return null;
+        }
+        $lines = array_values(array_filter(array_map('rtrim', explode("\n", (string) $task->checklist)), static fn (string $l) => trim($l) !== ''));
+        if (!isset($lines[$index])) {
+            return null;
+        }
+        $line = trim($lines[$index]);
+        $done = preg_match('/^\[x\]\s*/i', $line) === 1;
+        $text = trim((string) preg_replace('/^\[x\]\s*/i', '', $line));
+        $lines[$index] = $done ? $text : '[x] ' . $text;
+        $this->tasks->update($taskId, ['checklist' => implode("\n", $lines)]);
+
+        return !$done;
+    }
+
+    /**
+     * A chi tocca un'attivita' (es. la presentazione interna la fa Sara e non
+     * il team leader): cambia solo questa, e la persona riceve l'avviso.
+     */
+    public function assign(int $taskId, ?int $userId): ?Task
+    {
+        $task = $this->tasks->find($taskId);
+        if (!$task instanceof Task) {
+            return null;
+        }
+        $this->tasks->update($taskId, ['assigned_user_id' => $userId]);
+        if ($userId !== null && $userId !== (int) $task->assignedUserId && in_array('notifications', PackageCatalogService::installedNames(), true)) {
+            $this->container->get(\App\Notifications\NotificationService::class)->notify(
+                $userId,
+                \App\Notifications\NotificationTypes::TASK_ASSIGNED,
+                "Tocca a te: {$task->title}",
+                null,
+                '/attivita/' . $taskId,
+                'tasks',
+                $taskId
+            );
+        }
+
+        return $this->tasks->find($taskId);
     }
 
     public function reopen(int $taskId): void

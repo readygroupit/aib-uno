@@ -30,6 +30,8 @@ use App\Support\ItalianFormat as F;
 final class WorkOrderOverviewService
 {
     public const COLUMNS = [
+        'contatto' => ['title' => 'Primo contatto', 'tone' => 'neutral'],
+        'preventivo' => ['title' => 'Preventivo', 'tone' => 'neutral'],
         'da avviare' => ['title' => 'Da avviare', 'tone' => 'neutral'],
         'in corso' => ['title' => 'In corso', 'tone' => 'info'],
         'in attesa del cliente' => ['title' => 'In attesa del cliente', 'tone' => 'warning'],
@@ -48,8 +50,11 @@ final class WorkOrderOverviewService
     private ?array $userNames = null;
     private bool $hasCustomers;
 
+    private Container $container;
+
     public function __construct(Container $container)
     {
+        $this->container = $container;
         $this->tasks = $container->get(TaskRepository::class);
         $this->users = $container->get(UserRepository::class);
         $this->customers = $container->get(CustomerRepository::class);
@@ -391,7 +396,26 @@ final class WorkOrderOverviewService
             'context' => $context['label'] ?? null,
             'contextHref' => $context['href'] ?? null,
             'toggleAction' => '/attivita/' . $task->id . '/fatta',
+            // Una fase con dati da inserire (data, risposte, squadra...): la spunta apre la fase.
+            'openHref' => $open && $this->needsPage($task) ? '/attivita/' . $task->id : null,
         ];
+    }
+
+    /** @var array<int,bool> fase del processo => si fa nella sua pagina */
+    private array $stepNeedsPage = [];
+
+    private function needsPage(Task $task): bool
+    {
+        if ($task->sourceStepId === null) {
+            return false;
+        }
+        $id = (int) $task->sourceStepId;
+        if (!array_key_exists($id, $this->stepNeedsPage)) {
+            $step = $this->container->get(\App\Repository\WorkOrderTypeStepRepository::class)->find($id);
+            $this->stepNeedsPage[$id] = $step !== null && ProcessService::needsPage($step->kind, $step->completesOn);
+        }
+
+        return $this->stepNeedsPage[$id];
     }
 
     /**

@@ -192,6 +192,42 @@ return [
                     'autocomplete' => ['source' => '/riferimenti/staff/cerca'],
                     'help' => 'Chi segue il cliente in azienda.',
                 ],
+                // Qualificazione (fase 5): a che punto e', quanto e' caldo, com'e' da
+                // seguire, quando risentirlo. L'assistente propone la data in base
+                // alla temperatura (regole contact_hot/warm/cold) e avvisa quando arriva.
+                'commercial_stage' => [
+                    'sql' => 'VARCHAR(20)',
+                    'label' => 'A che punto e\'',
+                    'defaultRequired' => true,
+                    'options' => ['potenziale', 'in trattativa', 'cliente', 'ex cliente'],
+                ],
+                'temperature' => [
+                    'sql' => 'VARCHAR(10)',
+                    'label' => 'Quanto e\' caldo',
+                    'defaultRequired' => true,
+                    'options' => ['caldo', 'tiepido', 'freddo'],
+                    'help' => 'Caldo: pronto a partire. Freddo: interessato, ma senza fretta. Decide quando risentirlo.',
+                ],
+                'temperament' => [
+                    'sql' => 'VARCHAR(20)',
+                    'label' => 'Com\'e\' da seguire',
+                    'defaultRequired' => true,
+                    'options' => ['facile', 'normale', 'esigente', 'difficile'],
+                    'help' => 'Per chi lo segue: quanto attenzione serve (cambi di idea, pagamenti, tempi).',
+                ],
+                'next_contact_date' => [
+                    'sql' => 'DATE',
+                    'label' => 'Risentirlo il',
+                    'defaultRequired' => true,
+                    'format' => 'date',
+                    'help' => "Vuota: la propone l'assistente dalla temperatura. Quel giorno ti ricorda di risentirlo.",
+                ],
+                'next_contact_note' => [
+                    'sql' => 'VARCHAR(255)',
+                    'label' => 'Per cosa',
+                    'defaultRequired' => true,
+                    'help' => "Es. 'proporre il sito', 'sentire se ha deciso sul preventivo'.",
+                ],
                 'referrer_customer_id' => [
                     'sql' => 'INT UNSIGNED',
                     'label' => 'Portato da',
@@ -276,7 +312,12 @@ return [
                             [
                                 'title' => 'Rapporto',
                                 'area' => 'main',
-                                'fields' => ['relationship', 'importance', 'sector', 'customer_since'],
+                                'fields' => ['relationship', 'commercial_stage', 'importance', 'temperature', 'temperament', 'sector', 'customer_since'],
+                            ],
+                            [
+                                'title' => 'Quando risentirlo',
+                                'area' => 'sidebar',
+                                'fields' => ['next_contact_date', 'next_contact_note'],
                             ],
                             [
                                 'title' => 'Chi lo segue',

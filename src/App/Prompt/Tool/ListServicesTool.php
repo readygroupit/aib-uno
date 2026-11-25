@@ -48,7 +48,7 @@ final class ListServicesTool extends AbstractListEntityTool
         return [
             ['key' => 'name', 'label' => 'Nome'],
             ['key' => 'category', 'label' => 'Categoria'],
-            ['key' => 'price', 'label' => 'Prezzo'],
+            ['key' => 'price', 'label' => 'Prezzo indicativo'],
             ['key' => 'durationMinutes', 'label' => 'Durata (min)'],
         ];
     }

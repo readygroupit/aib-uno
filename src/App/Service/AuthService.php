@@ -96,6 +96,7 @@ final class AuthService
             'lastName' => $candidate->lastName,
             'profileName' => $profile->name ?? '',
             'onboardingSeen' => $candidate->onboardingDismissedAt !== null,
+            'avatar' => $candidate->avatarPath,
             'permissions' => $this->computeEffectivePermissionCodes((int) $candidate->id, (int) $candidate->profileId),
         ];
 

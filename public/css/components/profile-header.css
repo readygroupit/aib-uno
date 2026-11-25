@@ -56,3 +56,5 @@
     font-size: 11.5px;
     color: rgba(18, 51, 63, 0.5);
 }
+
+.profile-header__photo { display: flex; flex-direction: column; align-items: center; gap: 4px; }

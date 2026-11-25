@@ -1,0 +1,46 @@
+CREATE TABLE `customer_profiles` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `status` TINYINT NOT NULL DEFAULT 1,
+  `customer_id` INT UNSIGNED NOT NULL,
+  `history` TEXT NULL,
+  `products` TEXT NULL,
+  `mission` TEXT NULL,
+  `audience` TEXT NULL,
+  `competitors` TEXT NULL,
+  `style_likes` TEXT NULL,
+  `style_dislikes` TEXT NULL,
+  `tone_of_voice` TEXT NULL,
+  `brand_usage` TEXT NULL,
+  `seasonality` TEXT NULL,
+  `notes` TEXT NULL,
+  `last_source` VARCHAR(60) NULL,
+  `created_at` DATETIME NOT NULL,
+  `created_by` INT UNSIGNED NULL,
+  `updated_at` DATETIME NULL,
+  `updated_by` INT UNSIGNED NULL,
+  CONSTRAINT `fk_customer_profiles_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `customer_notes` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `status` TINYINT NOT NULL DEFAULT 1,
+  `customer_id` INT UNSIGNED NOT NULL,
+  `work_order_id` INT UNSIGNED NULL,
+  `kind` VARCHAR(20) NOT NULL,
+  `title` VARCHAR(200) NOT NULL,
+  `body` TEXT NULL,
+  `noted_at` DATE NOT NULL,
+  `source` VARCHAR(20) NULL,
+  `on_roadmap` TINYINT(1) NULL,
+  `roadmap_status` VARCHAR(30) NULL,
+  `due_date` DATE NULL,
+  `mentioned_user_ids` VARCHAR(255) NULL,
+  `author_user_id` INT UNSIGNED NULL,
+  `created_at` DATETIME NOT NULL,
+  `created_by` INT UNSIGNED NULL,
+  `updated_at` DATETIME NULL,
+  `updated_by` INT UNSIGNED NULL,
+  CONSTRAINT `fk_customer_notes_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`),
+  CONSTRAINT `fk_customer_notes_author_user_id` FOREIGN KEY (`author_user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

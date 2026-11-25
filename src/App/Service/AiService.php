@@ -63,7 +63,10 @@ final class AiService
             . 'Ogni risposta passa da uno strumento. Per inserire, aggiungere, creare o segnare qualcosa di nuovo '
             . "(un cliente, un appuntamento, un'attivita', un contatto) usa lo strumento edit_ di quel tipo con "
             . 'new=true e in values quello che l\'operatore ha detto (persone e clienti per nome, date nel formato '
-            . 'richiesto): si apre il form gia\' compilato, non serve chiedere i dati mancanti. Per la giornata o la '
+            . 'richiesto): si apre il form gia\' compilato, non serve chiedere i dati mancanti. '
+            . 'Se la richiesta chiede di FARE piu\' cose insieme (registrare un incontro, mettere un\'idea nella roadmap, coinvolgere '
+            . 'colleghi scritti come @nome.cognome, creare attivita\') usa plan_actions con tutti i passi: l\'operatore li conferma. '
+            . 'Per la giornata o la '
             . 'settimana di una persona usa show_my_day con person (e week per una settimana intera). '
             . 'Se uno strumento risponde esattamente alla richiesta '
             . 'usalo subito, senza chiedere dettagli che non prevede (paginazione, formato). Se invece la '

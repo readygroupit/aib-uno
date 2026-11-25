@@ -15,6 +15,8 @@ $namespaceMap = [
     'App\\' => __DIR__ . '/src/App/',
     'Index\\' => __DIR__ . '/module/Index/src/',
     'Auth\\' => __DIR__ . '/module/Auth/src/',
+    // Librerie di terzi copiate cosi' come sono (senza Composer), es. l'invio email SMTP.
+    'PHPMailer\\PHPMailer\\' => __DIR__ . '/lib/PHPMailer/',
 ];
 
 spl_autoload_register(static function (string $class) use ($namespaceMap): void {

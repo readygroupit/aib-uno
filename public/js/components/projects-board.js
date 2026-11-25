@@ -1,5 +1,6 @@
 import { registerComponent } from './registry.js';
 import { el } from '../dom.js';
+import { copyModal } from '../modal.js';
 
 function slugify(text) {
     return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
@@ -20,7 +21,7 @@ function copyButton(url) {
         navigator.clipboard.writeText(url).then(() => {
             button.textContent = 'Link copiato';
             setTimeout(() => { button.textContent = 'Copia link primo accesso'; }, 2000);
-        }).catch(() => window.prompt('Link di primo accesso', url));
+        }).catch(() => copyModal({ title: 'Link di primo accesso', text: url }));
     });
     return button;
 }

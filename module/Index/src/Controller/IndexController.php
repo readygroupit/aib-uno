@@ -24,9 +24,15 @@ final class IndexController extends AuthController
         // la home e' vuota: solo il prompt al centro, e' l'assistente a
         // parlare per primo (vedi la Guida).
         $registry = $this->container->get(PromptToolRegistry::class);
-        $components = $registry->has('show_home_dashboard')
-            ? $registry->get('show_home_dashboard')->execute(['range' => (string) $this->param('range', 'today')])
-            : [];
+        // Senza cruscotto: la ricerca al centro e, sotto, i colleghi digitali
+        // dell'assistente con le cose urgenti e importanti di chi entra.
+        $components = match (true) {
+            $registry->has('show_home_dashboard') => $registry->get('show_home_dashboard')->execute(['range' => (string) $this->param('range', 'today')]),
+            // Uno (il configuratore, con 'provisioning') resta con la sola ricerca.
+            $registry->has('show_assistant') && !in_array('provisioning', \App\Package\PackageCatalogService::installedNames(), true)
+                => $registry->get('show_assistant')->execute(['home' => true]),
+            default => [],
+        };
 
         return $this->renderPage($components, ['title' => APP_NAME]);
     }

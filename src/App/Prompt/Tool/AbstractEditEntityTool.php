@@ -376,6 +376,16 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
     {
         $detail = $model->id !== null ? $this->detailComponents($model) : [];
 
+        // Uniforme con attivita', progetto, cliente: con piu' riquadri sotto
+        // l'intestazione, schede "Panoramica" (i riquadri) e "Dettagli" (il form).
+        if (count($detail) >= 2) {
+            $head = array_shift($detail);
+
+            return $this->tabbedPage($model, $head, [
+                ['key' => 'panoramica', 'label' => 'Panoramica', 'icon' => 'list-check', 'color' => 'teal', 'components' => array_values($detail)],
+            ], $message, $messageType, $fieldErrors);
+        }
+
         // Con una scheda sopra, l'esito va in cima (si legge subito) e il
         // form resta chiuso; con errori sui campi resta aperto sul form.
         if ($detail !== [] && $message !== null && $fieldErrors === []) {
@@ -385,6 +395,69 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
         }
 
         return [...$detail, $this->buildForm($model, $message, $messageType, $fieldErrors)];
+    }
+
+    /**
+     * La pagina "a schede", uguale per tutti: in testa $head (stato, titolo,
+     * fatti, azioni), sotto le schede di lavoro ($tabs, la prima si apre per
+     * prima) e in fondo la scheda dei dati gia' compilati, con il form
+     * aperto. Con errori sui campi si apre la scheda dei dati. Vedi AGENTS.md,
+     * "Pagine di lavoro".
+     *
+     * @param array $tabs schede: [key, label, icon, color, count?, components]
+     * @param array{key?:string,label?:string,icon?:string,color?:string} $details
+     */
+    protected function tabbedPage(AbstractModel $model, array $head, array $tabs, ?string $message, ?string $messageType, array $fieldErrors, array $details = []): array
+    {
+        $form = $this->buildForm($model, $fieldErrors !== [] ? $message : null, $fieldErrors !== [] ? $messageType : null, $fieldErrors);
+        $form['title'] = '';
+        $form['collapsed'] = false;
+        $details += ['key' => 'dettagli', 'label' => 'Dettagli', 'icon' => 'pen', 'color' => 'petrol'];
+        $details['components'] = [$form];
+
+        $components = [];
+        if ($message !== null && $fieldErrors === []) {
+            $components[] = ['type' => 'notice', 'tone' => $messageType === 'error' ? 'error' : 'success', 'text' => $message];
+        }
+        $components[] = $head;
+        $components[] = [
+            'type' => 'page-tabs',
+            'label' => 'Sezioni della pagina',
+            'selected' => $fieldErrors !== [] ? $details['key'] : null,
+            'tabs' => [...$tabs, $details],
+        ];
+
+        return $components;
+    }
+
+    /**
+     * Il form con solo alcuni campi (es. i dati del cliente che servono a un
+     * preventivo, nel pannello laterale). Salva sullo stesso indirizzo del
+     * form completo: i campi che non ci sono restano come sono (vedi
+     * AbstractEntityController::collectAndValidate()).
+     *
+     * @param string[] $keys
+     */
+    public function formWithOnly(AbstractModel $model, array $keys, string $title): array
+    {
+        $form = $this->buildForm($model);
+        foreach ($form['sections'] as $si => $section) {
+            foreach ($section['boxes'] as $bi => $box) {
+                $form['sections'][$si]['boxes'][$bi]['fields'] = array_values(array_filter($box['fields'], static fn (array $f) => in_array($f['key'], $keys, true)));
+            }
+            $form['sections'][$si]['boxes'] = array_values(array_filter($form['sections'][$si]['boxes'], static fn (array $b) => $b['fields'] !== []));
+            $form['sections'][$si]['label'] = null;
+        }
+        $form['sections'] = array_values(array_filter($form['sections'], static fn (array $s) => $s['boxes'] !== []));
+        // Una sola sezione: niente schede dentro il form.
+        if (count($form['sections']) > 1) {
+            $form['sections'] = [['label' => null, 'key' => null, 'boxes' => array_merge(...array_column($form['sections'], 'boxes'))]];
+        }
+        $form['title'] = $title;
+        $form['collapsed'] = false;
+        $form['secondaryActions'] = [];
+
+        return $form;
     }
 
     /** Componenti mostrati sopra il form di un elemento esistente - nessuno di default. */
@@ -514,7 +587,10 @@ abstract class AbstractEditEntityTool implements PromptToolInterface
                 // (es. tasks.entity_id, sempre colonna ma non sempre
                 // valorizzato - vedi App\Package\PackageInstaller) e'
                 // sempre presente ma non e' detto sia obbligatorio.
-                'required' => ($definition['base'] ?? false) && !($definition['nullable'] ?? false),
+                // 'required' => true: obbligatorio nel form anche se la colonna
+                // ammette NULL (es. la data di una data chiave). Con 'showIf'
+                // vale solo quando il campo si vede.
+                'required' => (($definition['base'] ?? false) && !($definition['nullable'] ?? false)) || ($definition['required'] ?? false),
                 'width' => $this->inferWidth($definition),
                 'error' => $fieldErrors[$key] ?? null,
             ];

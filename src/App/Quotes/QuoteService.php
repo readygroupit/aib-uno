@@ -83,39 +83,51 @@ final class QuoteService
      */
     public function problems(Quote $quote): array
     {
-        $missing = [];
+        return array_merge(...array_values($this->problemsByArea($quote)));
+    }
+
+    /**
+     * Cosa manca, diviso per dove si sistema: le righe, i dati del
+     * preventivo, i dati del cliente (vedi la pagina del preventivo: un
+     * pulsante per ognuno).
+     *
+     * @return array{lines: string[], quote: string[], customer: string[]}
+     */
+    public function problemsByArea(Quote $quote): array
+    {
+        $byArea = ['lines' => [], 'quote' => [], 'customer' => []];
         $lines = $this->lines->findByQuote((int) $quote->id);
         if ($lines === []) {
-            $missing[] = 'nessuna riga';
+            $byArea['lines'][] = 'nessuna riga';
         }
         foreach ($lines as $line) {
             if ((float) $line->unitPrice <= 0) {
-                $missing[] = "prezzo di \u{ab}{$line->description}\u{bb}";
+                $byArea['lines'][] = "prezzo di \u{ab}{$line->description}\u{bb}";
             }
             if ($line->isRecurring() && $line->recurrence === null) {
-                $missing[] = "ogni quanto si paga \u{ab}{$line->description}\u{bb}";
+                $byArea['lines'][] = "ogni quanto si paga \u{ab}{$line->description}\u{bb}";
             }
         }
         if ($quote->validUntil === null) {
-            $missing[] = 'scadenza del preventivo';
+            $byArea['quote'][] = 'scadenza del preventivo';
         }
         if (trim((string) $quote->paymentTerms) === '') {
-            $missing[] = 'modalita\' di pagamento';
+            $byArea['quote'][] = 'modalita\' di pagamento';
         }
         $customer = $this->container->get(CustomerRepository::class)->find((int) $quote->customerId);
         if ($customer instanceof Customer) {
             if (!$customer->email) {
-                $missing[] = 'email del cliente';
+                $byArea['customer'][] = 'email del cliente';
             }
             if (!$customer->vatNumber) {
-                $missing[] = 'partita IVA o codice fiscale del cliente';
+                $byArea['customer'][] = 'partita IVA o codice fiscale del cliente';
             }
             if (!$customer->address) {
-                $missing[] = 'indirizzo del cliente';
+                $byArea['customer'][] = 'indirizzo del cliente';
             }
         }
 
-        return $missing;
+        return $byArea;
     }
 
     /**
@@ -124,6 +136,37 @@ final class QuoteService
      * @return string cosa e' successo
      */
     public function advance(int $quoteId, string $step, int $userId, bool $canApprove, string $text = ''): string
+    {
+        $message = $this->applyStep($quoteId, $step, $userId, $canApprove, $text);
+        $this->notifyProject($quoteId, $text);
+
+        return $message;
+    }
+
+    /**
+     * Il progetto collegato (una commessa con quote_id) avanza da solo:
+     * l'accettazione lo avvisa gia' accept(), da qualunque parte arrivi.
+     */
+    private function notifyProject(int $quoteId, string $text): void
+    {
+        $quote = $this->quotes->find($quoteId);
+        if (!$quote instanceof Quote) {
+            return;
+        }
+        $process = $this->container->get(\App\Work\ProcessService::class);
+        $events = match ($quote->stage) {
+            'da approvare' => [\App\Work\ProcessService::QUOTE_DRAFTED],
+            'approvato' => [\App\Work\ProcessService::QUOTE_DRAFTED, \App\Work\ProcessService::QUOTE_APPROVED],
+            'inviato' => [\App\Work\ProcessService::QUOTE_SENT],
+            'rifiutato' => ['preventivo rifiutato'],
+            default => [],
+        };
+        foreach ($events as $event) {
+            $process->onQuoteEvent($quoteId, $event, $text);
+        }
+    }
+
+    private function applyStep(int $quoteId, string $step, int $userId, bool $canApprove, string $text): string
     {
         $quote = $this->quotes->find($quoteId);
         if (!$quote instanceof Quote) {
@@ -222,10 +265,12 @@ final class QuoteService
             $created++;
         }
         $this->quotes->update($quoteId, ['stage' => 'accettato', 'accepted_at' => date('Y-m-d H:i:s'), 'accepted_via' => mb_substr($via, 0, 60)]);
+        $this->container->get(\App\Work\ProcessService::class)->onQuoteEvent($quoteId, \App\Work\ProcessService::QUOTE_ACCEPTED);
         if ($customer instanceof Customer) {
             $customers->update((int) $customer->id, array_filter([
                 'relationship' => $customer->relationship ?? 'cliente',
                 'customer_since' => $customer->customerSince ?? date('Y-m-d'),
+                'commercial_stage' => 'cliente',
             ]));
         }
 

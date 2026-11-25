@@ -12,6 +12,7 @@ $unoUser = isset($_SESSION['user']['id']) ? [
     'name' => trim(($_SESSION['user']['firstName'] ?? '') . ' ' . ($_SESSION['user']['lastName'] ?? '')),
     'firstName' => (string) ($_SESSION['user']['firstName'] ?? ''),
     'role' => $_SESSION['user']['profileName'] ?? '',
+    'avatar' => \App\Service\UserAvatarService::url($_SESSION['user']['avatar'] ?? null),
 ] : null;
 
 // Tour di benvenuto (vedi onboarding.js): si apre da solo finche' non
@@ -63,6 +64,12 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <link rel="stylesheet" href="<?= $this->asset('/css/components/agents.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/projects.css') ?>">
     <link rel="stylesheet" href="<?= $this->asset('/css/components/landing.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/notifications.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/assistant.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/knowledge.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/documents.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/page-tabs.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/css/components/drawer.css') ?>">
     <!--
       Logo del prompt, disponibile a livello globale: il prompt e' ormai
       costruito interamente lato client su ogni pagina (vedi hero.js), non
@@ -100,6 +107,7 @@ $unoShowOnboarding = isset($_SESSION['user']['id']) && !($_SESSION['user']['onbo
     <!-- Loghi dell'azienda (BrandingService): in cima al prompt, vedi hero.js. -->
     <script>window.UNO_BRAND = <?= json_encode($brand ?? null, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES) ?>;</script>
     <script>window.UNO_WORKLOG = <?= json_encode(in_array('worklog.view', $_SESSION['user']['permissions'] ?? [], true) && in_array('worklog', \App\Package\PackageCatalogService::installedNames(), true)) ?>;</script>
+    <script>window.UNO_NOTIFICATIONS = <?= json_encode(isset($_SESSION['user']['id']) && in_array('notifications', \App\Package\PackageCatalogService::installedNames(), true)) ?>;</script>
     <script>window.UNO_SHOW_ONBOARDING = <?= json_encode($unoShowOnboarding) ?>;</script>
     <!-- Versione (?v=filemtime) di ogni file JS, anche di quelli importati da altri moduli: nessun file vecchio dalla cache del browser (vedi View::importMap()). -->
     <script type="importmap"><?= $this->importMap() ?></script>

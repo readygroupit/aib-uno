@@ -86,6 +86,9 @@ use App\Prompt\Tool\AnalyzeDataTool;
 use App\Prompt\Tool\ShowImportTool;
 use App\Prompt\Tool\ShowAgentActivityTool;
 use App\Prompt\Tool\ShowAgentsTool;
+use App\Prompt\Tool\ShowAssistantTool;
+use App\Prompt\Tool\PlanActionsTool;
+use App\Prompt\Tool\SearchDocumentsTool;
 use App\Prompt\Tool\ShowProjectsTool;
 use App\Prompt\Tool\ShowReportTool;
 use App\Prompt\Tool\ShowSetupTool;
@@ -98,6 +101,9 @@ return static function (PromptToolRegistry $registry): void {
     // ('home'), che passa sempre da matchLocalTool() su questo registro.
     $registry->register(ShowHomeDashboardTool::class, 'leads', 'cases', 'document_requests', 'tasks', 'refunds');
     $registry->register(ShowMenuTool::class);
+    $registry->register(ShowAssistantTool::class, 'assistant', 'work_orders');
+    $registry->register(PlanActionsTool::class, 'customers');
+    $registry->register(SearchDocumentsTool::class, 'documents');
     $registry->register(ShowWizardTool::class);
     $registry->register(ListUsersTool::class);
     $registry->register(ListPermissionsTool::class);

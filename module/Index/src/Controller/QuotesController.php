@@ -155,6 +155,7 @@ final class QuotesController extends AbstractEntityController
             'quote' => $detail,
             'company' => $company,
             'customer' => $this->container->get(CustomerRepository::class)->find((int) $quote->customerId),
+            'quoteId' => (int) $quote->id,
         ], false);
     }
 }

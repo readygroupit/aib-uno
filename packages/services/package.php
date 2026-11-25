@@ -20,11 +20,13 @@ return [
             'fields' => [
                 'name' => [
                     'sql' => 'VARCHAR(190)',
+                    'width' => 'half',
                     'label' => 'Nome',
                     'base' => true,
                 ],
                 'category' => [
                     'sql' => 'VARCHAR(100)',
+                    'width' => 'quarter',
                     'label' => 'Categoria',
                     'defaultRequired' => true,
                 ],
@@ -35,14 +37,17 @@ return [
                 ],
                 'stage' => [
                     'sql' => 'VARCHAR(50)',
+                    'width' => 'quarter',
                     'label' => 'Stato',
                     'base' => true,
                     'options' => ['attivo', 'non disponibile'],
                 ],
                 'price' => [
                     'sql' => 'DECIMAL(10,2)',
-                    'label' => 'Prezzo di listino',
+                    'label' => 'Prezzo indicativo',
                     'base' => true,
+                    'nullable' => true,
+                    'help' => 'Facoltativo: il prezzo vero si decide nel preventivo.',
                     'format' => 'decimal',
                     'formatOptions' => ['precision' => 2],
                 ],
@@ -61,6 +66,7 @@ return [
                     'help' => "Tempo di lavoro tipico (es. uno shooting di una giornata = 480): servira' a pianificare le giornate.",
                 ],
                 'billing_type' => [
+                    'required' => true,
                     'sql' => 'VARCHAR(20)',
                     'label' => 'Come si paga',
                     'defaultRequired' => true,
@@ -68,6 +74,7 @@ return [
                     'help' => "Ricorrente: un canone che si rinnova (es. hosting del sito ogni anno, social ogni mese).",
                 ],
                 'recurrence' => [
+                    'required' => true,
                     'sql' => 'VARCHAR(20)',
                     'label' => 'Ogni quanto',
                     'defaultRequired' => true,
@@ -96,22 +103,45 @@ return [
             'layout' => [
                 'sections' => [
                     [
-                        'label' => null,
+                        'key' => 'servizio',
+                        'label' => 'Il servizio',
                         'boxes' => [
                             [
                                 'title' => 'Servizio',
+                                'description' => 'Come si chiama, che tipo di servizio e\' e cosa comprende.',
                                 'area' => 'main',
-                                'fields' => ['name', 'category', 'description', 'stage'],
-                            ],
-                            [
-                                'title' => 'Prezzo',
-                                'area' => 'sidebar',
-                                'fields' => ['billing_type', 'recurrence', 'price', 'cost_price', 'tax_rate_percent'],
+                                'fields' => ['name', 'category', 'stage', 'description'],
+                                'guide' => "La descrizione la leggono i colleghi e l'assistente: scrivi cosa si fa, non solo il nome. \"Non disponibile\" lo toglie dalle proposte senza cancellarlo.",
                             ],
                             [
                                 'title' => 'Chi lo fa e quanto dura',
-                                'area' => 'main',
+                                'description' => 'Solo se lo fa qualcuno fuori dall\'agenzia.',
+                                'area' => 'sidebar',
                                 'fields' => ['supplier_customer_id', 'duration_minutes'],
+                                'guide' => "Il fornitore serve solo se il servizio lo fa qualcuno fuori dall'agenzia. La durata e' indicativa: le date vere si fissano nel progetto.",
+                            ],
+                        ],
+                    ],
+                    [
+                        'key' => 'vendita',
+                        'label' => 'Vendita',
+                        'boxes' => [
+                            [
+                                'title' => 'Prezzo e costi',
+                                'description' => 'Il prezzo e\' indicativo: quello vero si decide nel preventivo.',
+                                'area' => 'main',
+                                'fields' => ['price', 'cost_price', 'tax_rate_percent'],
+                                'guide' => [
+                                    'text' => "Il prezzo vero si decide nel preventivo, cliente per cliente. Qui puoi mettere un prezzo indicativo: la riga del preventivo parte da li'.",
+                                    'tip' => "Senza prezzo indicativo il preventivo chiede di scriverlo prima di inviarlo. Il costo per voi resta interno: il cliente non lo vede.",
+                                ],
+                            ],
+                            [
+                                'title' => 'Come si fattura',
+                                'description' => 'Una volta o a canone.',
+                                'area' => 'sidebar',
+                                'fields' => ['billing_type', 'recurrence'],
+                                'guide' => "Una tantum si paga una volta; ricorrente si ripete (es. ogni mese) finche' il cliente ha il servizio.",
                             ],
                         ],
                     ],

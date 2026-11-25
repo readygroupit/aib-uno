@@ -27,6 +27,11 @@ final class Customer extends AbstractModel
     public ?string $sector = null;
     public ?string $customerSince = null;
     public ?int $accountUserId = null;
+    public ?string $commercialStage = null;
+    public ?string $temperature = null;
+    public ?string $temperament = null;
+    public ?string $nextContactDate = null;
+    public ?string $nextContactNote = null;
     public ?int $referrerCustomerId = null;
     public ?string $referralPercent = null;
     public ?string $referralTerms = null;

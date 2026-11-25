@@ -1,7 +1,8 @@
 import { el } from './dom.js';
 import { icon } from './icons.js';
 import { refreshCurrentEntry, openInPanel } from './components/hero.js';
-import { openModal, closeModal } from './modal.js';
+import { openModal, closeModal, confirmModal, copyModal } from './modal.js';
+import { inDrawer, refreshDrawer } from './drawer.js';
 
 /**
  * Pezzi in comune tra lista clienti, scheda cliente, scadenzario e
@@ -45,7 +46,7 @@ export async function reloadCurrentScreen() {
  * ricarica la schermata corrente, cosi' i numeri sono subito aggiornati.
  */
 export async function runAction(url, { confirm = null, button = null, body = null } = {}) {
-    if (confirm && !window.confirm(confirm)) return;
+    if (confirm && !(await confirmModal({ text: confirm }))) return;
     if (button) button.disabled = true;
 
     try {
@@ -57,6 +58,12 @@ export async function runAction(url, { confirm = null, button = null, body = nul
         });
         const data = await response.json();
         if (data.components) {
+            // Dal pannello laterale: la risposta aggiorna il pannello, non sostituisce la pagina sotto.
+            if (button && inDrawer(button)) {
+                if (data.message) toast(data.message);
+                await refreshDrawer();
+                return;
+            }
             refreshCurrentEntry(data.components);
             return;
         }
@@ -72,6 +79,11 @@ export async function runAction(url, { confirm = null, button = null, body = nul
             return;
         }
         toast(data.message || (data.ok ? 'Fatto.' : 'Non riuscito.'), data.ok ? 'success' : 'error');
+        // Azione dal pannello laterale: si aggiornano il pannello e la pagina sotto.
+        if (data.ok && button && inDrawer(button)) {
+            await refreshDrawer();
+            return;
+        }
         if (data.ok) await reloadCurrentScreen();
     } catch (e) {
         openModal({ title: 'Errore di comunicazione', tone: 'error', body: "Non e' stato possibile contattare il server. Riprova." });
@@ -89,7 +101,7 @@ export function shareModal(share) {
                 await navigator.clipboard.writeText(text);
                 toast('Copiato.');
             } catch (e) {
-                window.prompt('Copia da qui:', text);
+                copyModal({ text });
             }
         });
         return button;

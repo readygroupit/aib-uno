@@ -59,6 +59,101 @@ petrolio, una sola per schermata), poi i contatori, poi le ripartizioni
 bordini colorati sui box, sfumature agli angoli solo nei colori del tema
 (petrolio, giallino accent).
 
+## Mini guida ovunque (decisione del 24/11/2026)
+
+Ogni pagina, scheda, sezione e riquadro dove l'utente puo' bloccarsi ha la
+sua mini guida: un'icona "i" accanto al titolo che apre in un modale (non
+nella pagina, per non occupare spazio) una spiegazione breve: cosa c'e',
+come si compila, un consiglio. Il server manda `guide`
+nei dati del componente (una frase o `{title, text, steps[], tip}`); il
+JS usa `guideParts()` di `public/js/guide.js`. Gia' pronta per: riquadri
+dei form (`'guide'` nel `layout` del manifest), titolo del form,
+`page-tabs`, `service-header`, le parti del processo (`type-steps`).
+Una pagina o un componente nuovo nasce con la sua guida.
+
+Due posti fissi per i testi (25/11/2026), in `config/page-guides.php`:
+- `'pages'` / `'entities'`: il pulsante "Come funziona questa pagina" in
+  basso a destra, su ogni pagina (`public/js/page-help.js`, `/guida-pagina`,
+  `App\Help\PageGuideService`, che sceglie per nome di rotta). Una rotta
+  nuova si aggiunge qui; elenchi, schede e "nuovo" delle entita' si
+  compongono da `'entities'`.
+- `'boxes'`: la "i" dei riquadri dei form, per entita' del manifest e titolo
+  del riquadro (`PackageManifest::layout()` la aggiunge se il manifest non
+  ne ha una sua). Un riquadro nuovo nasce con la sua riga qui.
+
+Cosa c'e' in un riquadro si dice dentro il riquadro: una riga sotto il
+titolo (`'description'` nei box del layout). Niente testi sotto le schede.
+
+Pagine con piu' parti: schede di pagina (`page-tabs`, icona e colore per
+scheda). Una scheda puo' mostrare una sezione del form della pagina (un
+solo "Salva"), con eventuali altri riquadri sotto. Le parti lunghe partono
+chiuse.
+
+Pagine "di lavoro" (es. un'attivita'): prima cosa fare, poi il resto. Se
+ci sono piu' sezioni, si usano schede: la prima e' quella del lavoro
+(compatta, si fa e si spunta); i dati gia' compilati, che si leggono o si
+cambiano solo se serve, stanno in una scheda loro ("Dettagli"). Non si
+mette una lista di spunte sopra e i contenuti collegati sotto: ogni voce
+porta con se' quello che serve (spunta a sinistra, testo a destra, sotto
+risposta o note). Dove si scrive si salva da solo, mostrando "Salvato".
+Un solo pulsante principale per pagina. Per costruirla si usa
+`AbstractEditEntityTool::tabbedPage()`: intestazione, schede di lavoro e,
+in fondo, la scheda con il form ("Dettagli" o un nome adatto). Esempi:
+`EditTaskTool` (Da fare / Dettagli) e `EditQuoteTool` (Righe / Dati del
+preventivo). Da telefono l'intestazione va in colonna, con i pulsanti
+sotto il titolo.
+
+Mai `window.confirm`, `alert` o `prompt`: le conferme sono `confirmModal()`
+e i testi da copiare `copyModal()` (in `public/js/modal.js`); le domande con
+una riga di testo usano `askText()` (`work-ui.js`).
+
+Ogni fase di un processo si fa dalla sua pagina: la scheda "Da fare" mostra
+quello che la fase chiede, secondo il tipo (`EditTaskTool::stepTools()`):
+- data chiave: il form della data, che salva e resta sulla pagina
+  (`reloadAfterSave`);
+- approvazione: "Approva" e "Rimanda indietro";
+- attesa del cliente: "Registra una modifica chiesta" e "Ho sollecitato";
+- appuntamento: "Fissa l'appuntamento";
+- consegna: le cose da consegnare, da spuntare;
+- squadra: i ruoli con le persone;
+- briefing e raccolta informazioni: le risposte sotto ogni voce;
+- fasi del preventivo: il pulsante del preventivo;
+- facoltativa: anche "Non la facciamo".
+
+Un tipo di fase nuovo nasce con il suo strumento qui.
+
+Ogni fase di progetto ha anche il suo spazio di lavoro
+(`EditTaskTool::workArea()`, `TaskWorkService`):
+- l'esito o le note, con un titolo adatto al tipo ("Cosa e' emerso",
+  "Cosa ha risposto il cliente"...);
+- una nota per ogni voce della checklist ("+ nota");
+- i file: sul Drive nella "Cartella dei file" della fase; senza Drive
+  restano in `storage/uploads` e partono da soli con il sync.
+
+Tutto si salva da solo e l'assistente lo legge
+(`TaskWorkService::projectContext()`). Quello che si fa in una fase non
+deve finire fuori dal gestionale.
+
+Elementi "figli" (righe del preventivo, fasi/ruoli/date/consegne del
+processo, squadra/date/consegne/modifiche del progetto, referenti, contatti
+e diario del cliente) e ogni "nuovo" aperto da una pagina (con i dati
+nell'indirizzo, es. "+ Spesa", "+ Fase"): si aprono nel **pannello laterale**
+(`public/js/drawer.js`), non in una schermata nuova. Stesso form e stesso
+salvataggio della loro pagina; salvato, il pannello si chiude e la pagina
+sotto si ricarica. Un figlio nuovo va aggiunto a `DRAWER_PATHS`.
+
+Campi obbligatori: `'base' => true` (colonna NOT NULL), oppure
+`'required' => true` quando la colonna ammette NULL ma nel form il dato
+serve (es. la data di una data chiave, il ruolo di chi entra in squadra).
+Danno l'asterisco nel form e il controllo nel server
+(`AbstractEntityController::collectAndValidate()`). Con `'showIf'`
+l'obbligo vale solo quando il campo si vede (es. "A" solo se l'email si
+manda). I controlli tra piu' campi vanno in `crossFieldErrors()`.
+
+Campi: un campo da solo in una riga si allarga fino in fondo (`packGrid`).
+Quindi le combo e i campi corti si mettono in riga con altri (`'width'` nel
+manifest) e i riquadri si affiancano dove conviene (`'area' => 'sidebar'`).
+
 ## Analisi libera (IA che interroga i dati e compone la pagina)
 
 `src/App/Analysis` + tool `analyze_data`: vedi README -> "Interfaccia a

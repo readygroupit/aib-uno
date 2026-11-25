@@ -14,4 +14,13 @@ final class WorkOrderTypeStep extends AbstractModel
     public ?int $estimatedMinutes = null;
     public ?int $waitsForClient = null;
     public ?string $checklist = null;
+    public ?string $phase = null;
+    public ?string $kind = null;
+    public ?int $roleId = null;
+    public ?int $milestoneId = null;
+    public ?string $completesOn = null;
+    public ?int $rejectStepId = null;
+    public ?int $isRepeatable = null;
+    public ?int $isOptional = null;
+    public ?string $folderName = null;
 }

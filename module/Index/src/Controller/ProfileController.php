@@ -64,6 +64,22 @@ final class ProfileController extends AuthController
         return $this->renderPage($components, ['title' => 'Il mio profilo']);
     }
 
+    /** La propria foto: si carica dalla pagina del profilo (FormData, risposta JSON). */
+    public function avatarAction(): void
+    {
+        $userId = (int) $this->container->get(AuthService::class)->currentUserId();
+        $service = $this->container->get(\App\Service\UserAvatarService::class);
+        if ($this->request->get('remove')) {
+            $service->remove($userId);
+            $this->json(['ok' => true, 'message' => 'Foto tolta: restano le iniziali.']);
+
+            return;
+        }
+        $file = $this->request->file('file');
+        $error = $file !== null ? $service->store($userId, $file) : 'Nessuna foto arrivata.';
+        $this->json($error === null ? ['ok' => true, 'message' => 'Foto salvata.'] : ['ok' => false, 'message' => $error], $error === null ? 200 : 422);
+    }
+
     public function changePasswordAction(): ?string
     {
         /** @var ShowProfileTool $tool */

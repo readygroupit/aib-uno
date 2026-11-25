@@ -94,9 +94,38 @@ final class PackageManifest
      * non sono installati per questo progetto sparisce da solo, invece
      * di lasciare un vuoto). Null se il manifest non la definisce: chi
      * chiama ricade su un form a campo singolo, non strutturato.
+     *
+     * Ogni riquadro ha la sua mini guida (la "i" accanto al titolo): se il
+     * manifest non la scrive, arriva da config/page-guides.php ('boxes',
+     * per entita' e titolo del riquadro).
      */
     public function layout(string $entityKey): ?array
     {
-        return $this->data['entities'][$entityKey]['layout'] ?? null;
+        $layout = $this->data['entities'][$entityKey]['layout'] ?? null;
+        if ($layout === null) {
+            return null;
+        }
+        $guides = self::boxGuides()[$entityKey] ?? [];
+        foreach ($layout['sections'] ?? [] as $si => $section) {
+            foreach ($section['boxes'] ?? [] as $bi => $box) {
+                if (empty($box['guide']) && isset($box['title'], $guides[$box['title']])) {
+                    $layout['sections'][$si]['boxes'][$bi]['guide'] = $guides[$box['title']];
+                }
+            }
+        }
+
+        return $layout;
+    }
+
+    /** @return array<string, array<string, string|array>> */
+    private static function boxGuides(): array
+    {
+        static $guides = null;
+        if ($guides === null) {
+            $file = ROOT_PATH . '/config/page-guides.php';
+            $guides = is_file($file) ? ((require $file)['boxes'] ?? []) : [];
+        }
+
+        return $guides;
     }
 }

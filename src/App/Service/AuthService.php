@@ -167,7 +167,8 @@ final class AuthService
                 (string) $candidate->email,
                 'Recupero password',
                 "Ciao {$candidate->username},\n\n"
-                    . 'Per reimpostare la password vai su: ' . rtrim($baseUrl, '/') . "/password/reset/{$token}\n\n"
+                    . "Per scegliere la password usa questo pulsante:\n"
+                    . '[Scegli la password](' . rtrim($baseUrl, '/') . "/password/reset/{$token})\n\n"
                     . "Il link scade tra un'ora. Se non sei stato tu a richiederlo, ignora questa email."
             );
         }

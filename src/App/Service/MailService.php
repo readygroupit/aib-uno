@@ -52,6 +52,10 @@ final class MailService
         $this->lastError = null;
         $smtp = $this->smtpSettings();
         if ($smtp === null) {
+            // Senza SMTP: mail() del server, solo testo.
+            $body = EmailTemplate::plainText($body);
+        }
+        if ($smtp === null) {
             $this->log($to, $subject, $body);
             @mail($to, $subject, $body);
 
@@ -114,12 +118,10 @@ final class MailService
             $mail->setFrom($smtp['from'], $smtp['fromName']);
             $mail->addAddress($to);
             $mail->Subject = $subject;
-            // Testo semplice, piu' una versione HTML leggibile (a capo e link).
+            // HTML curato (vedi EmailTemplate) piu' la versione solo testo.
             $mail->isHTML(true);
-            $html = nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8'));
-            $html = (string) preg_replace('#(https?://[^\s<]+)#', '<a href="$1">$1</a>', $html);
-            $mail->Body = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#12333f">' . $html . '</div>';
-            $mail->AltBody = $body;
+            $mail->Body = $this->container->get(EmailTemplate::class)->render($subject, $body);
+            $mail->AltBody = EmailTemplate::plainText($body);
             $mail->send();
 
             return null;

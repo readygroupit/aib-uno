@@ -22,11 +22,13 @@ final class MailService
 
     public function send(string $to, string $subject, string $body): bool
     {
-        // Modalita' prova: agli utenti del gestionale si scrive davvero (es.
-        // link per la password), a tutti gli altri (clienti) no: la mail va
-        // all'indirizzo per le prove, o resta nel registro delle prove.
+        // Modalita' prova: con l'indirizzo per le prove impostato, TUTTE le
+        // email (clienti e colleghi) vanno li', con il destinatario vero
+        // nell'oggetto. Senza indirizzo: ai clienti non parte niente (resta nel
+        // registro delle prove), ai colleghi si scrive davvero. Inviti e
+        // password non passano di qui: sendDirect(), arrivano sempre alla persona.
         $test = $this->container->get(\App\TestMode\TestModeService::class);
-        if ($test->simulates('customer_email') && !$this->isUserEmail($to)) {
+        if ($test->simulates('customer_email') && ($test->testEmail() !== null || !$this->isUserEmail($to))) {
             $test->record('customer_email', "Email a {$to}: {$subject}", $body, $test->testEmail() ?? $to);
             if ($test->testEmail() === null) {
                 $this->log($to, '[PROVA, NON INVIATA] ' . $subject, $body);
@@ -37,6 +39,17 @@ final class MailService
             $to = $test->testEmail();
         }
 
+        return $this->sendDirect($to, $subject, $body);
+    }
+
+    /**
+     * Invia davvero, senza la modalita' prova: inviti e link per la password
+     * (devono arrivare alla persona, vedi AuthService::requestPasswordReset())
+     * e bin/test-email.php (la prova dell'SMTP parte anche in modalita' prova).
+     */
+    public function sendDirect(string $to, string $subject, string $body): bool
+    {
+        $this->lastError = null;
         $smtp = $this->smtpSettings();
         if ($smtp === null) {
             $this->log($to, $subject, $body);

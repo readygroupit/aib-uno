@@ -162,7 +162,8 @@ final class AuthService
                 'expires_at' => date('Y-m-d H:i:s', time() + 3600),
             ]);
 
-            $mail->send(
+            // Invito o password dimenticata: arriva sempre alla persona, anche in modalita' prova.
+            $mail->sendDirect(
                 (string) $candidate->email,
                 'Recupero password',
                 "Ciao {$candidate->username},\n\n"

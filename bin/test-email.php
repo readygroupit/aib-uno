@@ -22,9 +22,12 @@ $smtp = (array) (($container->get(App\Core\Config::class)->get('mail') ?? [])['s
 $via = trim((string) ($smtp['host'] ?? '')) !== '' ? 'SMTP ' . $smtp['host'] . ':' . ($smtp['port'] ?? 587) : 'mail() del server (SMTP non configurato)';
 echo "Invio a {$to} via {$via}...\n";
 $mail = $container->get(App\Service\MailService::class);
-$ok = $mail->send($to, 'Prova email da ' . (defined('APP_NAME') ? APP_NAME : 'il gestionale'), "Se leggi questa email, l'invio funziona.\n\nInviata il " . date('d/m/Y H:i') . '.');
+// Senza modalita' prova: la prova deve partire davvero.
+$ok = $mail->sendDirect($to, 'Prova email da ' . (defined('APP_NAME') ? APP_NAME : 'il gestionale'), "Se leggi questa email, l'invio funziona.\n\nInviata il " . date('d/m/Y H:i') . '.');
 if ($ok) {
-    echo "Fatto: email inviata" . (str_starts_with($via, 'mail()') ? " a mail() (controlla che il server la consegni davvero)" : '') . ".\n";
+    echo str_starts_with($via, 'mail()')
+        ? "Passata a mail() del server: SMTP non configurato (manca 'mail' => ['smtp' => ['host' => ...]] in config/autoload/secrets.php). Spesso mail() non consegna.\n"
+        : "Fatto: il server SMTP ha accettato l'email. Se non arriva, guarda lo spam o il registro del provider.\n";
     exit(0);
 }
 echo 'Non inviata: ' . ($mail->lastError ?? 'errore sconosciuto') . "\n";

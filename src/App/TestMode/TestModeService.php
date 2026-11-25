@@ -15,7 +15,8 @@ use App\Service\AuthService;
  * eccezioni da riaccendere una per una.
  *
  * Il controllo sta nei punti di uscita, non nelle pagine: MailService
- * (email a chi non e' un utente), CustomerMessageService e
+ * (tutte le email all'indirizzo per le prove, tranne inviti e password),
+ * CustomerMessageService e
  * WhatsAppService (link e messaggi ai clienti), PaymentService (link,
  * addebiti automatici), InvoiceService (SdI), SocialPublisher (social),
  * CalendarSyncService (Google Calendar). Ognuno chiede simulates() e, se
@@ -23,8 +24,8 @@ use App\Service\AuthService;
  * simulata.
  *
  * Impostazioni: 'test.enabled' ('1'/'0', assente = acceso), 'test.email' e
- * 'test.phone' (dove mandare email e WhatsApp ai clienti in prova; vuoti =
- * solo registro), 'test.real' (le eccezioni, separate da virgola; assente
+ * 'test.phone' (dove mandare in prova le email, anche ai colleghi, e i
+ * WhatsApp ai clienti; email vuota = ai clienti niente, ai colleghi vere), 'test.real' (le eccezioni, separate da virgola; assente
  * = 'calendar', perche' gli inviti vanno solo ai colleghi). Senza tabella
  * settings (Uno) la modalita' prova non c'e'.
  */
@@ -32,7 +33,7 @@ final class TestModeService
 {
     /** effetto => cosa vuol dire, per la pagina e il registro */
     public const EFFECTS = [
-        'customer_email' => 'Email ai clienti',
+        'customer_email' => 'Email ai clienti e ai colleghi (inviti e password partono sempre)',
         'whatsapp' => 'Messaggi WhatsApp ai clienti',
         'payments' => 'Pagamenti online (link e addebiti automatici)',
         'invoices' => 'Invio delle fatture allo SdI',
@@ -168,7 +169,7 @@ final class TestModeService
     }
 
     private const SHORT = [
-        'customer_email' => 'email ai clienti',
+        'customer_email' => 'email',
         'whatsapp' => 'WhatsApp',
         'payments' => 'pagamenti',
         'invoices' => 'fatture allo SdI',
